@@ -360,6 +360,45 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
   .pb-shot small{display:none}
   .pb-time{font-size:9.5px}
 }
+
+/* ===== 项目下拉 ===== */
+.proj{cursor:pointer;position:relative;user-select:none;transition:border-color .15s}
+.proj:hover{border-color:var(--seed-accent)}
+.proj .proj-caret{display:inline-block;font-size:8px;color:var(--faint);margin-left:3px;transition:transform .15s}
+.proj.open .proj-caret{transform:rotate(180deg)}
+.proj-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;width:260px;max-height:360px;overflow-y:auto;border:1px solid var(--line-strong);border-radius:var(--seed-radius);background:var(--seed-surface);box-shadow:0 8px 24px var(--shadow-3);z-index:100;padding:4px}
+.proj.open .proj-dropdown{display:block}
+.proj-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;transition:background .1s}
+.proj-item:hover{background:var(--accent-soft)}
+.proj-item.active{background:var(--accent-soft);font-weight:600}
+.proj-item .pi-name{flex:1;font-size:12.5px}
+.proj-item .pi-meta{font-family:var(--mono);font-size:9px;color:var(--faint)}
+.proj-item .pi-del{font-size:10px;color:var(--faint);border:none;background:none;cursor:pointer;padding:2px 5px;border-radius:4px}
+.proj-item .pi-del:hover{color:var(--seed-accent);background:color-mix(in srgb,var(--seed-accent) 10%,transparent)}
+.proj-item .pi-ren{font-size:10px;color:var(--faint);border:none;background:none;cursor:pointer;padding:2px 5px;border-radius:4px}
+.proj-item .pi-ren:hover{color:var(--seed-accent)}
+.proj-new{display:flex;align-items:center;gap:7px;width:100%;padding:7px 10px;border:none;border-top:1px dashed var(--line);background:transparent;font-size:12px;color:var(--dim);cursor:pointer;border-radius:6px}
+.proj-new:hover{color:var(--seed-accent);background:var(--accent-soft)}
+
+/* ===== 历史库面板 ===== */
+.history-btn{cursor:pointer;transition:color .15s}
+.history-btn:hover{color:var(--seed-accent)}
+.history-panel{display:none;position:fixed;right:16px;bottom:44px;width:420px;max-width:calc(100vw - 32px);max-height:60vh;border:1px solid var(--line-strong);border-radius:var(--seed-radius);background:var(--seed-surface);box-shadow:0 12px 36px var(--shadow-3);z-index:200;flex-direction:column;overflow:hidden}
+.history-panel.open{display:flex}
+.history-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
+.history-head .h-count{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--faint)}
+.history-head .h-close{width:24px;height:24px;border:none;background:transparent;color:var(--faint);cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.history-head .h-close:hover{color:var(--seed-fg);background:var(--accent-soft)}
+.history-body{flex:1;overflow-y:auto;padding:8px}
+.history-item{display:flex;gap:10px;padding:8px;border-radius:8px;cursor:pointer;transition:background .1s}
+.history-item:hover{background:var(--accent-soft)}
+.history-thumb{width:64px;height:36px;border-radius:6px;overflow:hidden;background:var(--stage-bg);flex-shrink:0}
+.history-thumb img{width:100%;height:100%;object-fit:cover}
+.history-info{flex:1;min-width:0}
+.history-info .hi-name{font-size:12px;font-weight:600;color:var(--seed-fg)}
+.history-info .hi-meta{font-family:var(--mono);font-size:9px;color:var(--faint);margin-top:2px}
+.history-info .hi-reuse{font-size:10px;color:var(--seed-accent);margin-top:3px}
+.history-empty{text-align:center;padding:24px;color:var(--faint);font-size:12px}
 </style>
 </head>
 <body data-od-id="mmh3-workbench">
@@ -372,7 +411,12 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     </div>
     <div class="logo-name">MM·H3 工作台<small>MiniMax H3 · Video Studio</small></div>
   </div>
-  <div class="proj"><b>未命名项目_01</b><span class="meta">4 SHOTS · 30S</span></div>
+  <div class="proj" id="projSwitch" tabindex="0" role="button" aria-label="切换项目" aria-expanded="false"><b id="projName">未命名项目_01</b><span class="meta" id="projMeta">4 SHOTS · 30S</span><span class="proj-caret">▼</span>
+    <div class="proj-dropdown" id="projDropdown">
+      <div id="projList"></div>
+      <button class="proj-new" id="projNew" type="button">＋ 新建项目</button>
+    </div>
+  </div>
   <div class="chrome-right">
     <button class="icon-btn mobile-only" id="drawerL" type="button" aria-label="打开剧本侧栏" title="剧本">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
@@ -599,6 +643,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
 <footer class="statusbar" data-component="statusbar" data-od-id="statusbar">
   <span class="sb-item"><span class="sb-dot"></span>CONN: LOCAL · 模型就绪</span>
   <span class="sb-item" id="queueItem">QUEUE 0 · 0</span>
+  <span class="sb-item history-btn" id="historyBtn" role="button" tabindex="0" aria-label="历史库">历史库</span>
   <div class="sb-right">
     <span id="totalDurSb">总时长 30s</span>
     <span>ENGINE: MINIMAX H3</span>
@@ -606,6 +651,16 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     <span class="sb-sep"></span>
   </div>
 </footer>
+
+<!-- 历史库面板 -->
+<div class="history-panel" id="historyPanel" role="region" aria-label="历史库">
+  <div class="history-head">历史库 <span class="h-count" id="historyCount">0 条</span>
+    <button class="h-close" id="historyClose" type="button" aria-label="关闭历史库">✕</button>
+  </div>
+  <div class="history-body" id="historyBody">
+    <div class="history-empty">暂无历史记录</div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -973,6 +1028,157 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
   }
 
   document.getElementById('genBtn').addEventListener('click',submitGeneration);
+
+  /* ===== D1: 项目列表（新建/重命名/删除/切换） ===== */
+  var projSwitch=document.getElementById('projSwitch');
+  var projDropdown=document.getElementById('projDropdown');
+  var projList=document.getElementById('projList');
+  var projNameEl=document.getElementById('projName');
+  var projMetaEl=document.getElementById('projMeta');
+  var currentProjectId=null;
+
+  function loadProjects(){
+    fetch(API_BASE+'/projects').then(function(r){return r.json();}).then(function(list){
+      projList.innerHTML='';
+      list.forEach(function(p){
+        var item=document.createElement('div');
+        item.className='proj-item'+(p.id===currentProjectId?' active':'');
+        item.innerHTML='<span class="pi-name">'+p.name+'</span><span class="pi-meta">'+(p.shot_count||0)+' shots</span><button class="pi-ren" title="重命名">✎</button><button class="pi-del" title="删除">✕</button>';
+        item.addEventListener('click',function(e){
+          if(e.target.classList.contains('pi-del')){
+            e.stopPropagation();
+            if(confirm('删除项目「'+p.name+'」？镜头与历史将一并删除。')){
+              fetch(API_BASE+'/projects/'+p.id,{method:'DELETE'}).then(function(){loadProjects();});
+            }
+            return;
+          }
+          if(e.target.classList.contains('pi-ren')){
+            e.stopPropagation();
+            var newName=prompt('重命名项目',p.name);
+            if(newName&&newName.trim()){
+              fetch(API_BASE+'/projects/'+p.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newName.trim()})}).then(function(){loadProjects();});
+            }
+            return;
+          }
+          switchProject(p.id,p.name);
+        });
+        projList.appendChild(item);
+      });
+    }).catch(function(){/* 后端未启动 */});
+  }
+
+  function switchProject(pid,name){
+    currentProjectId=pid;
+    projNameEl.textContent=name;
+    projSwitch.classList.remove('open');
+    projSwitch.setAttribute('aria-expanded','false');
+    loadProjectShots(pid);
+    loadHistory(pid);
+  }
+
+  function loadProjectShots(pid){
+    fetch(API_BASE+'/projects/'+pid+'/shots').then(function(r){return r.json();}).then(function(shots){
+      /* 更新时间线镜头段 */
+      var tl=document.getElementById('tlSegments');
+      /* 保留播放控制 + playhead + 添加按钮 */
+      var ctl=tl.querySelector('.tl-ctl');
+      var ph=tl.querySelector('.playhead');
+      var addBtn=tl.querySelector('.seg.add');
+      tl.innerHTML='';
+      tl.appendChild(ctl);
+      tl.appendChild(ph);
+      shots.forEach(function(s,i){
+        var node=document.createElement('div');
+        node.className='seg';
+        node.dataset.shot=i;
+        node.dataset.name=s.name;
+        node.dataset.dur=s.duration;
+        node.dataset.prompt=s.prompt;
+        node.setAttribute('data-component','timeline-segment');
+        node.setAttribute('role','button');
+        node.setAttribute('tabindex','0');
+        node.setAttribute('aria-selected','false');
+        var no=('0'+(i+1)).slice(-2);
+        var d=('0'+s.duration).slice(-2);
+        node.innerHTML='<div class="sf"><span class="no">'+no+'</span><span class="dur">0:'+d+'</span></div><div class="nm"><b>'+s.name+'</b></div>';
+        tl.insertBefore(node,addBtn);
+        bindSeg(node);
+      });
+      segs=[].slice.call(document.querySelectorAll('.seg[data-shot]'));
+      sizeSegs();
+      updateTotals();
+      projMetaEl.textContent=shots.length+' SHOTS · '+shots.reduce(function(a,s){return a+s.duration;},0)+'S';
+      if(segs.length>0)selectShot(segs[0]);
+    }).catch(function(){/* 后端未启动 */});
+  }
+
+  projSwitch.addEventListener('click',function(e){
+    if(e.target.closest('.proj-dropdown'))return;
+    projSwitch.classList.toggle('open');
+    projSwitch.setAttribute('aria-expanded',projSwitch.classList.contains('open')?'true':'false');
+    if(projSwitch.classList.contains('open'))loadProjects();
+  });
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('#projSwitch')){projSwitch.classList.remove('open');projSwitch.setAttribute('aria-expanded','false');}
+  });
+  document.getElementById('projNew').addEventListener('click',function(){
+    var name=prompt('新建项目名称','未命名项目');
+    if(name&&name.trim()){
+      fetch(API_BASE+'/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name.trim()})}).then(function(r){return r.json();}).then(function(p){
+        switchProject(p.id,p.name);
+      });
+    }
+  });
+  projSwitch.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();projSwitch.click();}
+  });
+
+  /* ===== D2: 历史库面板 ===== */
+  var historyBtn=document.getElementById('historyBtn');
+  var historyPanel=document.getElementById('historyPanel');
+  var historyBody=document.getElementById('historyBody');
+  var historyCount=document.getElementById('historyCount');
+
+  function loadHistory(pid){
+    if(!pid){historyBody.innerHTML='<div class="history-empty">请先选择项目</div>';historyCount.textContent='0 条';return;}
+    fetch(API_BASE+'/projects/'+pid+'/history').then(function(r){return r.json();}).then(function(items){
+      historyCount.textContent=items.length+' 条';
+      if(items.length===0){historyBody.innerHTML='<div class="history-empty">暂无历史记录</div>';return;}
+      historyBody.innerHTML='';
+      items.forEach(function(it){
+        var item=document.createElement('div');
+        item.className='history-item';
+        var thumbHtml=it.result_path?'<img src="/'+it.result_path+'" alt="缩略">':'';
+        var time=it.finished_at||it.created_at||'';
+        item.innerHTML='<div class="history-thumb">'+thumbHtml+'</div><div class="history-info"><div class="hi-name">'+(it.shot_name||'未命名')+'</div><div class="hi-meta">'+it.mode+' · '+(it.duration||0)+'s · '+time+'</div><div class="hi-reuse">点击复用参数与提示词</div></div>';
+        item.addEventListener('click',function(){
+          /* 复用提示词与参数到当前镜头 */
+          if(it.prompt){
+            promptInput.value=it.prompt;
+            updateCount();
+          }
+          historyPanel.classList.remove('open');
+        });
+        historyBody.appendChild(item);
+      });
+    }).catch(function(){
+      historyBody.innerHTML='<div class="history-empty">后端未连接</div>';
+      historyCount.textContent='—';
+    });
+  }
+
+  historyBtn.addEventListener('click',function(){
+    historyPanel.classList.toggle('open');
+    if(historyPanel.classList.contains('open')&&currentProjectId){
+      loadHistory(currentProjectId);
+    }
+  });
+  historyBtn.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();historyBtn.click();}
+  });
+  document.getElementById('historyClose').addEventListener('click',function(){
+    historyPanel.classList.remove('open');
+  });
 
   selectShot(segs[0]);
   sizeSegs();

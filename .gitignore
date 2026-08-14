@@ -1,0 +1,26 @@
+# 数据库
+data/
+
+# 上传素材
+uploads/
+
+# 生成结果
+assets/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# 环境
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

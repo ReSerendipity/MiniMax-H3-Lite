@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-10T02:00:00.000Z",
+  "brief": {
+    "artifactType": "website",
+    "targetPlatform": ["responsive", "web"],
+    "audience": "开发者/产品用户/企业客户",
+    "product": "MiniMax H3 视频生成模型",
+    "siteType": "tool-webapp",
+    "businessGoal": "提供一个便捷使用 MiniMax H3 生成视频的 Web 工作台：多镜头时间线编排，输入提示词/参数，逐镜头生成并预览成片",
+    "siblingProjects": ["Image_MultiModel", "SeedVR2", "TTS_MultiModel"],
+    "siblingStyle": "家族惯例：浅色默认 + 每产品独立强调色，--seed 种子令牌体系；本项目沿用暖橙强调色并支持明暗双主题",
+    "notes": "用户要求：工作台结构不得与兄弟项目（Image MultiModel 生图工作台 / SeedVR2）相同；已选定「时间线工作台」结构（顶部胶片时间线 + 中央舞台预览 + 右侧镜头参数 + 底部提示词坞）；画面素材用 CSS 模拟"
+  },
+  "output": {
+    "target": "html",
+    "componentLibrary": "none",
+    "previewStrategy": "index.html 置于 Canvas 工作区根目录（项目目录与工作区均已同步），Canvas 预览与本地预览服务均可访问"
+  },
+  "artifacts": [
+    {
+      "path": "index.html",
+      "action": "create",
+      "purpose": "MiniMax H3 时间线工作台主页面（全新结构，区别于兄弟项目纵向卡片布局）",
+      "requirements": [
+        "顶栏：Logo + 产品名 + 项目名（未命名项目_01 · 4 个镜头）+ 主题/帮助/分享/头像",
+        "胶片时间线（顶部）：播放控制 + 播放头 + 4 个镜头段（缩略帧/编号/时长/名称）+ 添加镜头按钮 + 刻度尺；点击镜头段切换舞台",
+        "中央舞台：16:9 大预览（CSS 场景画面）+ REC/镜头/时间码信息 + 播放条；右侧镜头参数面板（分辨率/时长/帧率/运镜/风格/种子/衔接）",
+        "底部提示词坞：当前镜头提示词输入 + 实时计数 + 负向提示词 + 生成当前镜头按钮 + 预设标签",
+        "底部状态栏（CONN/队列/总时长/引擎/缩放）+ 右下角队列浮标",
+        "明暗双主题 + 响应式 + 真实文案（无占位字样）"
+      ]
+    }
+  ],
+  "designDirection": {
+    "fidelity": "high-fidelity",
+    "styleSource": "时间线工作台结构：顶部胶片时间线（多镜头编排）、中央 16:9 舞台预览、右侧镜头参数、底部提示词坞——参考剪辑软件的时间线范式，与兄弟项目的纵向卡片/居中提示词布局完全区分；暖橙强调色（#d97a3e）+ --seed 令牌体系 + 明暗双主题；CSS 分层绘制的模拟影片画面",
+    "visualTone": ["tool", "timeline", "cinematic", "dual-theme"],
+    "themeMode": "light+dark",
+    "seedTokens": {
+      "family": ["--seed-bg", "--seed-fg", "--seed-primary", "--seed-accent", "--seed-surface"],
+      "lightSeed": {"seedBg": "#f4f4f6", "seedSurface": "#ffffff", "seedFg": "#17181c", "seedAccent": "#d97a3e"},
+      "darkSeed": {"seedBg": "#141519", "seedSurface": "#1e2026", "seedFg": "#eceef2", "seedAccent": "#ef8a4e"}
+    }
+  },
+  "structure": {
+    "screens": ["时间线工作台（单页多区）"],
+    "sections": ["顶栏", "胶片时间线（镜头段/播放头/刻度尺）", "中央舞台预览", "镜头参数面板", "提示词坞", "底部状态栏", "队列浮标"]
+  },
+  "interaction": {
+    "primaryFlow": "点击时间线镜头段 → 切换舞台预览与该镜头提示词 → 编辑提示词/参数 → 生成当前镜头 → 队列与历史查看",
+    "states": ["明暗主题切换", "镜头段切换（舞台/提示词/参数联动）", "添加镜头", "提示词实时计数", "预设标签回填", "生成按钮按压", "播放条/时间码", "响应式折叠"]
+  },
+  "quality": {
+    "responsive": true,
+    "accessibility": true,
+    "lintRequired": true,
+    "acceptanceCriteria": [
+      "index.html 为高保真时间线工作台预览：真实界面观感与文案，无线框/占位字样残留",
+      "时间线-舞台-提示词坞联动可用，无文字重叠、主控件可见",
+      "明暗双主题可用、响应式适配桌面/平板/手机",
+      "Design quality check P0=0，P1 修复或显式豁免",
+      "Canvas 预览页可成功打开该页面"
+    ]
+  },
+  "risks": [
+    "CSS 模拟画面为示意性质，正式产品需替换为真实生成结果帧",
+    "时间线为单页原型，正式接入需后端（FastAPI）与任务队列支持",
+    "明暗双主题需保证暗色下对比度与可读性"
+  ],
+  "resources": {
+    "skill": {
+      "id": "saas-landing",
+      "title": "saas-landing",
+      "rationale": "工作台式工具页面结构参考",
+      "alternatives": ["dashboard", "wireframe-sketch"]
+    },
+    "styleReference": {
+      "primary": "together-ai",
+      "inspiration": ["openai", "cohere"],
+      "rationale": "工具型界面结构参考；实际执行以 --seed 令牌体系与暖橙强调色为准"
+    },
+    "requiredReads": [
+      {"kind": "skill", "id": "saas-landing", "reason": "Workbench tool page structure."},
+      {"kind": "craft", "id": "anti-ai-slop", "reason": "Baseline AI-slop guardrail."},
+      {"kind": "craft", "id": "typography", "reason": "Baseline typography quality rule."},
+      {"kind": "craft", "id": "color", "reason": "Baseline color quality rule."},
+      {"kind": "protocol", "id": "design-mode-runtime", "reason": "Execution and runtime contract."}
+    ]
+  },
+  "abstract": "本计划将 MiniMax H3 视频生成工具做成全新结构的「时间线工作台」：顶部是胶片时间线（多镜头编排、可添加镜头、点击切换），中央是 16:9 舞台大预览，右侧是镜头参数面板，底部是提示词坞。该结构参考剪辑软件的时间线范式，与兄弟项目（Image MultiModel、SeedVR2）的纵向卡片布局完全区分。页面沿用家族暖橙强调色与 --seed 令牌体系，支持明暗双主题与响应式，用 CSS 分层绘制黄昏海岸、雨夜霓虹、飞鸟群、雪山晨雾等示例画面。交付为工作区根目录 index.html，可直接在 Canvas 预览页与本地预览服务打开对比。"
+}

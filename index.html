@@ -471,7 +471,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         <textarea id="promptInput" placeholder="输入镜头提示词：画面内容、镜头运动、氛围……（运镜由提示词驱动）"></textarea>
         <div class="dock-meta">
           <span class="count" id="charCount">0 字符</span>
-          <button class="neg" type="button" title="H3-Context-IR 为官方推荐的指令预处理系统，可提升复杂指令生成质量">＋ 指令优化（Context-IR）</button>
+          <button class="neg" type="button" title="本地轻量提示词优化（按官方提示词指南做规则/模板级优化），非 H3-Context-IR 官方等价物">＋ 指令优化（轻量）</button>
         </div>
       </div>
       <button class="btn-gen" id="genBtn" type="button" data-component="generate-btn">
@@ -485,7 +485,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         <button class="preset" type="button">延时 · 晨雾金顶</button>
         <button class="preset" type="button">胶片颗粒 · 宽银幕</button>
       </div>
-      <div class="foot-note">剧本区与当前镜头联动，编辑提示词后点击「生成当前镜头」发起推理任务。Context-IR 为官方推荐的指令预处理，建议复杂指令开启。</div>
+      <div class="foot-note">剧本区与当前镜头联动，编辑提示词后点击「生成当前镜头」发起推理任务。「指令优化」为本地轻量提示词增强（按官方提示词指南做规则/模板级优化），非 H3-Context-IR 官方等价物；H3-Context-IR 未开源、仅官方 API。</div>
     </div>
   </aside>
 
@@ -586,7 +586,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         <div class="ref-chips"><span class="ref-chip">图片 0/9</span><span class="ref-chip">视频 0/3</span><span class="ref-chip">音频 0/3</span><button class="ref-add" type="button">＋ 添加参考</button></div>
         <div class="bridge-note">首/末帧模式需上传对应图像；音频须搭配图像或视频输入。运镜由提示词驱动。</div>
       </div>
-      <div class="bridge-note">参数与当前镜头联动；2K 输出由 H3-Regenerate-2K 将 768p 结果重绘，本期仅占位。</div>
+      <div class="bridge-note">参数与当前镜头联动。2K 重绘（H3-Regenerate-2K）未开源，本期不可用——选项仅为占位。</div>
     </div>
     <div class="side-rail">
       <button class="coll-btn" id="collBtnR" type="button" data-collapse="sideR" aria-label="展开参数侧栏" title="展开" aria-expanded="false">
@@ -855,7 +855,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     negBtn.textContent='优化完成 ✓';
     negBtn.style.borderColor='var(--seed-primary)';
     clearTimeout(ctxTimer);
-    ctxTimer=setTimeout(function(){negBtn.textContent='＋ 指令优化（Context-IR）';negBtn.style.borderColor='';},2000);
+    ctxTimer=setTimeout(function(){negBtn.textContent='＋ 指令优化（轻量）';negBtn.style.borderColor='';},2000);
   }
 
   function playDemo(){

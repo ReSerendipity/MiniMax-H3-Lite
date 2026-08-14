@@ -861,21 +861,118 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     previewShell.classList.remove('opened');
   });
 
-  /* 生成 → 队列演示 + 生成状态流转 + 剧场揭晓 */
+  /* 生成 → 真实 API 请求（提交任务 → 轮询 → 结果回填） */
   var queueItem=document.getElementById('queueItem');
-  document.getElementById('genBtn').addEventListener('click',function(){
+  var API_BASE='http://127.0.0.1:18080/api';
+  var pollTimer=null;
+
+  function getActiveShot(){
+    var seg=document.querySelector('.seg.active');
+    if(!seg)return null;
+    var dur=parseInt(seg.dataset.dur,10)||8;
+    return{name:seg.dataset.name||'',dur:dur,prompt:promptInput.value,shotIdx:+seg.dataset.shot+1};
+  }
+
+  function getActiveMode(){
+    var modeEl=document.querySelector('.p-row .k');
+    var modeSeg=document.querySelectorAll('.p-row .seg.on')[0];
+    var modeMap={'文生':'text','首帧':'first_frame','末帧':'last_frame','首尾帧':'first_last','多模态参考':'ref'};
+    var modeText=modeSeg?modeSeg.textContent.trim():'文生';
+    return modeMap[modeText]||'text';
+  }
+
+  function getActiveParams(){
+    var rows=document.querySelectorAll('.p-row');
+    var p={};
+    rows.forEach(function(r){
+      var k=r.querySelector('.k')?r.querySelector('.k').textContent.trim():'';
+      var on=r.querySelector('.seg.on');
+      if(!k||!on)return;
+      var v=on.textContent.trim();
+      if(k==='画面比例')p.aspect=v;
+      else if(k==='分辨率')p.resolution=v.indexOf('768')>-1?'768P':'2K';
+      else if(k==='时长')p.duration=parseInt(v)||8;
+      else if(k==='运镜')p.motion=v;
+      else if(k==='风格')p.style=v;
+      else if(k==='衔接')p.bridge=v;
+      else if(k==='2K 重绘')p.twok=v==='开启';
+    });
+    return p;
+  }
+
+  function submitGeneration(){
+    var shot=getActiveShot();
+    if(!shot){return;}
+    var mode=getActiveMode();
+    var params=getActiveParams();
+    var body=JSON.stringify({shot_id:'demo',mode:mode,prompt:shot.prompt,params:params,ref_ids:[]});
+
     queueItem.textContent='QUEUE 1 · 1';
     queueItem.style.fontWeight='700';
-    setGenState('生成中 · 预计 8s',false);
-    clearTimeout(genTimer);
-    genTimer=setTimeout(function(){
-      queueItem.textContent='QUEUE 0 · 0';
-      queueItem.style.fontWeight='';
-      setGenState('生成完成 ✓',true);
-      setTimeout(function(){stageScene.classList.remove('genning');},1400);
-    },1800);
+    setGenState('提交中…',false);
     premiere(shotNo.textContent);
-  });
+
+    fetch(API_BASE+'/generations',{method:'POST',headers:{'Content-Type':'application/json'},body:body})
+      .then(function(r){return r.json();})
+      .then(function(task){
+        if(task.error){setGenState('提交失败: '+task.error,true);return;}
+        setGenState('生成中 · 推理执行中',false);
+        pollTask(task.id);
+      })
+      .catch(function(e){
+        /* 后端未启动时回退到演示模式 */
+        setGenState('生成中 · 预计 8s（演示模式）',false);
+        clearTimeout(genTimer);
+        genTimer=setTimeout(function(){
+          queueItem.textContent='QUEUE 0 · 0';
+          queueItem.style.fontWeight='';
+          setGenState('生成完成 ✓（演示模式）',true);
+          setTimeout(function(){stageScene.classList.remove('genning');},1400);
+        },1800);
+      });
+  }
+
+  function pollTask(taskId){
+    clearTimeout(pollTimer);
+    pollTimer=setTimeout(function(){
+      fetch(API_BASE+'/generations/'+taskId)
+        .then(function(r){return r.json();})
+        .then(function(task){
+          if(task.status==='processing'){
+            setGenState('生成中 · '+task.progress+'%',false);
+            pollTask(taskId);
+          }else if(task.status==='completed'){
+            queueItem.textContent='QUEUE 0 · 0';
+            queueItem.style.fontWeight='';
+            setGenState('生成完成 ✓',true);
+            /* 结果帧回填舞台 */
+            if(task.result_asset_id){
+              var v=document.createElement('video');
+              v.src='/assets/'+task.result_asset_id;
+              v.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0';
+              v.loop=true;v.muted=true;v.autoplay=true;
+              var old=stageScene.querySelector('video');
+              if(old)old.remove();
+              stageScene.appendChild(v);
+            }
+            setTimeout(function(){stageScene.classList.remove('genning');},1400);
+          }else if(task.status==='failed'){
+            queueItem.textContent='QUEUE 0 · 0';
+            queueItem.style.fontWeight='';
+            setGenState('生成失败: '+(task.error||'未知错误'),true);
+            setTimeout(function(){stageScene.classList.remove('genning');},2000);
+          }else{
+            /* pending */
+            pollTask(taskId);
+          }
+        })
+        .catch(function(){
+          setGenState('连接后端失败 · 演示模式',true);
+        });
+    },1000);
+  }
+
+  document.getElementById('genBtn').addEventListener('click',submitGeneration);
 
   selectShot(segs[0]);
   sizeSegs();

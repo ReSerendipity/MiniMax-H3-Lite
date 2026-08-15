@@ -76,9 +76,16 @@ def init_db():
         asset_id    TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
         ref_type    TEXT NOT NULL,           -- image|video|audio
         ord         INTEGER NOT NULL DEFAULT 0,
+        pair_asset_id TEXT,                  -- 音频→其所属视频资产 id（配对音轨）
         PRIMARY KEY (shot_id, asset_id)
     );
     """)
+    conn.commit()
+    # 幂等迁移：旧库追加 pair_asset_id 列（SQLite 不支持 ADD COLUMN IF NOT EXISTS）
+    try:
+        conn.execute("ALTER TABLE shot_refs ADD COLUMN pair_asset_id TEXT")
+    except Exception:
+        pass  # 列已存在
     conn.commit()
     conn.close()
 

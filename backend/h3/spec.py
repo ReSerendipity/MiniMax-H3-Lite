@@ -99,10 +99,28 @@ MAX_REF_TOTAL = 12
 
 # ── 工具 ─────────────────────────────────────────
 def group_refs(refs: list[dict]) -> dict:
-    """将 [{kind, path}, ...] 按 kind 分组为 {image: [...], video: [...], audio: [...]}"""
-    grouped = {"image": [], "video": [], "audio": []}
+    """将 [{kind, path, id, paired_video}, ...] 按 kind 分组为
+    {image: [...], video: [...], audio: [...], ref_video_audios: [{video, audio}, ...]}
+    ref_video_audios：音频配对到视频的同步音轨（下标对齐 ref_videos）。
+    """
+    grouped = {"image": [], "video": [], "audio": [], "ref_video_audios": []}
+    video_by_id = {}
     for r in refs:
         k = r.get("kind")
-        if k in grouped:
+        if k in ("image", "video", "audio"):
             grouped[k].append(r["path"])
+            if k == "video" and r.get("id"):
+                video_by_id[r["id"]] = r["path"]
+    # 配对音轨：音频 paired_video 指向某个视频 id → 成对输出
+    paired = []
+    pair_audio_by_video = {}  # video_path -> audio_path
+    for r in refs:
+        if r.get("kind") == "audio" and r.get("paired_video"):
+            vid = r["paired_video"]
+            if vid in video_by_id:
+                vpath = video_by_id[vid]
+                apath = r["path"]
+                pair_audio_by_video[vpath] = apath
+                paired.append({"video": vpath, "audio": apath})
+    grouped["ref_video_audios"] = paired
     return grouped

@@ -4,8 +4,13 @@ data/
 # 上传素材
 uploads/
 
-# 生成结果
-assets/
+# 生成结果（不忽略源码 CSS/JS）
+assets/*
+!assets/css/
+!assets/js/
+!assets/favicon.svg
+!assets/favicon-32.png
+!assets/apple-touch-icon.png
 
 # Python
 __pycache__/

@@ -18,6 +18,7 @@ from database import get_db, new_id, now_iso
 from config import settings
 from h3 import spec as h3
 from engine_registry import active_backend
+from settings_store import resolve as resolve_setting
 
 
 def _build_params(task_row: dict) -> dict:
@@ -51,7 +52,19 @@ def _build_params(task_row: dict) -> dict:
                     "id": rid,
                     "kind": asset["kind"],
                     "path": str(settings.BASE_DIR / asset["path"]),
+                    "paired_video": None,  # 从 shot_refs 查询填充
                 })
+        # 查询 shot_refs 表获取配对关系
+        shot_row = db.execute("SELECT project_id FROM shots WHERE id=?", (task_row["shot_id"],)).fetchone()
+        if shot_row:
+            pair_rows = db.execute(
+                "SELECT asset_id, pair_asset_id FROM shot_refs WHERE shot_id=?",
+                (task_row["shot_id"],),
+            ).fetchall()
+            pair_map = {r["asset_id"]: r["pair_asset_id"] for r in pair_rows if r["pair_asset_id"]}
+            for ref in refs:
+                if ref["id"] in pair_map:
+                    ref["paired_video"] = pair_map[ref["id"]]
         db.close()
 
     # 首帧 / 末帧（fl2va）
@@ -67,6 +80,27 @@ def _build_params(task_row: dict) -> dict:
                 if mode == "first_last" and len(images) > 1:
                     last_image = images[1]
 
+    # G7: i2v「跟随首帧图像尺寸」——首帧图尺寸决定 width/height（768p 短边 + 32 倍数对齐 + 1344 封顶）
+    if task_type == h3.FL2VA and params.get("size_mode") == "follow_first" and first_image:
+        try:
+            from PIL import Image
+            with Image.open(first_image) as im:
+                iw, ih = im.size
+            sw = h3.SHORT_SIDE  # 768
+            cap = h3.MAX_DIM    # 1344
+            m = 32 if active_backend() == "comfyui" else 2
+            if iw >= ih:
+                nw, nh = sw * iw / ih, sw
+            else:
+                nh, nw = sw * ih / iw, sw
+            # round up to multiple, cap to MAX_DIM
+            nw = min(((int(nw) + m - 1) // m) * m, cap)
+            nh = min(((int(nh) + m - 1) // m) * m, cap)
+            if nw > 0 and nh > 0:
+                width, height = nw, nh
+        except Exception:
+            pass  # PIL 不可用时跳过，保持原始 resolution_for 值
+
     return {
         "task_type": task_type,
         "mode": mode,
@@ -81,6 +115,10 @@ def _build_params(task_row: dict) -> dict:
         "first_image": first_image,
         "last_image": last_image,
         "seed": params.get("seed") or int(time.time() * 1000) % (2 ** 32),
+        "ref_image_size": params.get("ref_image_size") or resolve_setting("ref_image_size", settings.REF_IMAGE_SIZE),
+        "sampler_name": params.get("sampler") or resolve_setting("sampler", settings.SAMPLER_NAME),
+        "steps": int(params.get("steps") or resolve_setting("steps", settings.STEPS)),
+        "denoise": float(params.get("denoise") or resolve_setting("denoise", settings.DENOISE)),
     }
 
 
@@ -196,12 +234,17 @@ def _run_diffusers(params: dict) -> str:
                 inputs["last_image"] = params["last_image"]
         elif params["task_type"] == h3.REF2VA:
             grouped = h3.group_refs(params["refs"])
+            # ref_image_size：match/max 缩放参考图像（diffusers 后端不直接接受该参数，按语义预处理）
+            ref_size_mode = params.get("ref_image_size") or "match"
             if grouped["image"]:
-                inputs["ref_images"] = grouped["image"]
+                inputs["ref_images"] = _scale_ref_images(grouped["image"], params["width"], params["height"], ref_size_mode)
             if grouped["video"]:
                 inputs["ref_videos"] = grouped["video"]
             if grouped["audio"]:
                 inputs["ref_audios"] = grouped["audio"]
+            if grouped.get("ref_video_audios"):
+                # 若 ModularPipeline 支持配对音轨参数则透传；否则按顺序拆出独立列表
+                inputs["ref_video_audios"] = grouped["ref_video_audios"]
 
         output = pipe(**inputs)
         output.save(str(tmp_path))
@@ -213,12 +256,47 @@ def _run_diffusers(params: dict) -> str:
     return str(tmp_path)
 
 
+def _scale_ref_images(paths, width, height, mode):
+    """按 ref_image_size 语义缩放参考图像（PIL，避免新依赖：ffmpeg scale 也可但 PIL 更简洁）。
+    match：缩放到生成分辨率（更快）；
+    max：短边保持 ≤2048（更强身份保真）。
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return paths  # Pillow 不可用时跳过缩放，原样返回
+    import tempfile
+    out = []
+    for p in paths:
+        try:
+            im = Image.open(p)
+            if mode == "match":
+                im = im.resize((width, height), Image.LANCZOS)
+            else:  # max：短边 ≤2048，等比缩放
+                w, h = im.size
+                short = min(w, h)
+                if short > 2048:
+                    k = 2048 / short
+                    im = im.resize((round(w * k), round(h * k)), Image.LANCZOS)
+            dst = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+            dst.close()
+            im.convert("RGB").save(dst.name)
+            out.append(dst.name)
+        except Exception:
+            out.append(p)  # 单张失败回退原路径
+    return out
+
+
 def _run_comfyui(params: dict) -> str:
     """委托 ComfyUI 可选执行器（backend/comfy_workflow.py），按任务类型选择官方权重。"""
     from comfy_workflow import run_comfyui
 
     task_type = params["task_type"]
     scheduler = h3.REF2VA_SCHEDULER if task_type == h3.REF2VA else h3.SCHEDULER
+    # 高级参数覆盖：用户显式传值时优先于全局/默认
+    if params.get("scheduler_override"):
+        scheduler = params["scheduler_override"]
+    grouped = h3.group_refs(params["refs"]) if task_type == h3.REF2VA else {}
     task = {
         **params,
         "unet_model": settings.MODEL_REF2VA if task_type == h3.REF2VA else settings.MODEL_FL2VA,
@@ -231,5 +309,6 @@ def _run_comfyui(params: dict) -> str:
         "ref_image_paths": [r["path"] for r in params["refs"] if r["kind"] == "image"],
         "ref_video_paths": [r["path"] for r in params["refs"] if r["kind"] == "video"],
         "ref_audio_paths": [r["path"] for r in params["refs"] if r["kind"] == "audio"],
+        "ref_video_audios": grouped.get("ref_video_audios", []),
     }
     return run_comfyui(task)

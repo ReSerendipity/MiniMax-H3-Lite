@@ -54,6 +54,10 @@ def build_prompt(task: dict) -> dict:
         n["20"] = {"class_type": "MiniMaxH3ImageToVideo", "inputs": inputs}
     else:  # ref2va
         ref_inputs = {}
+        # 先建配对音轨映射：video_path -> audio_path（ComfyUI 文件名）
+        pair_audio_by_video = {}
+        for p in task.get("ref_video_audios", []):
+            pair_audio_by_video[p["video"]] = p["audio"]
         for i, name in enumerate(task.get("ref_images", [])):
             nid = str(40 + i)
             n[nid] = {"class_type": "LoadImage", "inputs": {"image": name}}
@@ -62,6 +66,12 @@ def build_prompt(task: dict) -> dict:
             nid = str(50 + i)
             n[nid] = {"class_type": task["load_video_node"], "inputs": {"video": name}}
             ref_inputs[f"ref_videos.ref_video_{i}"] = [nid, 0]
+            # 按下标对齐补 ref_video_audios.ref_video_audio_{i}
+            audio_name = pair_audio_by_video.get(name)
+            if audio_name:
+                anid = str(55 + i)
+                n[anid] = {"class_type": task["load_audio_node"], "inputs": {"audio": audio_name}}
+                ref_inputs[f"ref_video_audios.ref_video_audio_{i}"] = [anid, 0]
         for i, name in enumerate(task.get("ref_audios", [])):
             nid = str(60 + i)
             n[nid] = {"class_type": task["load_audio_node"], "inputs": {"audio": name}}
@@ -144,6 +154,23 @@ def run_comfyui(task: dict) -> str:
     ref_videos = [upload_file(base, p, Path(p).name) for p in task.get("ref_video_paths", [])]
     ref_audios = [upload_file(base, p, Path(p).name) for p in task.get("ref_audio_paths", [])]
 
+    # 配对音轨：上传配对音轨文件并建立 video_path(本地) -> audio_name(ComfyUI) 映射
+    pair_audio_by_video_cfy = {}
+    for p in task.get("ref_video_audios", []):
+        cfy_name = upload_file(base, p["audio"], Path(p["audio"]).name)
+        pair_audio_by_video_cfy[p["video"]] = cfy_name
+    # 将配对映射中的本地路径替换为 ComfyUI 路径
+    ref_video_audios_cfy = []
+    for p in task.get("ref_video_audios", []):
+        cfy_video = None
+        for i, vp in enumerate(task.get("ref_video_paths", [])):
+            if vp == p["video"]:
+                cfy_video = ref_videos[i]
+                break
+        cfy_audio = pair_audio_by_video_cfy.get(p["video"])
+        if cfy_video and cfy_audio:
+            ref_video_audios_cfy.append({"video": cfy_video, "audio": cfy_audio})
+
     prompt = build_prompt({
         "task_type": task["task_type"],
         "unet_model": task["unet_model"],
@@ -160,12 +187,13 @@ def run_comfyui(task: dict) -> str:
         "ref_images": ref_images,
         "ref_videos": ref_videos,
         "ref_audios": ref_audios,
-        "sampler_name": resolve_setting("sampler", settings.SAMPLER_NAME),
+        "ref_video_audios": ref_video_audios_cfy,
+        "sampler_name": task.get("sampler_name") or resolve_setting("sampler", settings.SAMPLER_NAME),
         "scheduler": task.get("scheduler", h3.SCHEDULER),
-        "steps": int(resolve_setting("steps", settings.STEPS)),
-        "denoise": float(resolve_setting("denoise", settings.DENOISE)),
+        "steps": int(task.get("steps") or resolve_setting("steps", settings.STEPS)),
+        "denoise": float(task.get("denoise") or resolve_setting("denoise", settings.DENOISE)),
         "save_prefix": resolve_setting("save_prefix", settings.SAVE_PREFIX),
-        "ref_image_size": resolve_setting("ref_image_size", settings.REF_IMAGE_SIZE),
+        "ref_image_size": task.get("ref_image_size") or resolve_setting("ref_image_size", settings.REF_IMAGE_SIZE),
         "load_video_node": resolve_setting("load_video_node", settings.LOAD_VIDEO_NODE),
         "load_audio_node": resolve_setting("load_audio_node", settings.LOAD_AUDIO_NODE),
     })

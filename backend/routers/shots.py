@@ -42,8 +42,31 @@ def list_shots(pid: str):
     rows = db.execute(
         "SELECT * FROM shots WHERE project_id=? ORDER BY ord", (pid,)
     ).fetchall()
+    shots = rows_to_dicts(rows)
+    # 附带每个镜头的参考素材（assets 信息，供前端渲染素材列表与提交 ref_ids）
+    for shot in shots:
+        refs = db.execute(
+            """SELECT a.id, a.kind, a.mime, a.meta
+               FROM shot_refs r JOIN assets a ON a.id = r.asset_id
+               WHERE r.shot_id=? ORDER BY r.ord""",
+            (shot["id"],),
+        ).fetchall()
+        shot["refs"] = []
+        for r in refs:
+            meta = {}
+            try:
+                import json as _json
+                meta = _json.loads(r["meta"] or "{}")
+            except Exception:
+                pass
+            shot["refs"].append({
+                "id": r["id"],
+                "kind": r["kind"],
+                "mime": r["mime"],
+                "name": meta.get("original_name") or r["id"],
+            })
     db.close()
-    return rows_to_dicts(rows)
+    return shots
 
 
 @router.post("/projects/{pid}/shots")

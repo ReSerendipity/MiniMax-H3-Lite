@@ -1,8 +1,9 @@
 """
 MM·H3 工作台 — 推理客户端
 PRD §6: 对接本地 H3-Base 推理服务
-支持两种后端：diffusers（进程内） / ComfyUI（HTTP API）
-阶段 C 实现：完整状态机 + 参数映射 + 结果落盘 + 缩略帧
+默认后端 diffusers（进程内 ModularPipeline，脱离 ComfyUI 可运行）；
+可选后端 comfyui（消费同一任务规格层，见 backend/comfy_workflow.py）。
+参数映射以 backend/h3/spec.py（源自三份官方工作流）为单一事实源。
 """
 import sys
 import json
@@ -15,33 +16,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from database import get_db, new_id, now_iso
 from config import settings
-
-
-# ── 比例 → 分辨率映射 ──────────────────────────────
-# H3-Base 输出 768p 短边，根据宽高比计算实际分辨率
-def _resolution_for_ratio(ratio: str, short_side: int = 768) -> tuple[int, int]:
-    """返回 (width, height)"""
-    ratios = {
-        "21:9": (21, 9), "16:9": (16, 9), "4:3": (4, 3),
-        "1:1": (1, 1), "3:4": (3, 4), "9:16": (9, 16),
-    }
-    w, h = ratios.get(ratio, (16, 9))
-    if w >= h:
-        width = short_side
-        height = int(short_side * h / w)
-    else:
-        height = short_side
-        width = int(short_side * w / h)
-    # 确保偶数
-    width += width % 2
-    height += height % 2
-    return (width, height)
+from h3 import spec as h3
+from engine_registry import active_backend
 
 
 def _build_params(task_row: dict) -> dict:
     """
-    PRD §6.1: 将前端参数映射为 H3 输入
-    模式 / 时长 / 宽高比 / 帧率 / 参考素材
+    将任务行规范化为后端无关的结构化参数。
+    帧长 / 分辨率 / 任务类型 / 参考素材分组均来自 h3.spec（官方工作流语义）。
     """
     payload = json.loads(task_row["payload"]) if isinstance(task_row["payload"], str) else task_row["payload"]
     prompt = payload.get("prompt", "")
@@ -51,13 +33,14 @@ def _build_params(task_row: dict) -> dict:
     duration = params.get("duration", 8)
     aspect = params.get("aspect", "16:9")
     resolution = params.get("resolution", "768P")
-    short_side = 768 if resolution == "768P" else 1440  # 2K 未开源，占位
-    width, height = _resolution_for_ratio(aspect, short_side)
+    short_side = 768 if resolution == "768P" else 1440  # 2K 未开源，暂不支持
+    multiple = 32 if active_backend() == "comfyui" else 2
+    width, height = h3.resolution_for(aspect, short_side=short_side, multiple=multiple)
+    num_frames = h3.frames_for_duration(duration)
+    task_type = h3.MODE_TO_TASK.get(mode, h3.T2VA)
 
-    # 参考素材 ID 列表
+    # 参考素材（assets → 本地路径）
     ref_ids = payload.get("ref_ids", [])
-
-    # 收集参考素材路径
     refs = []
     if ref_ids:
         db = get_db()
@@ -68,28 +51,36 @@ def _build_params(task_row: dict) -> dict:
                     "id": rid,
                     "kind": asset["kind"],
                     "path": str(settings.BASE_DIR / asset["path"]),
-                    "mime": asset["mime"],
                 })
         db.close()
 
-    # 模式 → H3 检查点映射
-    # text → t2va, first_frame/last_frame/first_last → fl2va, ref → ref2va
-    checkpoint = "t2va"
-    if mode in ("first_frame", "last_frame", "first_last"):
-        checkpoint = "fl2va"
-    elif mode == "ref":
-        checkpoint = "ref2va"
+    # 首帧 / 末帧（fl2va）
+    first_image = None
+    last_image = None
+    if task_type == h3.FL2VA:
+        images = [r["path"] for r in refs if r["kind"] == "image"]
+        if images:
+            if mode == "last_frame":
+                last_image = images[0]
+            else:
+                first_image = images[0]
+                if mode == "first_last" and len(images) > 1:
+                    last_image = images[1]
 
     return {
-        "checkpoint": checkpoint,
+        "task_type": task_type,
         "mode": mode,
         "prompt": prompt,
         "width": width,
         "height": height,
+        "num_frames": num_frames,
         "duration": duration,
         "fps": settings.FPS,
         "audio_sample_rate": settings.AUDIO_SAMPLE_RATE,
         "refs": refs,
+        "first_image": first_image,
+        "last_image": last_image,
+        "seed": params.get("seed") or int(time.time() * 1000) % (2 ** 32),
     }
 
 
@@ -110,7 +101,7 @@ def _extract_thumbnail(video_path: str, output_path: str, time_offset: float = 0
 def run_inference(task_id: str) -> dict:
     """
     执行推理任务，返回 {"asset_id": "...", "path": "...", "thumbnail": "..."}
-    根据 settings.INFERENCE_BACKEND 选择后端
+    按当前激活引擎（engine_registry.active_backend）选择后端。
     """
     db = get_db()
     row = db.execute("SELECT * FROM generation_tasks WHERE id=?", (task_id,)).fetchone()
@@ -119,14 +110,14 @@ def run_inference(task_id: str) -> dict:
         raise ValueError(f"任务不存在: {task_id}")
 
     params = _build_params(dict(row))
+    backend = active_backend()
 
-    if settings.INFERENCE_BACKEND == "diffusers":
+    if backend == "diffusers":
         result = _run_diffusers(params)
-    elif settings.INFERENCE_BACKEND == "comfyui":
+    elif backend == "comfyui":
         result = _run_comfyui(params)
     else:
-        # 演示模式：本地无 GPU 时生成占位文件
-        result = _run_placeholder(params)
+        raise RuntimeError(f"推理后端 {backend} 尚未实现，请切换为 diffusers（本地）或 comfyui")
 
     # 落盘 + 资产记录
     aid = new_id("ast_")
@@ -138,12 +129,10 @@ def run_inference(task_id: str) -> dict:
     if isinstance(result, (bytes, bytearray)):
         dest.write_bytes(result)
     elif isinstance(result, str) and Path(result).exists():
-        # 结果是临时文件路径，移动过来
         import shutil
         shutil.move(result, str(dest))
     else:
-        # 占位：写空文件
-        dest.write_bytes(b"")
+        raise RuntimeError(f"推理未产出有效文件: {result!r}")
 
     size = dest.stat().st_size if dest.exists() else 0
 
@@ -173,68 +162,74 @@ def run_inference(task_id: str) -> dict:
 
 def _run_diffusers(params: dict) -> str:
     """
-    使用 diffusers ModularPipeline 本地推理
-    PRD §6.2: MiniMaxAI/MiniMax-H3, t2va/fl2va/ref2va
+    使用 diffusers ModularPipeline 本地推理（PRD §6.2: MiniMaxAI/MiniMax-H3）。
+    输入映射按 h3.spec：t2va 纯文本；fl2va 传 image(+last_image)；ref2va 传 ref_images/ref_videos/ref_audios。
+    依赖缺失或推理失败时抛出 RuntimeError（任务如实 failed），绝不假成功。
     """
     try:
         from diffusers import ModularPipeline
         import torch
-    except ImportError:
-        # diffusers 未安装，回退到占位
-        return _run_placeholder(params)
+    except ImportError as e:
+        raise RuntimeError(
+            "diffusers 推理后端依赖缺失，请先安装：pip install diffusers torch"
+        ) from e
 
-    # 实际推理代码（按官方文档）
-    # model_id = settings.MODEL_NAME
-    # pipe = ModularPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
-    # if settings.QUANTIZATION:
-    #     pipe.enable_model_cpu_offload()
-    # output = pipe(
-    #     prompt=params["prompt"],
-    #     width=params["width"],
-    #     height=params["height"],
-    #     num_frames=params["duration"] * params["fps"],
-    #     ...
-    # )
-    # output.save(str(tmp_path))
-    # return str(tmp_path)
+    model_id = settings.MODEL_PATH or settings.MODEL_NAME
+    tmp_path = settings.ASSETS_DIR / f"tmp_{uuid.uuid4().hex}.mp4"
+    try:
+        pipe = ModularPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
+        if settings.QUANTIZATION:
+            pipe.enable_model_cpu_offload()
 
-    # 暂回退占位
-    return _run_placeholder(params)
+        inputs: dict = {
+            "prompt": params["prompt"],
+            "width": params["width"],
+            "height": params["height"],
+            "num_frames": params["num_frames"],
+            "fps": params["fps"],
+            "audio_sample_rate": params["audio_sample_rate"],
+        }
+        if params["task_type"] == h3.FL2VA:
+            if params.get("first_image"):
+                inputs["image"] = params["first_image"]
+            if params.get("last_image"):
+                inputs["last_image"] = params["last_image"]
+        elif params["task_type"] == h3.REF2VA:
+            grouped = h3.group_refs(params["refs"])
+            if grouped["image"]:
+                inputs["ref_images"] = grouped["image"]
+            if grouped["video"]:
+                inputs["ref_videos"] = grouped["video"]
+            if grouped["audio"]:
+                inputs["ref_audios"] = grouped["audio"]
+
+        output = pipe(**inputs)
+        output.save(str(tmp_path))
+    except Exception as e:
+        raise RuntimeError(f"diffusers 推理失败: {type(e).__name__}: {e}") from e
+
+    if not tmp_path.exists() or tmp_path.stat().st_size == 0:
+        raise RuntimeError("diffusers 推理未产出有效视频文件")
+    return str(tmp_path)
 
 
 def _run_comfyui(params: dict) -> str:
-    """
-    通过 ComfyUI HTTP API 提交工作流
-    """
-    import urllib.request
+    """委托 ComfyUI 可选执行器（backend/comfy_workflow.py），按任务类型选择官方权重。"""
+    from comfy_workflow import run_comfyui
 
-    workflow = {
-        "prompt": params["prompt"],
-        "width": params["width"],
-        "height": params["height"],
-        "duration": params["duration"],
-        "fps": params["fps"],
+    task_type = params["task_type"]
+    scheduler = h3.REF2VA_SCHEDULER if task_type == h3.REF2VA else h3.SCHEDULER
+    task = {
+        **params,
+        "unet_model": settings.MODEL_REF2VA if task_type == h3.REF2VA else settings.MODEL_FL2VA,
+        "clip_model": settings.MODEL_CLIP,
+        "vae_video_model": settings.MODEL_VAE_VIDEO,
+        "vae_audio_model": settings.MODEL_VAE_AUDIO,
+        "scheduler": scheduler,
+        "first_frame_path": params.get("first_image"),
+        "last_frame_path": params.get("last_image"),
+        "ref_image_paths": [r["path"] for r in params["refs"] if r["kind"] == "image"],
+        "ref_video_paths": [r["path"] for r in params["refs"] if r["kind"] == "video"],
+        "ref_audio_paths": [r["path"] for r in params["refs"] if r["kind"] == "audio"],
     }
-    try:
-        data = json.dumps(workflow).encode()
-        req = urllib.request.Request(
-            f"{settings.INFERENCE_URL}/api/prompt",
-            data=data,
-            headers={"Content-Type": "application/json"},
-        )
-        resp = urllib.request.urlopen(req, timeout=settings.INFERENCE_TIMEOUT)
-        result = json.loads(resp.read())
-        # 轮询 ComfyUI 历史...
-        # 简化实现：直接返回占位
-        return _run_placeholder(params)
-    except Exception:
-        return _run_placeholder(params)
-
-
-def _run_placeholder(params: dict) -> bytes:
-    """
-    占位推理结果（无 GPU 环境下的 fallback）
-    生成一个最小 MP4 文件头标记，供前端流程验证
-    """
-    # 最小 MP4 标识字节（非真正视频，仅用于流程测试）
-    return b"\x00\x00\x00\x20ftypmp42\x00\x00\x00\x00mp42isom"
+    return run_comfyui(task)

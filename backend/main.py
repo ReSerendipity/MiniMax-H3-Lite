@@ -14,7 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from database import init_db
 from config import settings
-from routers import projects, shots, generations, uploads, history
+from engine_registry import active_backend, list_engines
+from routers import projects, shots, generations, uploads, history, system
 
 app = FastAPI(
     title="MM·H3 工作台 API",
@@ -41,6 +42,7 @@ app.include_router(shots.router, prefix="/api", tags=["shots"])
 app.include_router(generations.router, prefix="/api", tags=["generations"])
 app.include_router(uploads.router, prefix="/api", tags=["uploads"])
 app.include_router(history.router, prefix="/api", tags=["history"])
+app.include_router(system.router, prefix="/api", tags=["system"])
 
 
 @app.on_event("startup")
@@ -50,10 +52,14 @@ def startup():
 
 @app.get("/api/health")
 def health():
+    active = active_backend()
+    meta = next((e for e in list_engines() if e["name"] == active), {})
     return {
         "status": "ok",
         "engine": "MiniMax H3",
         "model": settings.MODEL_NAME,
+        "backend": active,
+        "backend_requires_external": bool(meta.get("external")),
         "quantization": settings.QUANTIZATION,
         "max_concurrency": settings.MAX_CONCURRENCY,
     }

@@ -1,4 +1,4 @@
-// MM·H3 视频生成工作台 - 本地静态服务器（仅用 Node 内置模块，零依赖）
+// MM·H3 工作台 - 本地静态服务器（仅用 Node 内置模块，零依赖）
 // 用法: node server.js   （默认端口 8080，可用环境变量 PORT 覆盖）
 const http = require('http');
 const fs = require('fs');
@@ -39,5 +39,5 @@ http.createServer((req, res) => {
     res.end(data);
   });
 }).listen(port, () => {
-  console.log('MM·H3 工作台本地服务器已启动: http://localhost:' + port);
+  console.log('MM·H3 工作台前端服务器已启动: http://localhost:' + port);
 });

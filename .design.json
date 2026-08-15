@@ -1,41 +1,110 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-14T12:00:00.000Z",
+  "updatedAt": "2026-08-15T14:10:00.000Z",
   "brief": {
     "artifactType": "website",
-    "targetPlatform": ["responsive", "web"],
-    "audience": "开发者/产品用户/企业客户",
-    "product": "MiniMax H3 视频生成模型",
     "siteType": "tool-webapp",
-    "businessGoal": "提供一个便捷使用 MiniMax H3 生成视频的 Web 工作台：多镜头时间线编排，输入提示词/参数，逐镜头生成并预览成片",
-    "siblingProjects": ["Image_MultiModel", "SeedVR2", "TTS_MultiModel"],
-    "siblingStyle": "家族惯例：浅色默认 + 每产品独立强调色，--seed 种子令牌体系；本项目强调色随展示壳模式切换：剧场红 / 电视琉珀 / 放映机青绿，支持明暗双主题",
-    "notes": "用户要求：工作台结构不得与兄弟项目（Image MultiModel 生图工作台 / SeedVR2）相同；已选定「时间线工作台」结构（顶部胶片时间线 + 中央舞台预览 + 右侧镜头参数 + 底部提示词坞）；画面素材用 CSS 模拟"
+    "targetPlatform": ["responsive", "web"],
+    "audience": "开发者/技术创作者/产品用户",
+    "product": "MiniMax H3 视频生成时间线工作台（MM·H3 工作台）",
+    "businessGoal": "把前端按官方三份工作流（t2v/i2v/r2v）重组为三个独立模式工作页并配顶部模式切换；展示壳（剧场/电视/放映机）首次进入引导选择、持久化固定、切换入口收敛到低频位置；在保留首轮全部能力对齐的基础上，把单文件拆分为「共享资产 + 三个页面」，提升后续可维护性",
+    "task": "重大改版：3 工作流 → 3 模式页；展示壳首访选择 + 持久化 + 收敛切换入口；拆分板块",
+    "existingArtifact": "项目根目录现有 index.html（单文件高保真时间线工作台，含首轮适配：引擎标识/像素·帧数换算/ref_image_size/REF2VA 标签速查/官方规格与模型信息/7000 字符上限/正式 favicon 三件套）；后端 FastAPI 契约对齐 backend/h3/spec.py；server.js 静态托管整个目录（.html/.css/.js/.png/.svg MIME 齐全，多文件方案零改动）",
+    "userRequests": [
+      "给 3 个工作流适配 3 个模式并提供模式切换按键，每种模式单独成一个页面",
+      "一进入页面就让用户选择展示壳（剧场/电视/放映机），选哪个后续默认用哪个",
+      "用户选择持久化，后续固定使用这一个",
+      "展示壳切换按键不要放在经常使用的位置",
+      "拆分板块方便后续维护（用户备注：不建议长期单一 HTML 文件）"
+    ],
+    "userDecisions": {
+      "shellEntry": "顶栏右侧「外观」菜单（含明暗 + 展示壳），不覆盖舞台、不常驻视线",
+      "pageStructure": "拆分板块：三个模式页文件 + 共享 CSS/JS 资产（满足维护诉求；file:// 与 http 均可用，server.js/后端契约零改动）"
+    },
+    "modePages": {
+      "t2v": "index.html = 文生视频页（默认入口）：纯提示词 + 舞台 + 参数（比例/分辨率像素/时长帧数/输出规格/采样规格/模型清单），无参考槽位；提交 mode=text",
+      "i2v": "i2v.html = 图生视频页：帧模式子项（首帧/末帧/首尾帧）+ 首帧/末帧图像槽位（缩略预览、拖放/点击上传，ref_ids 顺序=首帧在前末帧在后，后端按 kind=image 顺序解析）+ 提示词 + 参数；提交 mode=first_frame|last_frame|first_last",
+      "r2v": "r2v.html = 多模态参考页：参考素材管理器（图≤9/视频≤3/音频≤3 混合≤12、Picture/Video/Audio 官方标签编号、ref_image_size match|max）+ 提示词标签速查（可点击插入）+ 参数（采样规格注明 r2v 建议 beta/normal）+ 模型清单（REF2VA）；提交 mode=ref"
+    },
+    "shellSpec": {
+      "modes": ["剧场（剧场红）", "电视（电视琉珀）", "放映机（放映机青绿）"],
+      "firstVisit": "无持久化值时首访弹层引导：三张展示壳预览卡（复用现有 CSS 视觉元素）+「跳过·默认剧场」；选择即应用并持久化",
+      "persistence": "localStorage key mmh3_shell（与 mmh3_theme 一并持久化）；try/catch 兜底：存储不可用（如 Canvas 预览 iframe）时降级为会话内内存变量，不阻断页面",
+      "applyBeforePaint": "每个页面 <head> 内置 3 行内联脚本，在 CSS 应用前读取存储并设置 html[data-shell]/[data-theme]，避免闪烁",
+      "reentry": "顶栏右侧「外观」菜单：明暗切换 + 三展示壳选项；移除舞台右上角常驻 shell-switch 覆盖层"
+    },
+    "keyConstraints": [
+      "PRD 决策基线：前端无框架构建链 → 页面间用普通链接跳转、共享资产用相对路径，file:// 与 node server.js 均可用",
+      "后端 API 契约不变：mode 取值 text/first_frame/last_frame/first_last/ref；ref_ids 顺序语义（fl2va 按 kind=image 顺序取首/末帧）",
+      "时间线跨页保留：镜头段点击时若该镜头 mode 属于其他页面 → 跳转对应页并 ?shot=id 选中",
+      "保留首轮全部适配信息与正式 favicon 引用，不回退",
+      "明暗双主题、展示壳强调色、--seed 令牌体系、响应式、可访问性维持"
+    ],
+    "notes": "用户勾选推荐项但备注明确表达长期维护诉求（不建议单一 HTML 文件、建议拆分板块）→ 计划采用「3 模式页 HTML + assets/css/shared.css + assets/js/shared.js」的模块化架构并在抽象中请用户确认此取舍。"
   },
   "output": {
     "target": "html",
     "componentLibrary": "none",
-    "previewStrategy": "index.html 置于 Canvas 工作区根目录（项目目录与工作区均已同步），Canvas 预览与本地预览服务均可访问"
+    "previewStrategy": "三个模式页位于项目根目录（index.html 为文生页与默认入口），共享资产位于 assets/css 与 assets/js；favicon 沿用 assets/ 三件套；Canvas 预览以文件呈现 + 会话工作区镜像快照帧提供"
   },
   "artifacts": [
     {
-      "path": "index.html",
-      "action": "create",
-      "purpose": "MiniMax H3 时间线工作台主页面（全新结构，区别于兄弟项目纵向卡片布局）",
+      "path": "C:\\Users\\Doro\\MiniMax-H3\\index.html",
+      "action": "modify",
+      "purpose": "重写为「文生视频（t2v）」模式页：顶部三模式切换（当前高亮）、左提示词坞、中央舞台（展示壳）、右参数（比例/像素/帧数/规格/采样/模型，FL2VA 引擎标识）、底部时间线与状态栏；无参考槽位",
       "requirements": [
-        "顶栏：Logo + 产品名 + 项目名（未命名项目_01 · 4 个镜头）+ 主题/帮助/分享/头像",
-        "胶片时间线（顶部）：播放控制 + 播放头 + 4 个镜头段（缩略帧/编号/时长/名称）+ 添加镜头按钮 + 刻度尺；点击镜头段切换舞台",
-        "中央舞台：16:9 大预览（CSS 场景画面）+ REC/镜头/时间码信息 + 播放条；右侧镜头参数面板（分辨率/时长/帧率/运镜/风格/种子/衔接）",
-        "底部提示词坞：当前镜头提示词输入 + 实时计数 + 负向提示词 + 生成当前镜头按钮 + 预设标签",
-        "底部状态栏（CONN/队列/总时长/引擎/缩放）+ 右下角队列浮标",
-        "明暗双主题 + 响应式 + 真实文案（无占位字样）"
+        "顶栏：Logo + 三模式切换按键（文生/图生/多模态参考，跳转 index.html/i2v.html/r2v.html，当前页高亮）+ 项目切换 + 「外观」菜单（明暗 + 展示壳）+ 帮助",
+        "head 内联 3 行脚本预置 data-shell/data-theme（读 localStorage，try/catch 内存兜底），CSS 应用前设置避免闪烁",
+        "左提示词坞：textarea + 实时计数（7000 上限警示）+ 指令优化 + 生成按钮 + 预设标签（t2v 无标签速查）",
+        "右参数：画面比例（含输出像素实时换算）/ 分辨率 768P（2K 禁用）/ 时长（17k+5 帧数徽标）/ 输出规格 24fps·32kHz / 官方模板规格信息位 / 模型清单（FL2VA 高亮）/ 引擎标识 FL2VA",
+        "中央舞台：沿用剧场/电视/放映机展示壳视觉；移除舞台上常驻 shell-switch 覆盖层",
+        "生成提交 mode=text；提示词/时长/比例校验沿用；结果回填与队列轮询沿用",
+        "保留正式 favicon 三件套引用与 canvas meta"
       ]
+    },
+    {
+      "path": "C:\\Users\\Doro\\MiniMax-H3\\i2v.html",
+      "action": "create",
+      "purpose": "「图生视频（i2v/fl2va）」模式页：帧模式子项 + 首/末帧图像槽位 + 提示词 + 舞台 + 参数",
+      "requirements": [
+        "复用共享顶栏/时间线/状态栏骨架（shared.js 渲染）；三模式切换高亮「图生」",
+        "帧模式子项：首帧 / 末帧 / 首尾帧（data-value=first_frame|last_frame|first_last）",
+        "图像槽位：首帧槽 + 末帧槽（按帧模式显示/禁用；缩略图预览、点击/拖放上传到 /api/upload，ref_ids 顺序=首帧→末帧）；首帧需 ≥1 图、末帧需 ≥1 图、首尾帧需 ≥2 图（首+末）",
+        "右参数：比例/分辨率像素/时长帧数/规格/采样规格/模型清单（FL2VA）+ 引擎标识",
+        "提示词坞与生成/队列/回填逻辑沿用；提交 mode 按帧模式子项",
+        "保留 favicon 引用与 canvas meta；file:// 与 http 可用"
+      ]
+    },
+    {
+      "path": "C:\\Users\\Doro\\MiniMax-H3\\r2v.html",
+      "action": "create",
+      "purpose": "「多模态参考（r2v/ref2va）」模式页：参考素材管理器 + 标签速查 + 提示词 + 舞台 + 参数",
+      "requirements": [
+        "复用共享骨架；三模式切换高亮「多模态参考」",
+        "参考素材管理器：图片槽（Picture 1..9）/ 视频槽（Video 1..3）/ 音频槽（Audio 1..3），混合 ≤12，按 kind 顺序编号；ref_image_size match|max 开关",
+        "提示词坞含 REF2VA 标签速查（可点击插入 <Picture N> 等）+ 措辞敏感引导",
+        "校验：ref 模式需 ≥1 参考；音频须配图或视频",
+        "右参数：比例/分辨率像素/时长帧数/规格/采样规格（注明 r2v 建议 beta/normal）/模型清单（REF2VA 高亮）+ 引擎标识",
+        "生成提交 mode=ref；队列/回填沿用；保留 favicon 引用与 canvas meta"
+      ]
+    },
+    {
+      "path": "C:\\Users\\Doro\\MiniMax-H3\\assets\\css\\shared.css",
+      "action": "create",
+      "purpose": "三页共享样式：令牌体系、顶栏与模式切换、侧栏/参数行/槽位、舞台与三展示壳视觉、时间线、状态栏、外观菜单、首访引导弹层、响应式",
+      "requirements": ["从现有 index.html 样式迁移并模块化分区（令牌/骨架/舞台/时间线/面板/弹层/响应式）；沿用 --seed 令牌 + data-shell 强调色 + 明暗双主题；新增外观菜单/首访弹层/图像槽位样式；无硬编码 AI 默认色"]
+    },
+    {
+      "path": "C:\\Users\\Doro\\MiniMax-H3\\assets\\js\\shared.js",
+      "action": "create",
+      "purpose": "三页共享逻辑：API 层、项目/镜头/时间线渲染与选择（跨页跳转 ?shot=id）、历史库、引擎菜单、换算函数（resolutionFor/framesForDuration）、展示壳与主题持久化（storage+内存兜底）、外观菜单、首访引导、按页面配置化的参数收集与生成提交",
+      "requirements": ["页面通过全局 MMH3_PAGE 配置声明（pageMode、参数行渲染、校验规则）；保持后端契约（mode 五值、ref_ids 顺序、/api/generations）；无占位实现，失败如实提示；换算函数与 spec.py 一致"]
     }
   ],
   "designDirection": {
-    "fidelity": "high-fidelity",
-    "styleSource": "时间线工作台结构：顶部胶片时间线（多镜头编排）、中央 16:9 舞台预览、右侧镜头参数、底部提示词坞——参考剪辑软件的时间线范式，与兄弟项目的纵向卡片/居中提示词布局完全区分；强调色随展示壳模式切换（剧场红 / 电视琉珀 / 放映机青绿）+ --seed 令牌体系 + 明暗双主题；CSS 分层绘制的模拟影片画面",
-    "visualTone": ["tool", "timeline", "cinematic", "dual-theme"],
+    "fidelity": "wireframe（结构/信息层规划；落地到既有高保真视觉体系不重做）",
+    "styleSource": "沿用现有 index.html 既定视觉体系：时间线工作台结构 + 展示壳强调色（剧场红/电视琉珀/放映机青绿）+ --seed 令牌 + 明暗双主题 + CSS 分层模拟画面；风格参考 cohere（暖色编辑产品感）仅作灵感；新增外观菜单与首访弹层使用既有控件语言",
+    "visualTone": ["tool", "timeline", "cinematic", "dual-theme", "dense-info", "modular"],
     "themeMode": "light+dark",
     "seedTokens": {
       "family": ["--seed-bg", "--seed-fg", "--seed-primary", "--seed-accent", "--seed-surface"],
@@ -44,49 +113,55 @@
     }
   },
   "structure": {
-    "screens": ["时间线工作台（单页多区）"],
-    "sections": ["顶栏", "胶片时间线（镜头段/播放头/刻度尺）", "中央舞台预览", "镜头参数面板", "提示词坞", "底部状态栏", "队列浮标"]
+    "screens": ["文生视频页 index.html", "图生视频页 i2v.html", "多模态参考页 r2v.html"],
+    "sections": ["顶栏（三模式切换 + 项目 + 外观菜单 + 帮助）", "左提示词坞（t2v/i2v 通用；r2v 含标签速查）", "中央舞台（展示壳视觉，无常驻切换覆盖层）", "右参数（页面化：t2v 纯参数 / i2v 帧模式+图像槽位 / r2v 参考管理器+ref_image_size）", "底部时间线（跨页，按镜头 mode 跳转）", "状态栏", "首访展示壳引导弹层（一次性）", "外观菜单（明暗 + 展示壳，低频入口）"]
   },
   "interaction": {
-    "primaryFlow": "点击时间线镜头段 → 切换舞台预览与该镜头提示词 → 编辑提示词/参数 → 生成当前镜头 → 队列与历史查看",
-    "states": ["明暗主题切换", "镜头段切换（舞台/提示词/参数联动）", "添加镜头", "提示词实时计数", "预设标签回填", "生成按钮按压", "播放条/时间码", "响应式折叠"]
+    "primaryFlow": "首访进入 → 展示壳引导选择并持久化 → 选模式页 → 选参数/上传素材 → 按标签引导书写提示词 → 生成 → 队列/回填；时间线切镜头 → 若镜头模式属其他页则跳转并选中",
+    "states": ["首访弹层（选择/跳过）", "三模式页切换与高亮", "展示壳/主题持久化与应用前预置", "外观菜单开合", "i2v 帧模式↔槽位显隐", "r2v 参考槽位编号/计数/ref_image_size", "镜头跨页跳转 ?shot=id", "生成/队列/回填"]
   },
   "quality": {
     "responsive": true,
     "accessibility": true,
     "lintRequired": true,
     "acceptanceCriteria": [
-      "index.html 为高保真时间线工作台预览：真实界面观感与文案，无线框/占位字样残留",
-      "时间线-舞台-提示词坞联动可用，无文字重叠、主控件可见",
-      "明暗双主题可用、响应式适配桌面/平板/手机",
-      "Design quality check P0=0，P1 修复或显式豁免",
-      "Canvas 预览页可成功打开该页面"
+      "三个模式页可独立打开（file:// 与 node server.js 均可用），顶栏模式切换互跳且当前页高亮",
+      "首访展示壳引导弹层出现一次：选择后 localStorage 持久化（mmh3_shell/mmh3_theme），再次进入直接应用不弹层；存储不可用时内存兜底且可跳过",
+      "展示壳切换仅存在于顶栏外观菜单，舞台无常驻切换覆盖层",
+      "i2v 页 ref_ids 顺序=首帧→末帧；首帧/末帧/首尾帧校验与后端一致（首尾帧≥2 图）",
+      "r2v 页参考管理器：图≤9/视频≤3/音频≤3 混合≤12、官方标签编号、ref_image_size 生效、音频须配图或视频",
+      "首轮适配全部保留（引擎标识/像素·帧数换算与 spec.py 一致/规格与模型信息/7000 上限/favicon 三件套）",
+      "jsdom 冒烟：三页初始化零运行时错误，关键交互断言通过；check_design_quality P0=0，P1 修复或显式豁免"
     ]
   },
   "risks": [
-    "CSS 模拟画面为示意性质，正式产品需替换为真实生成结果帧",
-    "时间线为单页原型，正式接入需后端（FastAPI）与任务队列支持",
-    "明暗双主题需保证暗色下对比度与可读性"
+    "重写工作量大（3 页面 + 2 共享资产），需确保三页共享逻辑一致（以 shared.js 页面配置为唯一差异点）",
+    "跨页跳转需保持项目/镜头状态一致（页面加载自后端重建；?shot=id 选中），避免切换后状态丢失观感",
+    "首访弹层在 Canvas 预览 iframe（存储受限）会每次出现 → 提供「跳过」且弹层不阻塞核心交互",
+    "样式拆分迁移时可能遗漏既有规则 → 以 jsdom 冒烟 + 视觉抽查覆盖关键区块",
+    "多文件架构改变项目结构约定 → 交付说明中向用户说明（README 未授权不擅自改）"
   ],
   "resources": {
     "skill": {
-      "id": "saas-landing",
-      "title": "saas-landing",
-      "rationale": "工作台式工具页面结构参考",
-      "alternatives": ["dashboard", "wireframe-sketch"]
+      "id": "dashboard",
+      "title": "dashboard",
+      "rationale": "mode matches prototype; platform: desktop; design intelligence favors dashboard/data workflow",
+      "alternatives": ["wireframe-sketch", "saas-landing", "image-poster"]
     },
     "styleReference": {
-      "primary": "together-ai",
-      "inspiration": ["openai", "cohere"],
-      "rationale": "工具型界面结构参考；实际执行以 --seed 令牌体系为准（强调色随展示壳模式切换）"
+      "primary": "cohere",
+      "inspiration": ["openai", "together-ai"],
+      "rationale": "preview language overlaps brief; AI product fit；仅作灵感，落地以现有 --seed 令牌体系与展示壳强调色为准"
     },
     "requiredReads": [
-      {"kind": "skill", "id": "saas-landing", "reason": "Workbench tool page structure."},
-      {"kind": "craft", "id": "anti-ai-slop", "reason": "Baseline AI-slop guardrail."},
-      {"kind": "craft", "id": "typography", "reason": "Baseline typography quality rule."},
-      {"kind": "craft", "id": "color", "reason": "Baseline color quality rule."},
-      {"kind": "protocol", "id": "design-mode-runtime", "reason": "Execution and runtime contract."}
+      {"kind": "skill", "id": "dashboard", "reason": "Selected Canvas skill checklist."},
+      {"kind": "design-system", "id": "cohere", "reason": "Primary style reference."},
+      {"kind": "craft", "id": "anti-ai-slop", "reason": "Baseline AI-slop guardrail for all Canvas design artifacts."},
+      {"kind": "craft", "id": "typography", "reason": "Baseline typography quality rule for visual execution."},
+      {"kind": "craft", "id": "color", "reason": "Baseline color quality rule for visual execution."},
+      {"kind": "protocol", "id": "design-mode-runtime", "reason": "Design Plan Mode execution and runtime contract."},
+      {"kind": "protocol", "id": "skill-protocol", "reason": "Skill metadata and resource selection contract."}
     ]
   },
-  "abstract": "本计划将 MiniMax H3 视频生成工具做成全新结构的「时间线工作台」：顶部是胶片时间线（多镜头编排、可添加镜头、点击切换），中央是 16:9 舞台大预览，右侧是镜头参数面板，底部是提示词坞。该结构参考剪辑软件的时间线范式，与兄弟项目（Image MultiModel、SeedVR2）的纵向卡片布局完全区分。页面沿用家族强调色（待定）与 --seed 令牌体系，支持明暗双主题与响应式，用 CSS 分层绘制黄昏海岸、雨夜霓虹、飞鸟群、雪山晨雾等示例画面。交付为工作区根目录 index.html，可直接在 Canvas 预览页与本地预览服务打开对比。"
+  "abstract": "本次改版把前端按官方三份工作流重组为三个独立模式页：文生视频（index.html）、图生视频（i2v.html，含首帧/末帧/首尾帧子项与图像槽位）、多模态参考（r2v.html，含参考素材管理器与标签速查），顶栏提供三模式切换按键互跳。展示壳（剧场/电视/放映机）首次进入弹出引导选择，选择持久化到本地存储、后续固定应用，切换入口收敛到顶栏「外观」菜单，舞台不再有常驻切换按键。为满足「拆分板块、方便维护」的诉求，页面采用「3 个模式页 HTML + 共享 assets/css/shared.css + assets/js/shared.js」的模块化结构，file:// 与本地服务器均可用，后端 API 与 server.js 零改动。首轮全部能力对齐（引擎标识、像素/帧数换算、规格与模型信息、7000 字符上限、favicon）完整保留。请重点确认：三页拆分方案是否合适、首访引导弹层形态、以及外观菜单的入口位置。"
 }

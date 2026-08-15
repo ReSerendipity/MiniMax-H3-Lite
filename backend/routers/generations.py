@@ -44,6 +44,18 @@ def submit_generation(body: GenRequest):
         db.close()
         raise HTTPException(422, f"时长不合法，可选 {settings.SUPPORTED_DURATIONS}")
 
+    # 模式 × 参考素材校验（PRD §6.1 / §8）
+    mode = body.mode
+    if mode in ("first_frame", "last_frame", "first_last") and not body.ref_ids:
+        db.close()
+        raise HTTPException(422, f"模式「{mode}」需要提供对应图片参考素材")
+    if mode == "first_last" and len(body.ref_ids) < 2:
+        db.close()
+        raise HTTPException(422, "首尾帧模式需要至少 2 张图片（首帧 + 末帧）")
+    if mode == "ref" and not body.ref_ids:
+        db.close()
+        raise HTTPException(422, "多模态参考模式需要提供参考素材")
+
     # 创建任务
     tid = new_id("task_")
     payload = json.dumps(
@@ -61,13 +73,20 @@ def submit_generation(body: GenRequest):
     row = db.execute("SELECT * FROM generation_tasks WHERE id=?", (tid,)).fetchone()
     db.close()
 
-    # 异步入队（阶段 C 实现 Worker，这里先返回 pending）
-    # worker.enqueue(tid)  — 阶段 C 接入
+    # 异步入队（queue_manager 真实 Worker：pending → processing → completed/failed）
+    from routers.queue_manager import enqueue
     try:
-        from routers.queue_manager import enqueue
         enqueue(tid)
-    except ImportError:
-        pass  # 阶段 C 尚未实现
+    except Exception as e:
+        # 入队失败 → 任务如实标记失败，绝不静默
+        db = get_db()
+        db.execute(
+            "UPDATE generation_tasks SET status='failed', error=? WHERE id=?",
+            (f"入队失败: {type(e).__name__}: {e}", tid),
+        )
+        db.commit()
+        db.close()
+        raise HTTPException(500, f"任务入队失败: {e}")
 
     return row_to_dict(row)
 
@@ -76,7 +95,15 @@ def submit_generation(body: GenRequest):
 def get_generation(tid: str):
     db = get_db()
     row = db.execute("SELECT * FROM generation_tasks WHERE id=?", (tid,)).fetchone()
-    db.close()
     if not row:
+        db.close()
         raise HTTPException(404, "任务不存在")
-    return row_to_dict(row)
+    data = row_to_dict(row)
+    # 附带结果文件路径（assets.path = assets/xxx.mp4），供前端直接回填舞台
+    if data.get("result_asset_id"):
+        a = db.execute(
+            "SELECT path FROM assets WHERE id=?", (data["result_asset_id"],)
+        ).fetchone()
+        data["result_path"] = a["path"] if a else None
+    db.close()
+    return data

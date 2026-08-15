@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="canvas:width" content="1440">
 <meta name="canvas:height" content="900">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#b3261e">
 <title>MM·H3 工作台 · MiniMax H3 视频生成时间线工作台</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -63,9 +67,6 @@ a{color:inherit;text-decoration:none}
 .icon-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--seed-surface);display:inline-flex;align-items:center;justify-content:center;color:var(--dim);transition:border-color .15s,color .15s}
 .icon-btn:hover{border-color:var(--seed-primary);color:var(--seed-primary)}
 .icon-btn.mobile-only{display:none}
-.btn-share{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:8px;border:1px solid var(--solid);background:var(--solid);color:var(--solid-fg);font-size:12px;font-weight:600;transition:opacity .15s}
-.btn-share:hover{opacity:.85}
-.avatar{width:28px;height:28px;border-radius:50%;background:var(--solid);color:var(--solid-fg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
 
 /* ===== workzone: fixed sidebars + stage ===== */
 .workzone{flex:1;min-height:0;display:grid;grid-template-columns:var(--side-w-l) 1fr var(--side-w-r);transition:grid-template-columns .2s}
@@ -130,6 +131,40 @@ a{color:inherit;text-decoration:none}
 .ref-add:hover{border-color:var(--seed-primary);color:var(--seed-primary)}
 .ref-block .bridge-note{margin-top:8px}
 .bridge-note{margin-top:8px;font-size:10.5px;color:var(--faint);line-height:1.6}
+
+/* ===== 官方工作流适配：引擎标识 / 输出像素 / 帧数 / 参考保真度 / 规格 / 模型 ===== */
+.mode-engine{display:flex;align-items:center;gap:6px;padding:5px 10px;margin:-4px 0 10px;border:1px dashed var(--line-strong);border-radius:7px;background:var(--seed-bg);font-size:10.5px;color:var(--dim)}
+.mode-engine .me-tag{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--seed-accent-strong);border:1px solid color-mix(in srgb,var(--seed-accent) 55%,var(--line-strong));border-radius:4px;padding:1px 6px;background:var(--accent-soft);flex-shrink:0}
+.mode-engine .me-model{font-family:var(--mono);font-size:9px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-px{font-family:var(--mono);font-size:9.5px;color:var(--dim);background:var(--seed-bg);border:1px dashed var(--line-strong);border-radius:5px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px}
+.res-px b{color:var(--seed-fg);font-weight:600}
+.p-row .seg em{font-style:normal;font-size:8.5px;color:var(--faint);margin-left:2px;letter-spacing:0}
+.p-row .seg.on em{color:inherit;opacity:.78}
+.ref-size{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px dashed var(--line);margin-top:8px}
+.ref-size .k{font-size:11px;color:var(--dim);flex-shrink:0}
+.sp-sub{font-family:var(--mono);font-size:8.5px;font-weight:450;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+.spec-block{margin-top:12px;padding:10px;border:1px dashed var(--line-strong);border-radius:var(--seed-radius);background:var(--seed-surface)}
+.spec-block .sp-title{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.03em;margin-bottom:6px}
+.spec-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:3px 0;font-size:10.5px;color:var(--dim)}
+.spec-line b{font-family:var(--mono);font-size:9.5px;color:var(--seed-fg);font-weight:600;text-align:right}
+.model-block{margin-top:12px;border:1px solid var(--line-strong);border-radius:var(--seed-radius);background:var(--seed-surface);overflow:hidden}
+.model-block summary{display:flex;align-items:center;gap:6px;list-style:none;cursor:pointer;padding:9px 12px;font-size:11px;font-weight:700;letter-spacing:.03em;user-select:none}
+.model-block summary::-webkit-details-marker{display:none}
+.model-block summary::after{content:"▸";margin-left:auto;font-size:9px;color:var(--faint);transition:transform .15s}
+.model-block[open] summary::after{transform:rotate(90deg)}
+.model-block .model-body{padding:2px 12px 10px}
+.model-item{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-top:1px dashed var(--line);font-size:10px}
+.model-item:first-of-type{border-top:none}
+.model-item .m-kind{flex-shrink:0;font-family:var(--mono);font-size:8.5px;letter-spacing:.04em;color:var(--seed-accent-strong);background:var(--accent-soft);border-radius:4px;padding:1px 5px}
+.model-item a{font-family:var(--mono);font-size:9px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.model-item a:hover{color:var(--seed-primary)}
+.dock-meta .count.over{color:var(--seed-accent-strong);font-weight:700}
+.tag-guide{margin-top:10px;padding:9px 11px;border:1px dashed var(--line-strong);border-radius:var(--seed-radius);background:var(--seed-bg)}
+.tag-guide .tg-title{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.03em}
+.tag-guide .tg-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.tag-guide .tg-chip{font-family:var(--mono);font-size:9.5px;color:var(--seed-accent-strong);border:1px solid color-mix(in srgb,var(--seed-accent) 45%,var(--line-strong));border-radius:5px;padding:2px 8px;background:var(--accent-soft);cursor:pointer;transition:all .15s}
+.tag-guide .tg-chip:hover{border-color:var(--seed-primary);color:var(--seed-primary);background:var(--seed-surface)}
+.tag-guide .tg-note{margin-top:7px;font-size:10px;color:var(--faint);line-height:1.6}
 
 /* ===== stage ===== */
 .stage-area{position:relative;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;padding:calc(14px*var(--density));background:var(--seed-bg);transition:background .2s}
@@ -304,6 +339,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
 .seg .dur{position:absolute;bottom:7px;right:7px;z-index:2;font-family:var(--mono);font-size:8px;color:var(--seed-fg);background:var(--seed-surface);border:1px solid var(--line-strong);border-radius:3px;padding:1px 5px}
 .seg .nm{display:flex;align-items:center;gap:6px;padding:2px 8px 6px;font-size:11px;color:var(--dim)}
 .seg .nm b{color:var(--seed-fg);font-weight:600}
+.seg.disabled{opacity:.38;cursor:not-allowed;pointer-events:none;filter:grayscale(.6)}
 .seg.add{display:flex;align-items:center;justify-content:center;gap:6px;width:86px;padding:0;border-style:dashed;color:var(--faint);font-size:11.5px;background:var(--seed-surface)}
 .seg.add:hover{border-color:var(--seed-primary);color:var(--seed-primary)}
 .tl-ruler{margin-top:8px;height:12px;border-top:1px dashed var(--line);position:relative;overflow:hidden}
@@ -353,7 +389,6 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
   .chrome{gap:8px}
   .chrome .icon-btn[aria-label="帮助"]{display:none}
   .proj{display:none}
-  .btn-share{width:30px;padding:0;gap:0;font-size:0}
   .statusbar{gap:10px;overflow-x:auto}
   .sb-right{display:none}
   .playbar{gap:8px;padding:8px 10px}
@@ -399,6 +434,22 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
 .history-info .hi-meta{font-family:var(--mono);font-size:9px;color:var(--faint);margin-top:2px}
 .history-info .hi-reuse{font-size:10px;color:var(--seed-accent);margin-top:3px}
 .history-empty{text-align:center;padding:24px;color:var(--faint);font-size:12px}
+/* ===== 推理引擎切换器 ===== */
+.eng-switch{position:relative;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:color .15s}
+.eng-switch:hover{color:var(--seed-accent)}
+.eng-switch .eng-dot{width:6px;height:6px;border-radius:50%;background:var(--ok,#3fb98f);display:inline-block}
+.eng-switch .eng-dot.external{background:var(--seed-accent)}
+.engine-menu{display:none;position:absolute;right:0;bottom:100%;margin-bottom:6px;width:280px;max-width:60vw;background:var(--seed-surface);border:1px solid var(--line-strong);border-radius:var(--seed-radius);box-shadow:0 10px 30px var(--shadow-3);z-index:220;overflow:hidden;flex-direction:column}
+.engine-menu.open{display:flex}
+.engine-menu-head{padding:9px 12px;font-size:12px;font-weight:700;border-bottom:1px solid var(--line)}
+.engine-list{padding:6px;display:flex;flex-direction:column;gap:2px}
+.engine-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:none;background:transparent;border-radius:8px;text-align:left;cursor:pointer;font-size:12px;color:var(--seed-fg)}
+.engine-item:hover{background:var(--accent-soft)}
+.engine-item.on{background:var(--accent-soft);color:var(--seed-accent)}
+.engine-item.off{opacity:.55;cursor:default}
+.engine-item .ei-tag{font-family:var(--mono);font-size:9px;color:var(--faint);margin-left:auto}
+.engine-item .ei-badge{font-size:9px;color:var(--faint);border:1px solid var(--line-strong);border-radius:999px;padding:1px 6px}
+.engine-menu-note{padding:8px 12px;font-size:10px;color:var(--faint);border-top:1px solid var(--line)}
 </style>
 </head>
 <body data-od-id="mmh3-workbench">
@@ -430,11 +481,6 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     <button class="icon-btn" type="button" aria-label="帮助" title="帮助">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1 1-1.1 1.8v.5"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>
     </button>
-    <button class="btn-share" type="button" aria-label="分享" title="分享">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.5M8.2 13.2l7.6 4.5"/></svg>
-      分享
-    </button>
-    <div class="avatar">M</div>
   </div>
 </header>
 
@@ -463,7 +509,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
       </div>
       <div class="shot-now">
         <span class="no" id="shotNo">01</span>
-        <span class="nm" id="shotName">黄昏海岸</span>
+        <span class="nm" id="shotName">未选择镜头</span>
         <span class="gen" title="当前镜头"></span>
       </div>
       <label class="label" for="promptInput">镜头提示词</label>
@@ -473,6 +519,11 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
           <span class="count" id="charCount">0 字符</span>
           <button class="neg" type="button" title="本地轻量提示词优化（按官方提示词指南做规则/模板级优化），非 H3-Context-IR 官方等价物">＋ 指令优化（轻量）</button>
         </div>
+      </div>
+      <div class="tag-guide" id="tagGuide" style="display:none">
+        <div class="tg-title">REF2VA 标签引用 <span class="tg-tag">按连接顺序编号</span></div>
+        <div class="tg-chips" id="tagChips"></div>
+        <div class="tg-note">在提示词中按连接顺序用标签引用参考素材，并明确哪个参考驱动画面的哪一部分；ref2va 对措辞敏感，先定义主体再写镜头。点击上方标签插入提示词光标处。</div>
       </div>
       <button class="btn-gen" id="genBtn" type="button" data-component="generate-btn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
@@ -539,18 +590,18 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         <div class="slate-top">
           <span class="chip"><span class="rec"><i></i>REC</span></span>
           <span class="chip" id="slateShot">SHOT 01</span>
-          <span class="chip" id="slateTc">00:00:03.18</span>
+          <span class="chip" id="slateTc">00:00:00.00</span>
           <span class="chip">24FPS · 768P</span>
         </div>
         <div class="playbar" id="playbar">
           <button class="pb-play" id="pbPlay" type="button" aria-label="播放/暂停预览">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
           </button>
-          <span class="pb-shot" id="pbShot">黄昏海岸<small>SHOT 01 · 0:08</small></span>
+          <span class="pb-shot" id="pbShot">未选择镜头<small>SHOT — · 0:00</small></span>
           <span class="pb-scrub"><i></i></span>
           <span class="pb-time" id="pbTime">00:00.0 / 00:08</span>
         </div>
-        <span class="gen-status" id="genStatus">生成中 · 预计 8s</span>
+        <span class="gen-status" id="genStatus">就绪</span>
         <span class="stage-hint" id="stageHint">剧场模式 · 生成时幕布揭晓</span>
       </div>
       <div class="reveal-card" id="revealCard"><span class="rc-main"></span><span class="rc-sub">Theater Premiere</span></div>
@@ -572,21 +623,43 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         镜头参数
         <span class="stag">CAMERA</span>
       </div>
-      <div class="p-row"><span class="k">模式</span><span class="v"><span class="seg on">文生</span><span class="seg">首帧</span><span class="seg">末帧</span><span class="seg">首尾帧</span><span class="seg">多模态参考</span></span></div>
-      <div class="p-row"><span class="k">画面比例</span><span class="v"><span class="seg on">16:9</span><span class="seg">21:9</span><span class="seg">4:3</span><span class="seg">1:1</span><span class="seg">3:4</span><span class="seg">9:16</span></span></div>
-      <div class="p-row"><span class="k">分辨率</span><span class="v"><span class="seg on">768P 短边</span><span class="seg">2K 重绘</span></span></div>
-      <div class="p-row"><span class="k">时长</span><span class="v"><span class="seg on">8s</span><span class="seg">4s</span><span class="seg">10s</span><span class="seg">15s</span></span></div>
+      <div class="p-row"><span class="k">模式</span><span class="v"><span class="seg on" data-value="text">文生</span><span class="seg" data-value="first_frame">首帧</span><span class="seg" data-value="last_frame">末帧</span><span class="seg" data-value="first_last">首尾帧</span><span class="seg" data-value="ref">多模态参考</span></span></div>
+      <div class="mode-engine" id="modeEngine"><span class="me-tag" id="modeEngineTag">FL2VA</span><span class="me-model" id="modeEngineModel">minimax_h3_fl2va_pruned_int8_convrot.safetensors · t2va / fl2va</span></div>
+      <div class="p-row"><span class="k">画面比例</span><span class="v"><span class="seg on" data-value="16:9">16:9</span><span class="seg" data-value="21:9">21:9</span><span class="seg" data-value="4:3">4:3</span><span class="seg" data-value="1:1">1:1</span><span class="seg" data-value="3:4">3:4</span><span class="seg" data-value="9:16">9:16</span></span></div>
+      <div class="p-row"><span class="k">分辨率</span><span class="v"><span class="seg on" data-value="768p">768P 短边</span><span class="res-px" id="resPx" title="按所选比例换算：短边 768 · 长边上限 1344 · 32 倍数对齐">16:9 → <b>1344×768</b></span><span class="seg disabled" data-value="2k" title="H3-Regenerate-2K 未开源，不可用">2K 重绘</span></span></div>
+      <div class="p-row"><span class="k">时长</span><span class="v"><span class="seg on" data-value="8s">8s</span><span class="seg" data-value="4s">4s</span><span class="seg" data-value="10s">10s</span><span class="seg" data-value="15s">15s</span></span></div>
       <div class="p-row"><span class="k">输出规格</span><span class="v"><span class="seg on">24fps</span><span class="seg on">32kHz 立体声</span></span></div>
-      <div class="p-row"><span class="k">运镜</span><span class="v"><span class="seg on">推近</span><span class="seg">拉远</span><span class="seg">横移</span><span class="seg">环绕</span></span></div>
-      <div class="p-row"><span class="k">风格</span><span class="v"><span class="seg on">电影感</span><span class="seg">写实</span><span class="seg">动漫</span></span></div>
-      <div class="p-row"><span class="k">2K 重绘</span><span class="v"><span class="seg on">关闭</span><span class="seg">开启</span></span></div>
-      <div class="p-row"><span class="k">衔接</span><span class="v"><span class="seg on">硬切</span><span class="seg">叠化</span><span class="seg">淡入淡出</span></span></div>
+      <div class="p-row"><span class="k">运镜</span><span class="v"><span class="seg on" data-value="推近">推近</span><span class="seg" data-value="拉远">拉远</span><span class="seg" data-value="横移">横移</span><span class="seg" data-value="环绕">环绕</span></span></div>
+      <div class="p-row"><span class="k">风格</span><span class="v"><span class="seg on" data-value="电影感">电影感</span><span class="seg" data-value="写实">写实</span><span class="seg" data-value="动漫">动漫</span></span></div>
+      <div class="p-row"><span class="k">2K 重绘</span><span class="v"><span class="seg on" data-value="关闭">关闭</span><span class="seg disabled" data-value="开启" title="H3-Regenerate-2K 未开源，不可用">开启</span></span></div>
+      <div class="p-row"><span class="k">衔接</span><span class="v"><span class="seg on" data-value="硬切">硬切</span><span class="seg" data-value="叠化">叠化</span><span class="seg" data-value="淡入淡出">淡入淡出</span></span></div>
       <div class="ref-block wf-group">
         <div class="ref-title">参考素材 <span class="ref-sub">REF2VA · 混合上限 12 项</span></div>
-        <div class="ref-chips"><span class="ref-chip">图片 0/9</span><span class="ref-chip">视频 0/3</span><span class="ref-chip">音频 0/3</span><button class="ref-add" type="button">＋ 添加参考</button></div>
+        <div class="ref-chips"><span class="ref-chip">图片 <span id="refImgN">0</span>/9</span><span class="ref-chip">视频 <span id="refVidN">0</span>/3</span><span class="ref-chip">音频 <span id="refAudN">0</span>/3</span><input type="file" id="refInput" accept="image/*,video/*,audio/*" multiple style="display:none"><button class="ref-add" id="refAddBtn" type="button">＋ 添加参考</button></div>
+        <div class="ref-size"><span class="k">参考保真度</span><span class="v"><span class="seg on" data-value="match">match</span><span class="seg" data-value="max">max</span></span></div>
+        <div class="bridge-note">match：参考对齐生成分辨率，更快；max：最高 2048 短边，身份/细节保真更强但更慢（参考 token 每步参与采样）。提示词按连接顺序用 <span class="mono">&lt;Picture 1&gt; &lt;Video 1&gt; &lt;Audio 1&gt;</span> 引用。</div>
+        <div class="ref-list" id="refList" style="display:none;margin-top:8px;flex-direction:column;gap:4px"></div>
         <div class="bridge-note">首/末帧模式需上传对应图像；音频须搭配图像或视频输入。运镜由提示词驱动。</div>
       </div>
-      <div class="bridge-note">参数与当前镜头联动。2K 重绘（H3-Regenerate-2K）未开源，本期不可用——选项仅为占位。</div>
+      <div class="spec-block">
+        <div class="sp-title">官方模板规格 <span class="sp-sub">ComfyUI · MiniMax H3</span></div>
+        <div class="spec-line"><span>Sampler</span><b>res_multistep</b></div>
+        <div class="spec-line"><span>Scheduler</span><b>simple · r2v 建议 beta/normal</b></div>
+        <div class="spec-line"><span>Steps / Denoise</span><b>20 · 1.0</b></div>
+        <div class="spec-line"><span>输出</span><b>24fps · 32kHz 立体声 · 8bit</b></div>
+      </div>
+      <details class="model-block">
+        <summary>模型清单 <span class="sp-sub">FL2VA / REF2VA / VAE</span></summary>
+        <div class="model-body">
+          <div class="model-item"><span class="m-kind">FL2VA · t2v/i2v</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors" target="_blank" rel="noopener">minimax_h3_fl2va_pruned_int8_convrot.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">REF2VA · r2v</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors" target="_blank" rel="noopener">minimax_h3_ref2va_pruned_int8_convrot.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Text Encoder</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors" target="_blank" rel="noopener">qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Video VAE</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors" target="_blank" rel="noopener">minimax_h3_video_vae_fp16.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Audio VAE</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors" target="_blank" rel="noopener">minimax_h3_audio_vae_fp32.safetensors</a></div>
+          <div class="bridge-note" style="margin-top:8px">存放：ComfyUI/models/{vae, diffusion_models, text_encoders}。国内下载优先魔搭 MiniMax/MiniMax-H3。</div>
+        </div>
+      </details>
+      <div class="bridge-note">参数与当前镜头联动。2K 重绘（H3-Regenerate-2K）未开源，本期不可用——选项已禁用。</div>
     </div>
     <div class="side-rail">
       <button class="coll-btn" id="collBtnR" type="button" data-collapse="sideR" aria-label="展开参数侧栏" title="展开" aria-expanded="false">
@@ -604,7 +677,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     <button class="tl-collapse" id="tlCollapse" type="button" aria-label="折叠时间线" title="折叠/展开时间线" aria-expanded="true">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
     </button>
-    <span class="tsub">TIMELINE · 总时长 30s · 4 镜头</span>
+    <span class="tsub">TIMELINE · 空</span>
   </div>
   <div class="tl-track">
     <div class="tl" id="tlSegments">
@@ -617,22 +690,6 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         </button>
       </div>
       <div class="playhead"></div>
-      <div class="seg active" data-shot="0" data-component="timeline-segment" role="button" tabindex="0" aria-selected="true" data-name="黄昏海岸" data-dur="8" data-prompt="黄昏的海岸线，海浪缓缓拍打礁石，落日余晖洒在海面上，电影级调色，镜头缓慢推近">
-        <div class="sf"><span class="no">01</span><span class="dur">0:08</span></div>
-        <div class="nm"><b>黄昏海岸</b></div>
-      </div>
-      <div class="seg" data-shot="1" data-component="timeline-segment" role="button" tabindex="0" aria-selected="false" data-name="雨夜霓虹" data-dur="10" data-prompt="雨夜的东京街头，霓虹灯倒映在湿润的路面上，镜头缓缓横移，电影级氛围">
-        <div class="sf"><span class="no">02</span><span class="dur">0:10</span></div>
-        <div class="nm"><b>雨夜霓虹</b></div>
-      </div>
-      <div class="seg" data-shot="2" data-component="timeline-segment" role="button" tabindex="0" aria-selected="false" data-name="飞鸟群" data-dur="4" data-prompt="慢镜头飞鸟群掠过逆光天空，羽毛边缘泛光，柔焦背景">
-        <div class="sf"><span class="no">03</span><span class="dur">0:04</span></div>
-        <div class="nm"><b>飞鸟群</b></div>
-      </div>
-      <div class="seg" data-shot="3" data-component="timeline-segment" role="button" tabindex="0" aria-selected="false" data-name="雪山晨雾" data-dur="8" data-prompt="雪山晨雾延时摄影，日出金顶，晨雾在山谷间流动，航拍视角">
-        <div class="sf"><span class="no">04</span><span class="dur">0:08</span></div>
-        <div class="nm"><b>雪山晨雾</b></div>
-      </div>
       <button class="seg add" id="addSeg" type="button" aria-label="添加镜头"><span>＋</span>加镜头</button>
     </div>
     <div class="tl-ruler" aria-hidden="true"></div>
@@ -641,12 +698,19 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
 
 <!-- 状态栏 -->
 <footer class="statusbar" data-component="statusbar" data-od-id="statusbar">
-  <span class="sb-item"><span class="sb-dot"></span>CONN: LOCAL · 模型就绪</span>
+  <span class="sb-item"><span class="sb-dot"></span><span id="connText">CONN: —</span></span>
   <span class="sb-item" id="queueItem">QUEUE 0 · 0</span>
   <span class="sb-item history-btn" id="historyBtn" role="button" tabindex="0" aria-label="历史库">历史库</span>
   <div class="sb-right">
-    <span id="totalDurSb">总时长 30s</span>
-    <span>ENGINE: MINIMAX H3</span>
+    <span id="totalDurSb">总时长 0s</span>
+    <div class="eng-switch" id="engineSwitch" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="切换推理引擎" title="切换推理引擎">
+      <span class="eng-dot" id="engineDot"></span><span id="engineText">ENGINE: MINIMAX H3</span>
+      <div class="engine-menu" id="engineMenu" role="menu" aria-label="推理引擎">
+        <div class="engine-menu-head">推理引擎</div>
+        <div class="engine-list" id="engineList"></div>
+        <div class="engine-menu-note" id="engineNote"></div>
+      </div>
+    </div>
     <span>缩放 - 100% +</span>
     <span class="sb-sep"></span>
   </div>
@@ -722,6 +786,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
   var segs=[].slice.call(document.querySelectorAll('.seg[data-shot]'));
 
   function selectShot(seg){
+    if(!seg){return;}
     segs.forEach(function(s){s.classList.remove('active');s.setAttribute('aria-selected','false');});
     seg.classList.add('active');
     seg.setAttribute('aria-selected','true');
@@ -737,7 +802,50 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     pbShot.innerHTML=name+'<small>SHOT '+s+' · 0:'+d+'</small>';
     promptInput.value=seg.dataset.prompt;
     updateCount();
+    /* 参数与镜头联动：从后端 params 回填各参数行（.on 状态，按 data-value 匹配） */
+    var params={};
+    try{params=JSON.parse(seg.dataset.params||'{}');}catch(e){}
+    document.querySelectorAll('.p-row').forEach(function(r){
+      var k=r.querySelector('.k')?r.querySelector('.k').textContent.trim():'';
+      var opts=r.querySelectorAll('.seg:not(.disabled)');
+      if(!opts.length)return;
+      opts.forEach(function(x){x.classList.remove('on');});
+      var v=null;
+      if(k==='模式')v=params.mode||'text';
+      else if(k==='画面比例')v=params.aspect;
+      else if(k==='分辨率')v=(params.resolution==='2K'?'2k':'768p');
+      else if(k==='时长')v=(params.duration!=null?String(params.duration)+'s':null);
+      else if(k==='运镜')v=params.motion;
+      else if(k==='风格')v=params.style;
+      else if(k==='衔接')v=params.bridge;
+      else if(k==='2K 重绘')v=params.twok?'开启':'关闭';
+      var matched=false;
+      if(v){
+        opts.forEach(function(x){if(x.dataset.value===v){x.classList.add('on');matched=true;}});
+      }
+      if(!matched)opts[0].classList.add('on');
+    });
+    /* ref_image_size 回填 */
+    var rsEls=document.querySelectorAll('.ref-size .seg');
+    if(rsEls.length){
+      [].slice.call(rsEls).forEach(function(x){x.classList.remove('on');});
+      var rsv=params.ref_image_size||'match';
+      var rsm=false;
+      [].slice.call(rsEls).forEach(function(x){if(x.dataset.value===rsv){x.classList.add('on');rsm=true;}});
+      if(!rsm)rsEls[0].classList.add('on');
+    }
+    /* 模式引擎标识 + REF2VA 标签引导联动 */
+    syncModeUI(params.mode||'text');
+    /* 画面比例像素联动 */
+    var resPx=document.getElementById('resPx');
+    if(resPx){
+      var rp=resolutionFor(params.aspect||'16:9');
+      resPx.innerHTML=(params.aspect||'16:9')+' → <b>'+rp[0]+'×'+rp[1]+'</b>';
+    }
+    /* 素材列表联动 */
+    renderRefs(seg.dataset.id);
   }
+
 
   /* 段宽按时长比例：width = 72 + dur*6（8s→120px / 4s→96px / 10s→132px），高保真回填轮沿用此规则 */
   function sizeSegs(){
@@ -764,36 +872,26 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
   segs.forEach(bindSeg);
 
   /* 添加镜头 */
-  var pool=[['舞台独白','8','舞台聚光灯下的独白者，雨滴敲打玻璃，情绪渐强，中景'],['城市车流','6','夜晚高架桥上的延时车流，光轨拖曳，航拍视角'],['深海水母','15','深海中半透明水母缓缓漂浮，触须发光，微距特写，长镜头']];
-  var nextNo=5,poolIdx=0;
+/* 添加镜头 → POST /api/projects/{pid}/shots（真实持久化，无假数据 pool） */
+  var newShotNo=1;
   document.getElementById('addSeg').addEventListener('click',function(){
-    var p=pool[poolIdx%pool.length];poolIdx++;
-    var no=('0'+nextNo).slice(-2), d=('0'+p[1]).slice(-2);
-    var node=document.createElement('div');
-    node.className='seg';
-    node.dataset.shot=segs.length;
-    node.dataset.name=p[0];
-    node.dataset.dur=p[1];
-    node.dataset.prompt=p[2];
-    node.setAttribute('data-component','timeline-segment');
-    node.setAttribute('role','button');
-    node.setAttribute('tabindex','0');
-    node.setAttribute('aria-selected','false');
-    node.innerHTML='<div class="sf"><span class="no">'+no+'</span><span class="dur">0:'+d+'</span></div><div class="nm"><b>'+p[0]+'</b></div>';
-    this.parentNode.insertBefore(node,this);
-    segs.push(node);
-    bindSeg(node);
-    sizeSegs();
-    nextNo++;
-    selectShot(node);
-    updateTotals();
-    tl.classList.remove('collapsed');
+    if(!currentProjectId){window.alert('请先新建或选择项目');return;}
+    var body={name:'新镜头 '+(newShotNo++),prompt:promptInput.value||'',mode:getActiveMode(),duration:8,aspect:'16:9',params:{}};
+    fetch(API_BASE+'/projects/'+currentProjectId+'/shots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json();})
+      .then(function(s){
+        if(s.detail||!s.id){window.alert('创建镜头失败: '+(s.detail||'未知错误'));return;}
+        loadProjectShots(currentProjectId,s.id);
+      })
+      .catch(function(){window.alert('创建镜头失败: 后端连接失败');});
   });
 
-  /* 提示词计数 */
+
+  /* 提示词计数（官方上限 7000 字符，超出红色警示） */
   function updateCount(){
     var n=promptInput.value.replace(/\s/g,'').length;
-    charCount.textContent=n+' 字符 · ≈'+Math.max(1,Math.round(n*1.4))+' token';
+    charCount.textContent=n+' 字符 · ≈'+Math.max(1,Math.round(n*1.4))+' token · 上限 7000';
+    charCount.classList.toggle('over',n>7000);
   }
   promptInput.addEventListener('input',updateCount);
 
@@ -814,9 +912,9 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
   var negBtn=document.querySelector('.neg');
   var ctxTimer=null, genTimer=null;
 
-  /* 参数 chip 单选 + 模式联动 + 参考素材 / Context-IR / 播放演示（事件委托） */
+  /* 参数 chip 单选 + 模式联动 + 参考素材 / 引擎标识 / 像素换算 / Context-IR / 播放演示（事件委托） */
   document.addEventListener('click',function(e){
-    var t=e.target&&e.target.closest?e.target.closest('.p-row .seg, .ref-add, .neg, .pb-play'):null;
+    var t=e.target&&e.target.closest?e.target.closest('.p-row .seg, .ref-size .seg, .ref-add, .neg, .pb-play'):null;
     if(!t)return;
     if(t.classList.contains('pb-play')){playDemo();return;}
     if(t.classList.contains('ref-add')){addRef();return;}
@@ -827,26 +925,126 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     var row=t.parentNode.parentNode;
     var k=row.querySelector?row.querySelector('.k'):null;
     if(k&&k.textContent==='模式'){
-      var m=t.textContent.trim();
-      refBlock.classList.remove('ref-active');
-      if(m==='多模态参考'){refBlock.classList.add('ref-active');refNote.textContent='已启用多模态参考：图 ≤9 · 视频 ≤3 · 音频 ≤3（混合 ≤12）';}
-      else if(m==='首帧'||m==='末帧'||m==='首尾帧'){refNote.textContent='需上传'+(m==='首尾帧'?'首帧与末帧':'对应')+'图像后生成；可切换「多模态参考」加入多素材。';}
-      else{refNote.textContent='首/末帧模式需上传对应图像；音频须搭配图像或视频输入。运镜由提示词驱动。';}
+      var m=t.dataset.value||'text';
+      syncModeUI(m);
+      refNote.textContent=(m==='ref')?'已启用多模态参考：图 ≤9 · 视频 ≤3 · 音频 ≤3（混合 ≤12）；提示词按连接顺序用 <Picture 1>/<Video 1>/<Audio 1> 引用。':
+        ((m==='first_frame'||m==='last_frame'||m==='first_last')?'需上传'+(m==='first_last'?'首帧与末帧':'对应')+'图像后生成；可切换「多模态参考」加入多素材。':
+        '首/末帧模式需上传对应图像；音频须搭配图像或视频输入。运镜由提示词驱动。');
     }
     if(k&&k.textContent==='画面比例'){
-      var ratio=t.textContent.trim();
+      var ratio=t.dataset.value||t.textContent.trim();
       previewShell.style.setProperty('--shell-ar',ratio);
       var dim=stageScene.querySelector('.stage-mark .dim');
       if(dim)dim.textContent=ratio;
+      var resPx=document.getElementById('resPx');
+      if(resPx){
+        var rp=resolutionFor(ratio);
+        resPx.innerHTML=ratio+' → <b>'+rp[0]+'×'+rp[1]+'</b>';
+      }
     }
   });
 
+/* 参考素材：真实上传 POST /api/upload（绑定当前镜头） */
+  var SHOT_REFS={};   // shot_id -> [{id,kind,name}]
+  function currentShotId(){var s=document.querySelector('.seg.active');return s&&s.dataset.id?s.dataset.id:null;}
   function addRef(){
-    refImgN=(refImgN+1)%10;
-    refImgChip.textContent='图片 '+refImgN+'/9';
-    refBlock.classList.add('flash');
-    setTimeout(function(){refBlock.classList.remove('flash');},700);
+    var inp=document.getElementById('refInput');
+    if(!inp)return;
+    if(!currentProjectId||!currentShotId()){window.alert('请先选择项目与镜头');return;}
+    inp.click();
   }
+  var refInput=document.getElementById('refInput');
+  if(refInput){
+    refInput.addEventListener('change',function(){
+      var files=Array.prototype.slice.call(refInput.files||[]);
+      var sid=currentShotId();
+      if(!files.length||!sid){refInput.value='';return;}
+      files.forEach(function(file){
+        var fd=new FormData();
+        fd.append('file',file);
+        fd.append('shot_id',sid);
+        fetch(API_BASE+'/upload',{method:'POST',body:fd})
+          .then(function(r){return r.json();})
+          .then(function(a){
+            if(a.detail||!a.id){window.alert('上传失败: '+(a.detail||'未知错误'));return;}
+            loadProjectShots(currentProjectId);
+          })
+          .catch(function(){window.alert('上传失败: 后端连接失败');});
+      });
+      refInput.value='';
+    });
+  }
+  function renderRefs(sid){
+    var box=document.getElementById('refList');
+    var refs=SHOT_REFS[sid]||[];
+    if(!box)return;
+    var imgN=0,vidN=0,audN=0;
+    refs.forEach(function(r){if(r.kind==='image')imgN++;else if(r.kind==='video')vidN++;else if(r.kind==='audio')audN++;});
+    var e1=document.getElementById('refImgN');if(e1)e1.textContent=imgN;
+    var e2=document.getElementById('refVidN');if(e2)e2.textContent=vidN;
+    var e3=document.getElementById('refAudN');if(e3)e3.textContent=audN;
+    box.style.display=refs.length?'flex':'none';
+    box.innerHTML='';
+    var imgi=0,vidi=0,audi=0;
+    refs.forEach(function(r){
+      var tag=r.kind==='image'?'Picture '+(++imgi):(r.kind==='video'?'Video '+(++vidi):'Audio '+(++audi));
+      var d=document.createElement('div');
+      d.style.cssText='display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--faint);background:var(--seed-surface);border:1px solid var(--line);border-radius:6px;padding:3px 8px';
+      d.innerHTML='<span style="font-family:var(--mono);opacity:.78">'+tag+'</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.name+'</span>';
+      box.appendChild(d);
+    });
+    renderTagChips();
+  }
+
+  /* ===== 官方工作流规格换算（公式与 backend/h3/spec.py 一致） ===== */
+  var H3_RATIOS={'21:9':[21,9],'16:9':[16,9],'4:3':[4,3],'1:1':[1,1],'3:4':[3,4],'9:16':[9,16]};
+  function resolutionFor(aspect){
+    var r=H3_RATIOS[aspect]||[16,9],sw=768,m=32,cap=1344,w,h;
+    if(r[0]>=r[1]){w=sw*r[0]/r[1];h=sw;}else{h=sw*r[1]/r[0];w=sw;}
+    var rd=function(v){v=Math.max(Math.floor(v),m);v=Math.ceil(v/m)*m;return Math.min(v,cap);};
+    return [rd(w),rd(h)];
+  }
+  function framesForDuration(d){
+    var b=Math.max(5,Math.round(d*24));
+    return b+((5-(b%17))%17+17)%17;
+  }
+  /* 模式 → 引擎/权重标识 + REF2VA 标签引导显隐 */
+  function syncModeUI(mode){
+    var refMode=(mode==='ref');
+    if(refBlock)refBlock.classList.toggle('ref-active',refMode);
+    var tagGuide=document.getElementById('tagGuide');
+    if(tagGuide)tagGuide.style.display=refMode?'block':'none';
+    var tag=document.getElementById('modeEngineTag');
+    var mdl=document.getElementById('modeEngineModel');
+    if(tag)tag.textContent=refMode?'REF2VA':'FL2VA';
+    if(mdl)mdl.textContent=refMode?'minimax_h3_ref2va_pruned_int8_convrot.safetensors · ref2va':'minimax_h3_fl2va_pruned_int8_convrot.safetensors · t2va / fl2va';
+  }
+  /* REF2VA 提示词标签速查：按连接顺序生成可点击标签 */
+  function renderTagChips(){
+    var box=document.getElementById('tagChips');
+    if(!box)return;
+    box.innerHTML='';
+    var seg=document.querySelector('.seg.active');
+    if(!seg||!seg.dataset.id)return;
+    var refs=SHOT_REFS[seg.dataset.id]||[];
+    var imgi=0,vidi=0,audi=0;
+    refs.forEach(function(r){
+      var tag=r.kind==='image'?'Picture '+(++imgi):(r.kind==='video'?'Video '+(++vidi):'Audio '+(++audi));
+      var b=document.createElement('button');
+      b.type='button';b.className='tg-chip';
+      b.textContent='<'+tag+'>';
+      b.addEventListener('click',function(){insertTag('<'+tag+'>');});
+      box.appendChild(b);
+    });
+  }
+  function insertTag(tag){
+    var p=promptInput;
+    var s=p.selectionStart||p.value.length,e=p.selectionEnd||p.value.length;
+    p.value=p.value.slice(0,s)+tag+p.value.slice(e);
+    p.focus();p.selectionStart=p.selectionEnd=s+tag.length;
+    updateCount();
+  }
+
 
   function runContextIR(){
     var base=promptInput.value.trim()||'黄昏的海岸线，海浪缓缓拍打礁石，落日余晖洒在海面上，电影级调色，镜头缓慢推近';
@@ -929,11 +1127,13 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
   }
 
   function getActiveMode(){
-    var modeEl=document.querySelector('.p-row .k');
-    var modeSeg=document.querySelectorAll('.p-row .seg.on')[0];
-    var modeMap={'文生':'text','首帧':'first_frame','末帧':'last_frame','首尾帧':'first_last','多模态参考':'ref'};
-    var modeText=modeSeg?modeSeg.textContent.trim():'文生';
-    return modeMap[modeText]||'text';
+    var row=null;
+    document.querySelectorAll('.p-row').forEach(function(r){
+      var k=r.querySelector('.k');
+      if(k&&k.textContent.trim()==='模式')row=r;
+    });
+    var seg=row?row.querySelector('.seg.on'):null;
+    return seg?(seg.dataset.value||'text'):'text';
   }
 
   function getActiveParams(){
@@ -943,7 +1143,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
       var k=r.querySelector('.k')?r.querySelector('.k').textContent.trim():'';
       var on=r.querySelector('.seg.on');
       if(!k||!on)return;
-      var v=on.textContent.trim();
+      var v=on.dataset.value||on.textContent.trim();
       if(k==='画面比例')p.aspect=v;
       else if(k==='分辨率')p.resolution=v.indexOf('768')>-1?'768P':'2K';
       else if(k==='时长')p.duration=parseInt(v)||8;
@@ -952,38 +1152,47 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
       else if(k==='衔接')p.bridge=v;
       else if(k==='2K 重绘')p.twok=v==='开启';
     });
+    var rs=document.querySelector('.ref-size .seg.on');
+    if(rs)p.ref_image_size=rs.dataset.value||rs.textContent.trim();
     return p;
   }
 
   function submitGeneration(){
+    var seg=document.querySelector('.seg.active');
+    if(!seg||!seg.dataset.id){window.alert('请先在项目中选择镜头');return;}
     var shot=getActiveShot();
-    if(!shot){return;}
     var mode=getActiveMode();
     var params=getActiveParams();
-    var body=JSON.stringify({shot_id:'demo',mode:mode,prompt:shot.prompt,params:params,ref_ids:[]});
-
+    var sid=seg.dataset.id;
+    var refIds=(SHOT_REFS[sid]||[]).map(function(r){return r.id;});
+    if((mode==='first_frame'||mode==='last_frame'||mode==='first_last'||mode==='ref')&&!refIds.length){
+      window.alert('该模式需要参考素材，请先上传');return;
+    }
     queueItem.textContent='QUEUE 1 · 1';
     queueItem.style.fontWeight='700';
     setGenState('提交中…',false);
     premiere(shotNo.textContent);
-
-    fetch(API_BASE+'/generations',{method:'POST',headers:{'Content-Type':'application/json'},body:body})
+    /* 先保存镜头参数（PUT），再提交生成任务 */
+    var upd={prompt:shot.prompt,mode:mode,duration:params.duration||8,aspect:params.aspect||'16:9',params:params};
+    fetch(API_BASE+'/shots/'+sid,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(upd)})
+      .then(function(r){return r.json();})
+      .catch(function(){return null;})
+      .then(function(){
+        return fetch(API_BASE+'/generations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({shot_id:sid,mode:mode,prompt:shot.prompt,params:params,ref_ids:refIds})});
+      })
       .then(function(r){return r.json();})
       .then(function(task){
-        if(task.error){setGenState('提交失败: '+task.error,true);return;}
+        if(task.detail||!task.id){
+          setGenState('提交失败: '+(task.detail||'未知错误'),true);
+          queueItem.textContent='QUEUE 0 · 0';queueItem.style.fontWeight='';
+          return;
+        }
         setGenState('生成中 · 推理执行中',false);
         pollTask(task.id);
       })
-      .catch(function(e){
-        /* 后端未启动时回退到演示模式 */
-        setGenState('生成中 · 预计 8s（演示模式）',false);
-        clearTimeout(genTimer);
-        genTimer=setTimeout(function(){
-          queueItem.textContent='QUEUE 0 · 0';
-          queueItem.style.fontWeight='';
-          setGenState('生成完成 ✓（演示模式）',true);
-          setTimeout(function(){stageScene.classList.remove('genning');},1400);
-        },1800);
+      .catch(function(){
+        setGenState('提交失败: 后端连接失败',true);
+        queueItem.textContent='QUEUE 0 · 0';queueItem.style.fontWeight='';
       });
   }
 
@@ -994,16 +1203,15 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         .then(function(r){return r.json();})
         .then(function(task){
           if(task.status==='processing'){
-            setGenState('生成中 · '+task.progress+'%',false);
+            setGenState('生成中 · '+(task.progress||0)+'%',false);
             pollTask(taskId);
           }else if(task.status==='completed'){
             queueItem.textContent='QUEUE 0 · 0';
             queueItem.style.fontWeight='';
             setGenState('生成完成 ✓',true);
-            /* 结果帧回填舞台 */
-            if(task.result_asset_id){
+            if(task.result_path){
               var v=document.createElement('video');
-              v.src='/assets/'+task.result_asset_id;
+              v.src=(API_BASE.split('/api')[0])+'/'+task.result_path;
               v.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0';
               v.loop=true;v.muted=true;v.autoplay=true;
               var old=stageScene.querySelector('video');
@@ -1022,10 +1230,11 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
           }
         })
         .catch(function(){
-          setGenState('连接后端失败 · 演示模式',true);
+          setGenState('查询任务失败: 后端连接失败',true);
         });
     },1000);
   }
+
 
   document.getElementById('genBtn').addEventListener('click',submitGeneration);
 
@@ -1038,7 +1247,8 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
   var currentProjectId=null;
 
   function loadProjects(){
-    fetch(API_BASE+'/projects').then(function(r){return r.json();}).then(function(list){
+    return fetch(API_BASE+'/projects').then(function(r){return r.json();}).then(function(list){
+      if(!currentProjectId&&list.length){switchProject(list[0].id,list[0].name);}
       projList.innerHTML='';
       list.forEach(function(p){
         var item=document.createElement('div');
@@ -1064,7 +1274,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         });
         projList.appendChild(item);
       });
-    }).catch(function(){/* 后端未启动 */});
+    }).catch(function(){projList.innerHTML='<div class="proj-item"><span class="pi-name">后端未启动</span></div>'});
   }
 
   function switchProject(pid,name){
@@ -1076,7 +1286,7 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
     loadHistory(pid);
   }
 
-  function loadProjectShots(pid){
+  function loadProjectShots(pid,selectId){
     fetch(API_BASE+'/projects/'+pid+'/shots').then(function(r){return r.json();}).then(function(shots){
       /* 更新时间线镜头段 */
       var tl=document.getElementById('tlSegments');
@@ -1087,13 +1297,16 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
       tl.innerHTML='';
       tl.appendChild(ctl);
       tl.appendChild(ph);
+      SHOT_REFS={};
       shots.forEach(function(s,i){
         var node=document.createElement('div');
         node.className='seg';
         node.dataset.shot=i;
+        node.dataset.id=s.id;
         node.dataset.name=s.name;
         node.dataset.dur=s.duration;
         node.dataset.prompt=s.prompt;
+        node.dataset.params=JSON.stringify(s.params||{});
         node.setAttribute('data-component','timeline-segment');
         node.setAttribute('role','button');
         node.setAttribute('tabindex','0');
@@ -1103,88 +1316,104 @@ html[data-shell="pj"] .shell-switch button.on{background:linear-gradient(100deg,
         node.innerHTML='<div class="sf"><span class="no">'+no+'</span><span class="dur">0:'+d+'</span></div><div class="nm"><b>'+s.name+'</b></div>';
         tl.insertBefore(node,addBtn);
         bindSeg(node);
+        SHOT_REFS[s.id]=(s.refs||[]).map(function(r){return {id:r.id,kind:r.kind,name:r.name};});
       });
       segs=[].slice.call(document.querySelectorAll('.seg[data-shot]'));
       sizeSegs();
       updateTotals();
       projMetaEl.textContent=shots.length+' SHOTS · '+shots.reduce(function(a,s){return a+s.duration;},0)+'S';
-      if(segs.length>0)selectShot(segs[0]);
-    }).catch(function(){/* 后端未启动 */});
-  }
-
-  projSwitch.addEventListener('click',function(e){
-    if(e.target.closest('.proj-dropdown'))return;
-    projSwitch.classList.toggle('open');
-    projSwitch.setAttribute('aria-expanded',projSwitch.classList.contains('open')?'true':'false');
-    if(projSwitch.classList.contains('open'))loadProjects();
-  });
-  document.addEventListener('click',function(e){
-    if(!e.target.closest('#projSwitch')){projSwitch.classList.remove('open');projSwitch.setAttribute('aria-expanded','false');}
-  });
-  document.getElementById('projNew').addEventListener('click',function(){
-    var name=prompt('新建项目名称','未命名项目');
-    if(name&&name.trim()){
-      fetch(API_BASE+'/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name.trim()})}).then(function(r){return r.json();}).then(function(p){
-        switchProject(p.id,p.name);
-      });
-    }
-  });
-  projSwitch.addEventListener('keydown',function(e){
-    if(e.key==='Enter'||e.key===' '){e.preventDefault();projSwitch.click();}
-  });
-
-  /* ===== D2: 历史库面板 ===== */
-  var historyBtn=document.getElementById('historyBtn');
-  var historyPanel=document.getElementById('historyPanel');
-  var historyBody=document.getElementById('historyBody');
-  var historyCount=document.getElementById('historyCount');
-
-  function loadHistory(pid){
-    if(!pid){historyBody.innerHTML='<div class="history-empty">请先选择项目</div>';historyCount.textContent='0 条';return;}
-    fetch(API_BASE+'/projects/'+pid+'/history').then(function(r){return r.json();}).then(function(items){
-      historyCount.textContent=items.length+' 条';
-      if(items.length===0){historyBody.innerHTML='<div class="history-empty">暂无历史记录</div>';return;}
-      historyBody.innerHTML='';
-      items.forEach(function(it){
-        var item=document.createElement('div');
-        item.className='history-item';
-        var thumbHtml=it.result_path?'<img src="/'+it.result_path+'" alt="缩略">':'';
-        var time=it.finished_at||it.created_at||'';
-        item.innerHTML='<div class="history-thumb">'+thumbHtml+'</div><div class="history-info"><div class="hi-name">'+(it.shot_name||'未命名')+'</div><div class="hi-meta">'+it.mode+' · '+(it.duration||0)+'s · '+time+'</div><div class="hi-reuse">点击复用参数与提示词</div></div>';
-        item.addEventListener('click',function(){
-          /* 复用提示词与参数到当前镜头 */
-          if(it.prompt){
-            promptInput.value=it.prompt;
-            updateCount();
-          }
-          historyPanel.classList.remove('open');
-        });
-        historyBody.appendChild(item);
-      });
+      if(segs.length>0){
+        if(selectId){
+          var hit=null;
+          segs.forEach(function(s){if(s.dataset.id===selectId)hit=s;});
+          selectShot(hit||segs[0]);
+        }else{
+          selectShot(segs[0]);
+        }
+      }else{
+        promptInput.value='';
+        updateCount();
+        renderRefs(null);
+      }
     }).catch(function(){
-      historyBody.innerHTML='<div class="history-empty">后端未连接</div>';
-      historyCount.textContent='—';
+      projMetaEl.textContent='0 SHOTS';
     });
   }
+  /* ===== 推理引擎切换器 ===== */
+  var engineSwitch=document.getElementById('engineSwitch');
+  var engineMenu=document.getElementById('engineMenu');
+  function toggleEngineMenu(force){
+    var open=force!==undefined?force:!engineMenu.classList.contains('open');
+    engineMenu.classList.toggle('open',open);
+    engineSwitch.setAttribute('aria-expanded',String(open));
+  }
+  function closeEngineMenu(){toggleEngineMenu(false);}
+  engineSwitch.addEventListener('click',function(e){e.stopPropagation();toggleEngineMenu();});
+  engineSwitch.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleEngineMenu();}});
+  document.addEventListener('click',function(){closeEngineMenu();});
+  function loadEngines(){
+    fetch(API_BASE+'/engines').then(function(r){return r.json();}).then(function(d){
+      var engs=d.engines||[];
+      var act=null;engs.forEach(function(e){if(e.active)act=e;});
+      var et=document.getElementById('engineText');
+      if(et&&act)et.textContent='ENGINE: '+act.display_name;
+      var dot=document.getElementById('engineDot');
+      if(dot&&act)dot.classList.toggle('external',!!act.external);
+      var box=document.getElementById('engineList');if(!box)return;
+      box.innerHTML='';
+      engs.forEach(function(e){
+        var it=document.createElement('button');
+        it.type='button';
+        it.className='engine-item'+(e.active?' on':'')+(e.implemented?'':' off');
+        it.setAttribute('role','menuitemradio');
+        it.setAttribute('aria-checked',String(e.active));
+        it.disabled=!e.implemented;
+        it.innerHTML='<span>'+e.display_name+'</span>'+
+          '<span class="ei-tag">'+(e.external?'外部服务':'本地进程内')+'</span>'+
+          (e.implemented?'':'<span class="ei-badge">未实现</span>');
+        if(e.implemented&&!e.active&&!d.locked){
+          it.addEventListener('click',function(){
+            fetch(API_BASE+'/engine/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({backend:e.name})})
+              .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+              .then(function(){closeEngineMenu();loadEngines();checkHealth();})
+              .catch(function(){window.alert('引擎切换失败');closeEngineMenu();});
+          });
+        }
+        box.appendChild(it);
+      });
+      var note=document.getElementById('engineNote');
+      if(note)note.textContent=d.locked?'推理引擎由环境变量 MMH3_INFERENCE_BACKEND 锁定，暂不可切换。':'默认「本地 · diffusers」脱离 ComfyUI 即可运行；外部引擎需自行启动对应服务。';
+    }).catch(function(){});
+  }
+  /* ===== 连接状态（真实 health）+ 初始加载（无静态演示镜头） ===== */
+  function checkHealth(){
+    fetch(API_BASE.replace(/\/api$/,'')+'/api/health').then(function(r){return r.json();}).then(function(h){
+      var c=document.getElementById('connText');
+      if(c)c.textContent='CONN: LOCAL · '+(h.model||'OK');
+    }).catch(function(){
+      var c=document.getElementById('connText');
+      if(c)c.textContent='CONN: 离线';
+    });
+  }
+  checkHealth();
+  loadEngines();
+  setInterval(checkHealth,15000);
+  loadProjects();
 
-  historyBtn.addEventListener('click',function(){
-    historyPanel.classList.toggle('open');
-    if(historyPanel.classList.contains('open')&&currentProjectId){
-      loadHistory(currentProjectId);
+  /* ===== 初始渲染（无静态演示镜头） ===== */
+  /* 时长帧数徽标（17k+5 网格 @24fps，公式与 backend/h3/spec.py frames_for_duration 一致） */
+  document.querySelectorAll('.p-row .seg[data-value]').forEach(function(s){
+    if(/^\d+s$/.test(s.dataset.value)){
+      var em=document.createElement('em');
+      em.textContent='·'+framesForDuration(parseInt(s.dataset.value,10))+'帧';
+      s.appendChild(em);
     }
   });
-  historyBtn.addEventListener('keydown',function(e){
-    if(e.key==='Enter'||e.key===' '){e.preventDefault();historyBtn.click();}
-  });
-  document.getElementById('historyClose').addEventListener('click',function(){
-    historyPanel.classList.remove('open');
-  });
-
-  selectShot(segs[0]);
   sizeSegs();
   updateTotals();
   updateCount();
   setShell('theater');
+  syncModeUI('text');
 })();
 </script>
 </body>

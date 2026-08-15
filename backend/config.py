@@ -6,6 +6,14 @@ import os
 from pathlib import Path
 from dataclasses import dataclass, field
 
+from h3.spec import (
+    MODELS as H3_MODELS,
+    SAMPLER_NAME as H3_SAMPLER,
+    SCHEDULER as H3_SCHEDULER,
+    STEPS as H3_STEPS,
+    DENOISE as H3_DENOISE,
+)
+
 
 # 模块级常量，避免 dataclass field default_factory 中的递归
 _BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,11 +35,30 @@ class Settings:
     # ── 推理 ──────────────────────────────────────────────
     MODEL_NAME: str = "MiniMaxAI/MiniMax-H3"
     MODEL_PATH: str = ""                      # 本地权重路径，空则从 HF/魔搭拉取
-    INFERENCE_BACKEND: str = "diffusers"     # diffusers | comfyui | sglang
+    INFERENCE_BACKEND: str = "diffusers"     # diffusers | comfyui | sglang（运行时可用 /api/engine/switch 切换并持久化）
     INFERENCE_URL: str = "http://127.0.0.1:8188"
     QUANTIZATION: str = "int8"                # bf16 | int8 | int4 | gguf-q4_k_m
     MAX_CONCURRENCY: int = 1                  # 单机默认串行
     INFERENCE_TIMEOUT: int = 600              # 单任务超时（秒）
+
+    # ── 官方 H3 模型文件名（默认来自 h3.spec，可环境变量覆盖） ──
+    MODEL_FL2VA: str = H3_MODELS["fl2va"]
+    MODEL_REF2VA: str = H3_MODELS["ref2va"]
+    MODEL_CLIP: str = H3_MODELS["clip"]
+    MODEL_VAE_VIDEO: str = H3_MODELS["vae_video"]
+    MODEL_VAE_AUDIO: str = H3_MODELS["vae_audio"]
+
+    # ── 采样默认值（官方模板） ──────────────────────────
+    SAMPLER_NAME: str = H3_SAMPLER
+    SCHEDULER: str = H3_SCHEDULER
+    STEPS: int = H3_STEPS
+    DENOISE: float = H3_DENOISE
+
+    # ── ComfyUI 可选执行器 ──────────────────────────────
+    SAVE_PREFIX: str = "mmh3"
+    REF_IMAGE_SIZE: str = "match"
+    LOAD_VIDEO_NODE: str = "LoadVideo"
+    LOAD_AUDIO_NODE: str = "LoadAudio"
 
     # ── 上传校验 ──────────────────────────────────────────
     MAX_IMAGE_COUNT: int = 9
@@ -76,6 +103,15 @@ class Settings:
             s.QUANTIZATION = env["MMH3_QUANTIZATION"]
         if env.get("MMH3_MAX_CONCURRENCY"):
             s.MAX_CONCURRENCY = max(1, int(env["MMH3_MAX_CONCURRENCY"]))
+        for env_key, attr in (
+            ("MMH3_MODEL_FL2VA", "MODEL_FL2VA"),
+            ("MMH3_MODEL_REF2VA", "MODEL_REF2VA"),
+            ("MMH3_MODEL_CLIP", "MODEL_CLIP"),
+            ("MMH3_MODEL_VAE_VIDEO", "MODEL_VAE_VIDEO"),
+            ("MMH3_MODEL_VAE_AUDIO", "MODEL_VAE_AUDIO"),
+        ):
+            if env.get(env_key):
+                setattr(s, attr, env[env_key])
         return s
 
 

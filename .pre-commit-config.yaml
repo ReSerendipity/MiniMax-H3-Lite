@@ -1,0 +1,52 @@
+# MM·H3 工作台 - Pre-commit Hooks 配置
+# 安装：pip install pre-commit && pre-commit install
+# 手动运行：pre-commit run --all-files
+
+repos:
+  # ── Python 代码检查 ──────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+
+  # ── Python linting ──────────────────────────────────────
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: ['--ignore=E501,W503', '--max-line-length=120']
+        exclude: ^(tests/node_modules|\.venv)/
+
+  # ── Python 格式化 (可选，如需自动格式化) ───────────────────
+  # - repo: https://github.com/psf/black
+  #   rev: 24.1.0
+  #   hooks:
+  #     - id: black
+  #       language_version: python3.11
+
+  # ── 安全扫描 ──────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
+    hooks:
+      - id: bandit
+        args: ['-r', 'backend/']
+        exclude: ^(tests|\.venv)/
+
+  # ── 依赖检查 ──────────────────────────────────────────────
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.16
+    hooks:
+      - id: validate-pyproject
+
+  # ── 敏感信息检测 ──────────────────────────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: ^(tests|\.secrets\.baseline|requirements\.txt)

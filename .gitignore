@@ -63,3 +63,6 @@ docs/
 
 # 本地管理规则（仅所有者）
 LOCAL_RULES.md
+
+# 前端冒烟测试渲染产物（bin/render_pages.py 生成，不入库）
+tests/frontend/_rendered/

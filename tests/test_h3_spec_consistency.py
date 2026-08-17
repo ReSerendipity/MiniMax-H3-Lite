@@ -133,18 +133,20 @@ def test_engine_registry_imports():
 
 
 def test_engine_switch_persistence(tmp_path, monkeypatch):
-    """切换引擎并持久化后回读"""
-    from engine_registry import switch_backend, active_backend
+    """切换引擎并持久化后回读（当前仅 diffusers 一种）"""
+    from engine_registry import switch_backend, active_backend, list_engines
     from settings_store import resolve
 
     # 确保环境变量不干扰
     monkeypatch.delenv("MMH3_INFERENCE_BACKEND", raising=False)
-    # 切到 comfyui → 持久化
-    result = switch_backend("comfyui")
-    assert result["name"] == "comfyui"
-    assert resolve("inference_backend") == "comfyui"
-    # 切回 diffusers
-    switch_backend("diffusers")
+    
+    # 当前只有 diffusers 一个引擎，确认它存在且可用
+    engines = list_engines()
+    assert any(e["name"] == "diffusers" for e in engines), "diffusers engine missing"
+    
+    # 切换到 diffusers → 持久化
+    result = switch_backend("diffusers")
+    assert result["name"] == "diffusers"
     assert resolve("inference_backend") == "diffusers"
 
 
@@ -156,11 +158,12 @@ def test_health_backend_field():
         h = c.get("/api/health").json()
         assert "backend" in h, f"health missing 'backend': {h}"
         assert "backend_requires_external" in h, f"health missing 'backend_requires_external': {h}"
-        assert h["backend"] in ("diffusers", "comfyui", "sglang")
+        assert h["backend"] == "diffusers", f"expected diffusers but got {h['backend']}"
+        assert h["backend_requires_external"] is False, "diffusers should not require external service"
 
 
 def test_engines_endpoint():
-    """GET /api/engines 返回完整可用引擎列表"""
+    """GET /api/engines 返回完整可用引擎列表（当前仅 diffusers）"""
     from fastapi.testclient import TestClient
     from backend.main import app
     with TestClient(app) as c:
@@ -170,4 +173,7 @@ def test_engines_endpoint():
         assert "engines" in data
         assert "active" in data
         assert "locked" in data
-        assert len(data["engines"]) >= 3
+        # 目前只有 diffusers 一个引擎
+        engine_names = [e["name"] for e in data["engines"]]
+        assert "diffusers" in engine_names
+        assert len(data["engines"]) >= 1

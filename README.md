@@ -19,7 +19,7 @@
 ## 目录结构
 
 ```
-MiniMax-H3/
+MiniMax-H3-lite/
 ├── backend/
 │   ├── main.py           # FastAPI 入口（单端口 18080：Jinja2 页面 + /api + /assets）
 │   ├── templates/        # Jinja2 页面模板（base.html + partials/ + t2v/i2v/r2v.html）

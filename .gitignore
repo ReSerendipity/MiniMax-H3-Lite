@@ -47,7 +47,7 @@ htmlcov/
 .design.json
 .canvas-meta.json
 web-prototypes/
-styles/
+/styles/
 # 截图（本地 UI 截图，README 未引用）
 screenshots/
 capture-screenshots.bat
@@ -60,3 +60,6 @@ docs/
 
 # 内容来源标识签名密钥（仅本机，严禁入库）
 .watermark_key
+
+# 本地管理规则（仅所有者）
+LOCAL_RULES.md

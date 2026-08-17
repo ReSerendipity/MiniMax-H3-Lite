@@ -1,0 +1,29 @@
+# NOTICE
+
+## 本仓库代码许可
+
+本仓库（MiniMax-H3-lite）自身的源代码、前端资产与测试，除特别注明外，均以
+[Apache License 2.0](LICENSE) 授权，Copyright © 2026 ReSerendipity。
+
+## 模型许可声明（MiniMax 协议强制要求）
+
+本仓库为 MiniMax H3 模型的工作台/集成工具，仓库不包含模型权重。
+MiniMax H3 模型权重及其官方工作流文档（`workflows/` 目录内的官方 ComfyUI 模板）
+受《MiniMax H3 Community License Agreement》约束：
+
+**MiniMax H3 is licensed under the MiniMax H3 Community License Agreement,
+Copyright © 2026 MiniMax. All Rights Reserved.**
+
+关键条款（摘要，完整文本以官方为准）：
+- **适用地域**：全球范围内使用，但**排除欧盟、英国、韩国与美国**（Excluded Territories）。
+  上述地区部署需单独向 MiniMax 申请授权（联系 api@minimax.io）。
+- **商业门槛**：商用产品或服务年收入超过 2000 万美元时，需事先获得 MiniMax 书面授权。
+- **署名要求**：商用产品界面须显著展示 "MiniMax H3"；官方鼓励在基于 H3 的产品中标注
+  "Powered by MiniMax H3"。
+- **再分发**：向第三方分发须附带本 NOTICE 声明文本与完整协议副本。
+- **限制**：不得将输出用于训练其他 AI 模型；须遵守其 Acceptable Use Policy（禁止军事用途、
+  选举干预、深度伪造滥用等）。
+- **组件说明**：H3 的 encoder 使用 Qwen3-VL-32B，该组件按 Apache 2.0 授权
+  （https://github.com/QwenLM/Qwen3-VL/blob/main/LICENSE）。
+
+官方许可证全文：https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE

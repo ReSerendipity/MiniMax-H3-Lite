@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light" data-shell="theater">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="canvas:width" content="1440">
+<meta name="canvas:height" content="900">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#b3261e">
+<title>MM·H3 工作台 · 文生视频（T2V）</title>
+<script>(function(){try{var s=localStorage.getItem('mmh3_shell');if(s)document.documentElement.setAttribute('data-shell',s);var t=localStorage.getItem('mmh3_theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/css/shared.css">
+</head>
+<body data-od-id="mmh3-workbench">
+
+<!-- 顶栏 -->
+<header class="chrome" data-component="chrome" data-od-id="chrome">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor"/></svg>
+    </div>
+    <div class="logo-name">MM·H3 工作台<small>MiniMax H3 · Video Studio</small></div>
+  </div>
+  <nav class="mode-tabs" id="modeTabs" role="tablist" aria-label="生成模式"></nav>
+  <div class="proj" id="projSwitch" tabindex="0" role="button" aria-label="切换项目" aria-expanded="false"><b id="projName">未命名项目_01</b><span class="meta" id="projMeta">0 SHOTS</span><span class="proj-caret">▼</span>
+    <div class="proj-dropdown" id="projDropdown">
+      <div id="projList"></div>
+      <button class="proj-new" id="projNew" type="button">＋ 新建项目</button>
+    </div>
+  </div>
+  <div class="chrome-right">
+    <button class="icon-btn mobile-only" id="drawerL" type="button" aria-label="打开提示词侧栏" title="提示词">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
+    </button>
+    <button class="icon-btn mobile-only" id="drawerR" type="button" aria-label="打开参数侧栏" title="参数">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+    </button>
+    <div class="app-wrap">
+      <button class="app-btn" id="appBtn" type="button" aria-label="外观设置（主题与展示壳）" title="外观（主题与展示壳）">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></svg>
+      </button>
+      <div class="app-menu" id="appMenu" role="menu" aria-label="外观设置">
+        <div class="app-menu-head">外观 Appearance</div>
+        <div class="app-group">
+          <div class="ag-title">明暗主题</div>
+          <button class="app-opt" data-app="theme" data-value="light" type="button"><span class="ao-swatch" style="background:#f4f4f6"></span>明亮<span class="ao-desc">LIGHT</span></button>
+          <button class="app-opt" data-app="theme" data-value="dark" type="button"><span class="ao-swatch" style="background:#0e1013"></span>暗色<span class="ao-desc">DARK</span></button>
+        </div>
+        <div class="app-group">
+          <div class="ag-title">展示壳 Display Shell</div>
+          <button class="app-opt" data-app="shell" data-value="theater" type="button"><span class="ao-swatch" style="background:#b3261e"></span>剧场<span class="ao-desc">THEATER</span></button>
+          <button class="app-opt" data-app="shell" data-value="tv" type="button"><span class="ao-swatch" style="background:#b07612"></span>电视<span class="ao-desc">TV</span></button>
+          <button class="app-opt" data-app="shell" data-value="pj" type="button"><span class="ao-swatch" style="background:#1d7873"></span>放映机<span class="ao-desc">PROJECTOR</span></button>
+        </div>
+      </div>
+    </div>
+    <button class="icon-btn" type="button" aria-label="帮助" title="帮助">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1 1-1.1 1.8v.5"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- 工作区：左提示词坞 + 中央舞台 + 右参数 -->
+<div class="workzone" id="workzone" data-od-id="workzone">
+
+  <aside class="side side-l" id="sideL" data-component="script-sidebar" data-od-id="script-sidebar">
+    <button class="edge-handle" id="edgeL" type="button" data-collapse="sideL" aria-label="折叠提示词侧栏" title="折叠">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
+    </button>
+    <div class="side-rail">
+      <button class="coll-btn" id="collBtnL" type="button" data-collapse="sideL" aria-label="展开提示词侧栏" title="展开" aria-expanded="false">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
+      </button>
+      <span class="rail-label">提示词 Prompt</span>
+    </div>
+    <div class="side-body">
+      <div class="side-head">提示词坞
+        <button class="coll-btn" id="collBtnL2" type="button" data-collapse="sideL" aria-label="折叠提示词侧栏" title="折叠" aria-expanded="false">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg>
+        </button>
+        <span class="stag">PROMPT · T2V</span>
+      </div>
+      <div class="shot-now">
+        <span class="no" id="shotNo">01</span>
+        <span class="nm" id="shotName">未选择镜头</span>
+        <span class="gen" title="当前镜头"></span>
+      </div>
+      <label class="label" for="promptInput">镜头提示词</label>
+      <div class="prompt-box">
+        <textarea id="promptInput" placeholder="输入镜头提示词：画面内容、镜头运动、氛围、音效与配乐……（运镜由提示词驱动）"></textarea>
+        <div class="dock-meta">
+          <span class="count" id="charCount">0 字符</span>
+          <button class="neg" type="button" title="本地轻量提示词优化（按官方提示词指南做规则/模板级优化），非 H3-Context-IR 官方等价物">＋ 指令优化（轻量）</button>
+        </div>
+      </div>
+      <button class="btn-gen" id="genBtn" type="button" data-component="generate-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+        生成当前镜头
+      </button>
+      <div class="label">预设标签</div>
+      <div class="presets">
+        <button class="preset" type="button">电影感 · 推近</button>
+        <button class="preset" type="button">赛博朋克 · 雨夜</button>
+        <button class="preset" type="button">延时 · 晨雾金顶</button>
+        <button class="preset" type="button">胶片颗粒 · 宽银幕</button>
+      </div>
+      <div class="foot-note">文生视频（T2V）只靠提示词生成：画面、镜头、音效与配乐写在同一段内。「指令优化」为本地轻量提示词增强，非 H3-Context-IR 官方等价物（未开源、仅官方 API）。</div>
+    </div>
+  </aside>
+
+  <!-- 中央舞台预览（展示壳由首访选择 + 顶栏外观菜单控制） -->
+  <main class="stage-area" id="stageArea" data-component="stage-canvas" data-od-id="stage-canvas" data-shell="theater">
+    <div class="preview-shell" id="previewShell" data-mode="theater">
+      <div class="curtain l"></div>
+      <div class="curtain r"></div>
+      <div class="valance"></div>
+      <div class="spot"></div>
+      <div class="tv-crt"></div>
+      <div class="tv-antenna"></div>
+      <div class="tv-glass"></div>
+      <div class="tv-scan"></div>
+      <div class="tv-console">
+        <span class="tv-speaker"></span>
+        <span class="tv-brand">MINIMAX H3</span>
+        <span class="tv-ctrl"><span class="tv-knob"></span><span class="tv-knob"></span><span class="tv-led"></span></span>
+      </div>
+      <div class="tv-feet fl"></div>
+      <div class="tv-feet fr"></div>
+      <div class="pj-frame"></div>
+      <div class="pj-letterbox t"></div>
+      <div class="pj-letterbox b"></div>
+      <div class="pj-vignette"></div>
+      <div class="pj-grain"></div>
+      <div class="pj-sheen"></div>
+      <div class="pj-beam"></div>
+      <div class="pj-mount"></div>
+      <div class="pj-unit">
+        <span class="pj-reel a"></span>
+        <span class="pj-reel b"></span>
+        <span class="pj-body"></span>
+        <span class="pj-lens"></span>
+        <span class="pj-on"></span>
+        <span class="pj-label">吊装投屏 · FILM 35mm</span>
+      </div>
+      <span class="tv-src" id="tvSrc">SRC · SHOT 01</span>
+      <div class="stage-scene" id="stageScene">
+        <div class="shot-scene" id="shotScene"></div>
+        <div class="stage-mark">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor"/></svg>
+          <span class="dim">16:9</span>
+          <span class="cap">等待生成 · 结果帧回填</span>
+        </div>
+        <div class="slate-top">
+          <span class="chip"><span class="rec"><i></i>REC</span></span>
+          <span class="chip" id="slateShot">SHOT 01</span>
+          <span class="chip" id="slateTc">00:00:00.00</span>
+          <span class="chip">24FPS · 768P</span>
+        </div>
+        <div class="playbar" id="playbar">
+          <button class="pb-play" id="pbPlay" type="button" aria-label="播放/暂停预览">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+          </button>
+          <span class="pb-shot" id="pbShot">未选择镜头<small>SHOT — · 0:00</small></span>
+          <span class="pb-scrub"><i></i></span>
+          <span class="pb-time" id="pbTime">00:00.0 / 00:08</span>
+        </div>
+        <span class="gen-status" id="genStatus">就绪</span>
+        <span class="stage-hint" id="stageHint">剧场模式 · 生成时幕布揭晓</span>
+      </div>
+      <div class="reveal-card" id="revealCard"><span class="rc-main"></span><span class="rc-sub">Theater Premiere</span></div>
+      <span class="curtain-hint">剧场闭幕后 · 点「生成当前镜头」开幕</span>
+      <button class="curtain-close" id="curtainClose" type="button">剧场开幕 · 点此闭幕</button>
+    </div>
+  </main>
+
+  <!-- 右侧镜头参数 -->
+  <aside class="side side-r" id="sideR" data-component="params-sidebar" data-od-id="params-sidebar">
+    <button class="edge-handle" id="edgeR" type="button" data-collapse="sideR" aria-label="折叠参数侧栏" title="折叠">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg>
+    </button>
+    <div class="side-body">
+      <div class="side-head">
+        <button class="coll-btn" id="collBtnR2" type="button" data-collapse="sideR" aria-label="折叠参数侧栏" title="折叠" aria-expanded="false">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
+        </button>
+        镜头参数
+        <span class="stag">T2V · CAMERA</span>
+      </div>
+      <div class="mode-engine" id="modeEngine"><span class="me-tag">FL2VA</span><span class="me-model">minimax_h3_fl2va_pruned_int8_convrot.safetensors · t2va</span></div>
+      <div class="p-row"><span class="k">画面比例</span><span class="v"><span class="seg on" data-value="16:9">16:9</span><span class="seg" data-value="21:9">21:9</span><span class="seg" data-value="4:3">4:3</span><span class="seg" data-value="1:1">1:1</span><span class="seg" data-value="3:4">3:4</span><span class="seg" data-value="9:16">9:16</span></span></div>
+      <div class="p-row"><span class="k">分辨率</span><span class="v"><span class="seg on" data-value="768p">768P 短边</span><span class="res-px" id="resPx" title="按所选比例换算：短边 768 · 长边上限 1344 · 32 倍数对齐">16:9 → <b>1344×768</b></span><span class="seg disabled" data-value="2k" title="H3-Regenerate-2K 未开源，不可用">2K 重绘</span></span></div>
+      <div class="p-row"><span class="k">时长</span><span class="v"><span class="seg on" data-value="8s">8s</span><span class="seg" data-value="4s">4s</span><span class="seg" data-value="10s">10s</span><span class="seg" data-value="15s">15s</span></span></div>
+      <div class="p-row"><span class="k">种子</span><span class="v"><input type="text" id="seedInput" class="seed-in" inputmode="numeric" placeholder="留空=随机" title="固定噪声种子，留空则每次随机"><button class="seg" id="seedRand" type="button" title="生成随机种子">随机</button></span></div>
+      <div class="p-row"><span class="k">输出规格</span><span class="v"><span class="seg on">24fps</span><span class="seg on">32kHz 立体声</span></span></div>
+      <div class="spec-block">
+        <div class="sp-title">官方模板规格 <span class="sp-sub">ComfyUI · MiniMax H3</span></div>
+        <div class="spec-line"><span>Sampler</span><b>res_multistep</b></div>
+        <div class="spec-line"><span>Scheduler</span><b>simple</b></div>
+        <div class="spec-line"><span>Steps / Denoise</span><b>20 · 1.0</b></div>
+        <div class="spec-line"><span>输出</span><b>24fps · 32kHz 立体声 · 8bit</b></div>
+      </div>
+      <details class="model-block">
+        <summary>模型清单 <span class="sp-sub">FL2VA / VAE</span></summary>
+        <div class="model-body">
+          <div class="model-item"><span class="m-kind on">FL2VA · t2v</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors" target="_blank" rel="noopener">minimax_h3_fl2va_pruned_int8_convrot.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Text Encoder</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors" target="_blank" rel="noopener">qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Video VAE</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors" target="_blank" rel="noopener">minimax_h3_video_vae_fp16.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Audio VAE</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors" target="_blank" rel="noopener">minimax_h3_audio_vae_fp32.safetensors</a></div>
+          <div class="bridge-note" style="margin-top:8px">存放：ComfyUI/models/{vae, diffusion_models, text_encoders}。国内下载优先魔搭 MiniMax/MiniMax-H3。</div>
+        </div>
+      </details>
+      <details class="adv-block">
+        <summary>高级参数 <span class="sp-sub">采样器覆盖（留空=全局）</span></summary>
+        <div class="adv-body">
+          <div class="adv-row"><span class="k">Sampler</span><span class="v"><select id="advSampler"><option value="">默认</option><option value="res_multistep">res_multistep</option><option value="dpmpp_2m">dpmpp_2m</option><option value="euler">euler</option></select></span></div>
+          <div class="adv-row"><span class="k">Steps</span><span class="v"><input type="number" id="advSteps" min="1" max="50" placeholder="默认"></span></div>
+          <div class="adv-row"><span class="k">Denoise</span><span class="v"><input type="number" id="advDenoise" min="0" max="1" step="0.05" placeholder="默认"></span></div>
+          <div class="adv-row"><span class="k">说明</span><span class="v"><span class="adv-empty">diffusers 后端暂不支持采样器覆盖，仅 ComfyUI 生效</span></span></div>
+        </div>
+      </details>
+      <div class="bridge-note">2K 重绘（H3-Regenerate-2K）未开源，本期不可用——选项已禁用。</div>
+    </div>
+    <div class="side-rail">
+      <button class="coll-btn" id="collBtnR" type="button" data-collapse="sideR" aria-label="展开参数侧栏" title="展开" aria-expanded="false">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg>
+      </button>
+      <span class="rail-label">参数 Camera</span>
+    </div>
+  </aside>
+</div>
+
+<!-- 底部时间线轨道 -->
+<section class="timeline" id="timeline" data-component="timeline-track" data-od-id="timeline-track">
+  <div class="tl-head">
+    <span class="tt">时间线</span>
+    <button class="tl-collapse" id="tlCollapse" type="button" aria-label="折叠时间线" title="折叠/展开时间线" aria-expanded="true">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <span class="tsub">TIMELINE · 空</span>
+  </div>
+  <div class="tl-track">
+    <div class="tl" id="tlSegments">
+      <div class="tl-ctl">
+        <button type="button" aria-label="播放">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+        </button>
+        <button type="button" aria-label="停止">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>
+        </button>
+      </div>
+      <div class="playhead"></div>
+      <button class="seg add" id="addSeg" type="button" aria-label="添加镜头"><span>＋</span>加镜头</button>
+    </div>
+    <div class="tl-ruler" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- 状态栏 -->
+<footer class="statusbar" data-component="statusbar" data-od-id="statusbar">
+  <span class="sb-item"><span class="sb-dot"></span><span id="connText">CONN: —</span></span>
+  <span class="sb-item" id="queueItem">QUEUE 0 · 0</span>
+  <span class="sb-item history-btn" id="historyBtn" role="button" tabindex="0" aria-label="历史库">历史库</span>
+  <div class="sb-right">
+    <span id="totalDurSb">总时长 0s</span>
+    <div class="eng-switch" id="engineSwitch" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="切换推理引擎" title="切换推理引擎">
+      <span class="eng-dot" id="engineDot"></span><span id="engineText">ENGINE: MINIMAX H3</span>
+      <div class="engine-menu" id="engineMenu" role="menu" aria-label="推理引擎">
+        <div class="engine-menu-head">推理引擎</div>
+        <div class="engine-list" id="engineList"></div>
+        <div class="engine-menu-note" id="engineNote"></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- 历史库面板 -->
+<div class="history-panel" id="historyPanel" role="region" aria-label="历史库">
+  <div class="history-head">历史库 <span class="h-count" id="historyCount">0 条</span>
+    <button class="h-close" id="historyClose" type="button" aria-label="关闭历史库">✕</button>
+  </div>
+  <div class="history-body" id="historyBody">
+    <div class="history-empty">暂无历史记录</div>
+  </div>
+</div>
+
+<!-- 首访展示壳引导（shared.js 渲染内容，仅首次出现） -->
+<div class="shell-modal" id="shellModal"></div>
+
+<script>window.MMH3_PAGE={id:'t2v',file:'index.html',mode:'text'};</script>
+<script src="assets/js/shared.js"></script>
+</body>
+</html>

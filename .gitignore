@@ -29,3 +29,6 @@ venv/
 # OS
 Thumbs.db
 .DS_Store
+
+# Node（前端冒烟测试）
+node_modules/

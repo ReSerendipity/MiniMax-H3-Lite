@@ -1,0 +1,25 @@
+<!-- 底部时间线轨道 -->
+<section class="timeline" id="timeline" data-component="timeline-track" data-od-id="timeline-track">
+  <div class="tl-head">
+    <span class="tt">时间线</span>
+    <button class="tl-collapse" id="tlCollapse" type="button" aria-label="折叠时间线" title="折叠/展开时间线" aria-expanded="true">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <span class="tsub">TIMELINE · 空</span>
+  </div>
+  <div class="tl-track">
+    <div class="tl" id="tlSegments">
+      <div class="tl-ctl">
+        <button type="button" aria-label="播放">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+        </button>
+        <button type="button" aria-label="停止">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>
+        </button>
+      </div>
+      <div class="playhead"></div>
+      <button class="seg add" id="addSeg" type="button" aria-label="添加镜头"><span>＋</span>加镜头</button>
+    </div>
+    <div class="tl-ruler" aria-hidden="true"></div>
+  </div>
+</section>

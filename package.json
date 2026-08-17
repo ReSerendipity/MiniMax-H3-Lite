@@ -1,0 +1,13 @@
+{
+  "name": "mmh3-workbench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MM·H3 工作台（MiniMax H3 视频生成时间线工作台）— 前端冒烟测试入口",
+  "scripts": {
+    "test:template": "python bin/render_pages.py",
+    "test:frontend": "python bin/render_pages.py && node tests/frontend/smoke.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}

@@ -1,0 +1,46 @@
+<!-- 顶栏 -->
+<header class="chrome" data-component="chrome" data-od-id="chrome">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor"/></svg>
+    </div>
+    <div class="logo-name">MM·H3 工作台<small>MiniMax H3 · Video Studio</small></div>
+  </div>
+  <nav class="mode-tabs" id="modeTabs" role="tablist" aria-label="生成模式"></nav>
+  <div class="proj" id="projSwitch" tabindex="0" role="button" aria-label="切换项目" aria-expanded="false"><b id="projName">未命名项目_01</b><span class="meta" id="projMeta">0 SHOTS</span><span class="proj-caret">▼</span>
+    <div class="proj-dropdown" id="projDropdown">
+      <div id="projList"></div>
+      <button class="proj-new" id="projNew" type="button">＋ 新建项目</button>
+    </div>
+  </div>
+  <div class="chrome-right">
+    <button class="icon-btn mobile-only" id="drawerL" type="button" aria-label="打开提示词侧栏" title="提示词">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
+    </button>
+    <button class="icon-btn mobile-only" id="drawerR" type="button" aria-label="打开参数侧栏" title="参数">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+    </button>
+    <div class="app-wrap">
+      <button class="app-btn" id="appBtn" type="button" aria-label="外观设置（主题与展示壳）" title="外观（主题与展示壳）">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></svg>
+      </button>
+      <div class="app-menu" id="appMenu" role="menu" aria-label="外观设置">
+        <div class="app-menu-head">外观 Appearance</div>
+        <div class="app-group">
+          <div class="ag-title">明暗主题</div>
+          <button class="app-opt" data-app="theme" data-value="light" type="button"><span class="ao-swatch" style="background:#f4f4f6"></span>明亮<span class="ao-desc">LIGHT</span></button>
+          <button class="app-opt" data-app="theme" data-value="dark" type="button"><span class="ao-swatch" style="background:#0e1013"></span>暗色<span class="ao-desc">DARK</span></button>
+        </div>
+        <div class="app-group">
+          <div class="ag-title">展示壳 Display Shell</div>
+          <button class="app-opt" data-app="shell" data-value="theater" type="button"><span class="ao-swatch" style="background:#b3261e"></span>剧场<span class="ao-desc">THEATER</span></button>
+          <button class="app-opt" data-app="shell" data-value="tv" type="button"><span class="ao-swatch" style="background:#b07612"></span>电视<span class="ao-desc">TV</span></button>
+          <button class="app-opt" data-app="shell" data-value="pj" type="button"><span class="ao-swatch" style="background:#1d7873"></span>放映机<span class="ao-desc">PROJECTOR</span></button>
+        </div>
+      </div>
+    </div>
+    <button class="icon-btn" type="button" aria-label="帮助" title="帮助">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1 1-1.1 1.8v.5"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>

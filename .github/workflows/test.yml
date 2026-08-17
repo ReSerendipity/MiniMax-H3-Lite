@@ -1,0 +1,150 @@
+# MM·H3 工作台 - 测试与质量门禁 CI
+name: Test & Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Python 后端测试 ──────────────────────────────────────
+  python-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run tests with coverage
+        env:
+          MMH3_INFERENCE_BACKEND: diffusers
+        run: |
+          pytest tests/ \
+            --cov=backend \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-fail-under=60 \
+            -v
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+
+  # ── 前端冒烟测试 ──────────────────────────────────────
+  frontend-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd tests && npm ci
+
+      - name: Run frontend smoke test
+        run: npm run test:frontend
+
+  # ── 代码质量检查 ──────────────────────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Python lint tools
+        run: pip install flake8
+
+      - name: Lint Python
+        run: |
+          flake8 backend/ tests/*.py \
+            --ignore=E501,W503 \
+            --max-line-length=120 \
+            --count --show-source --statistics
+
+      - name: Install Node lint tools
+        run: npm ci
+
+      - name: Lint JavaScript
+        run: npx eslint tests/frontend/*.js tests/*.js --no-error-on-unmatched-pattern || true
+
+  # ── 安全扫描 ──────────────────────────────────────
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true  # 安全扫描不阻断 CI
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          npm ci
+
+      - name: Python security audit
+        run: |
+          pip install pip-audit
+          pip-audit --format json > pip-audit-report.json || true
+          cat pip-audit-report.json
+
+      - name: NPM security audit
+        run: |
+          npm audit --json > npm-audit-report.json || true
+          cat npm-audit-report.json
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            pip-audit-report.json
+            npm-audit-report.json

@@ -1,0 +1,64 @@
+<!-- 中央舞台预览（展示壳由首访选择 + 顶栏外观菜单控制） -->
+<main class="stage-area" id="stageArea" data-component="stage-canvas" data-od-id="stage-canvas" data-shell="theater">
+  <div class="preview-shell" id="previewShell" data-mode="theater">
+    <div class="curtain l"></div>
+    <div class="curtain r"></div>
+    <div class="valance"></div>
+    <div class="spot"></div>
+    <div class="tv-crt"></div>
+    <div class="tv-antenna"></div>
+    <div class="tv-glass"></div>
+    <div class="tv-scan"></div>
+    <div class="tv-console">
+      <span class="tv-speaker"></span>
+      <span class="tv-brand">MINIMAX H3</span>
+      <span class="tv-ctrl"><span class="tv-knob"></span><span class="tv-knob"></span><span class="tv-led"></span></span>
+    </div>
+    <div class="tv-feet fl"></div>
+    <div class="tv-feet fr"></div>
+    <div class="pj-frame"></div>
+    <div class="pj-letterbox t"></div>
+    <div class="pj-letterbox b"></div>
+    <div class="pj-vignette"></div>
+    <div class="pj-grain"></div>
+    <div class="pj-sheen"></div>
+    <div class="pj-beam"></div>
+    <div class="pj-mount"></div>
+    <div class="pj-unit">
+      <span class="pj-reel a"></span>
+      <span class="pj-reel b"></span>
+      <span class="pj-body"></span>
+      <span class="pj-lens"></span>
+      <span class="pj-on"></span>
+      <span class="pj-label">吊装投屏 · FILM 35mm</span>
+    </div>
+    <span class="tv-src" id="tvSrc">SRC · SHOT 01</span>
+    <div class="stage-scene" id="stageScene">
+      <div class="shot-scene" id="shotScene"></div>
+      <div class="stage-mark">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor"/></svg>
+        <span class="dim">16:9</span>
+        <span class="cap">等待生成 · 结果帧回填</span>
+      </div>
+      <div class="slate-top">
+        <span class="chip"><span class="rec"><i></i>REC</span></span>
+        <span class="chip" id="slateShot">SHOT 01</span>
+        <span class="chip" id="slateTc">00:00:00.00</span>
+        <span class="chip">24FPS · 768P</span>
+      </div>
+      <div class="playbar" id="playbar">
+        <button class="pb-play" id="pbPlay" type="button" aria-label="播放/暂停预览">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+        </button>
+        <span class="pb-shot" id="pbShot">未选择镜头<small>SHOT — · 0:00</small></span>
+        <span class="pb-scrub"><i></i></span>
+        <span class="pb-time" id="pbTime">00:00.0 / 00:08</span>
+      </div>
+      <span class="gen-status" id="genStatus">就绪</span>
+      <span class="stage-hint" id="stageHint">剧场模式 · 生成时幕布揭晓</span>
+    </div>
+    <div class="reveal-card" id="revealCard"><span class="rc-main"></span><span class="rc-sub">Theater Premiere</span></div>
+    <span class="curtain-hint">剧场闭幕后 · 点「生成当前镜头」开幕</span>
+    <button class="curtain-close" id="curtainClose" type="button">剧场开幕 · 点此闭幕</button>
+  </div>
+</main>

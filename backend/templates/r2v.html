@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}MM·H3 工作台 · 多模态参考（R2V）{% endblock %}
+
+{% block prompt_dock %}
+      <div class="side-head">提示词坞
+        <button class="coll-btn" id="collBtnL2" type="button" data-collapse="sideL" aria-label="折叠提示词侧栏" title="折叠" aria-expanded="false">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg>
+        </button>
+        <span class="stag">PROMPT · R2V</span>
+      </div>
+      <div class="shot-now">
+        <span class="no" id="shotNo">01</span>
+        <span class="nm" id="shotName">未选择镜头</span>
+        <span class="gen" title="当前镜头"></span>
+      </div>
+      <label class="label" for="promptInput">镜头提示词</label>
+      <div class="prompt-box">
+        <textarea id="promptInput" placeholder="用 <Picture 1> / <Video 1> / <Audio 1> 按连接顺序引用参考素材，再描述目标画面、运动与音效……"></textarea>
+        <div class="dock-meta">
+          <span class="count" id="charCount">0 字符</span>
+          <button class="neg" type="button" title="本地轻量提示词优化（按官方提示词指南做规则/模板级优化），非 H3-Context-IR 官方等价物">＋ 指令优化（轻量）</button>
+        </div>
+      </div>
+      <div class="tag-guide" id="tagGuide">
+        <div class="tg-title">REF2VA 标签引用 <span class="tg-tag">按连接顺序编号</span></div>
+        <div class="tg-chips" id="tagChips"></div>
+        <div class="tg-note">在提示词中按连接顺序用标签引用参考素材，并明确哪个参考驱动画面的哪一部分；ref2va 对措辞敏感，先定义主体再写镜头。点击上方标签插入提示词光标处。</div>
+        <div class="tg-note">对话：用 &lt;d&gt;[English] 台词...&lt;/d&gt; 包裹指定语言（稳定支持：中文/英文/法/德/意/日/韩/葡/俄/西/阿拉伯）。</div>
+        <div class="tg-note">保留程度：fully_preserved（完全保留身份/画面）、partially_copy（部分复用，如沿用 &lt;Audio 1&gt; 的配乐）、reference（仅参考，如借 &lt;Audio 2&gt; 的音色）——写进提示词可显著提升 ref2va 的遵循度。</div>
+        <div class="tg-note">参考标签按连接顺序编号：&lt;Picture 1&gt; / &lt;Video 1&gt; / &lt;Audio 1&gt;；视频的同步音轨引用同一 Audio 标签。</div>
+        <div class="tg-note">可选 Context-IR 结构：subject_definitions &gt; summary &gt; retention_analysis &gt; detailed_description &gt; overall_soundscape &gt; non_diegetic_music（H3-Context-IR 未开源，此结构供手写提示词时对齐官方组织方式）。</div>
+      </div>
+      <button class="btn-gen" id="genBtn" type="button" data-component="generate-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+        生成当前镜头
+      </button>
+      <div class="label">预设标签</div>
+      <div class="presets">
+        <button class="preset" type="button">角色一致性 · 保留身份</button>
+        <button class="preset" type="button">风格迁移 · 保留画风</button>
+        <button class="preset" type="button">镜头模仿 · 参考运镜</button>
+        <button class="preset" type="button">音色延续 · 保留声音</button>
+      </div>
+      <div class="foot-note">多模态参考（R2V / REF2VA）用独立权重（ref2va）锁定角色、风格、运镜或声音；音频须搭配图像或视频输入。</div>
+{% endblock %}
+
+{% block params_panel %}
+      <div class="side-head">
+        <button class="coll-btn" id="collBtnR2" type="button" data-collapse="sideR" aria-label="折叠参数侧栏" title="折叠" aria-expanded="false">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
+        </button>
+        镜头参数
+        <span class="stag">R2V · REF2VA</span>
+      </div>
+      <div class="mode-engine" id="modeEngine"><span class="me-tag">REF2VA</span><span class="me-model">minimax_h3_ref2va_pruned_int8_convrot.safetensors · ref2va</span></div>
+      <div class="ref-block wf-group ref-active">
+        <div class="ref-title">参考素材 <span class="ref-sub">REF2VA · 混合上限 12 项</span></div>
+        <div class="ref-chips"><span class="ref-chip">图片 <span id="refImgN">0</span>/9</span><span class="ref-chip">视频 <span id="refVidN">0</span>/3</span><span class="ref-chip">音频 <span id="refAudN">0</span>/3</span><input type="file" id="refInput" accept="image/*,video/*,audio/*" multiple style="display:none"><input type="file" id="pairAudioInput" accept="audio/*" style="display:none"><button class="ref-add" id="refAddBtn" type="button">＋ 添加参考</button></div>
+        <div class="ref-size"><span class="k">参考保真度</span><span class="v"><span class="seg on" data-value="match">match</span><span class="seg" data-value="max">max</span></span></div>
+        <div class="bridge-note">match：参考对齐生成分辨率，更快；max：最高 2048 短边，身份/细节保真更强但更慢（参考 token 每步参与采样）。提示词按连接顺序用 <span class="mono">&lt;Picture 1&gt; &lt;Video 1&gt; &lt;Audio 1&gt;</span> 引用。</div>
+        <div class="rm-list" id="refList" style="display:none"></div>
+        <div class="bridge-note">视频/音频每段 2–15s，同类合计 ≤15s；超限上传将被拒绝。音频须搭配图像或视频输入。运镜由提示词驱动。</div>
+      </div>
+      <div class="p-row"><span class="k">画面比例</span><span class="v"><span class="seg on" data-value="16:9">16:9</span><span class="seg" data-value="21:9">21:9</span><span class="seg" data-value="4:3">4:3</span><span class="seg" data-value="1:1">1:1</span><span class="seg" data-value="3:4">3:4</span><span class="seg" data-value="9:16">9:16</span></span></div>
+      <div class="p-row"><span class="k">分辨率</span><span class="v"><span class="seg on" data-value="768p">768P 短边</span><span class="res-px" id="resPx" title="按所选比例换算：短边 768 · 长边上限 1344 · 32 倍数对齐">16:9 → <b>1344×768</b></span><span class="seg disabled" data-value="2k" title="H3-Regenerate-2K 未开源，不可用">2K 重绘</span></span></div>
+      <div class="p-row"><span class="k">时长</span><span class="v"><span class="seg on" data-value="8s">8s</span><span class="seg" data-value="4s">4s</span><span class="seg" data-value="10s">10s</span><span class="seg" data-value="15s">15s</span></span></div>
+      <div class="p-row"><span class="k">种子</span><span class="v"><input type="text" id="seedInput" class="seed-in" inputmode="numeric" placeholder="留空=随机" title="固定噪声种子，留空则每次随机"><button class="seg" id="seedRand" type="button" title="生成随机种子">随机</button></span></div>
+      <div class="p-row"><span class="k">输出规格</span><span class="v"><span class="seg on">24fps</span><span class="seg on">32kHz 立体声</span></span></div>
+      <div class="spec-block">
+        <div class="sp-title">官方模板规格 <span class="sp-sub">MiniMax H3</span></div>
+        <div class="spec-line"><span>Sampler</span><b>res_multistep</b></div>
+        <div class="spec-line"><span>Scheduler</span><b>simple · 建议 beta/normal</b></div>
+        <div class="spec-line"><span>Steps / Denoise</span><b>20 · 1.0</b></div>
+        <div class="spec-line"><span>输出</span><b>24fps · 32kHz 立体声 · 8bit</b></div>
+      </div>
+      <details class="model-block">
+        <summary>模型清单 <span class="sp-sub">REF2VA / VAE</span></summary>
+        <div class="model-body">
+          <div class="model-item"><span class="m-kind on">REF2VA · r2v</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors" target="_blank" rel="noopener">minimax_h3_ref2va_pruned_int8_convrot.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Text Encoder</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors" target="_blank" rel="noopener">qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Video VAE</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors" target="_blank" rel="noopener">minimax_h3_video_vae_fp16.safetensors</a></div>
+          <div class="model-item"><span class="m-kind">Audio VAE</span><a href="https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors" target="_blank" rel="noopener">minimax_h3_audio_vae_fp32.safetensors</a></div>
+          <div class="bridge-note" style="margin-top:8px">模型权重：从 HuggingFace 或魔搭下载后放入 models 目录。国内下载优先魔搭 Studio/MiniMax/MiniMax-H3。</div>
+        </div>
+      </details>
+      <details class="adv-block">
+        <summary>高级参数 <span class="sp-sub">采样器覆盖（留空=全局）</span></summary>
+        <div class="adv-body">
+          <div class="adv-row"><span class="k">Sampler</span><span class="v"><select id="advSampler"><option value="">默认</option><option value="res_multistep">res_multistep</option><option value="dpmpp_2m">dpmpp_2m</option><option value="euler">euler</option></select></span></div>
+          <div class="adv-row"><span class="k">Scheduler</span><span class="v"><select id="advScheduler"><option value="">默认</option><option value="simple">simple</option><option value="beta">beta</option><option value="normal">normal</option></select></span></div>
+          <div class="adv-row"><span class="k">Steps</span><span class="v"><input type="number" id="advSteps" min="1" max="50" placeholder="默认"></span></div>
+          <div class="adv-row"><span class="k">Denoise</span><span class="v"><input type="number" id="advDenoise" min="0" max="1" step="0.05" placeholder="默认"></span></div>
+          <div class="adv-row"><span class="k">说明</span><span class="v"><span class="adv-empty">当前使用本地 diffusers 推理引擎</span></span></div>
+        </div>
+      </details>
+      <div class="bridge-note">2K 重绘（H3-Regenerate-2K）未开源，本期不可用——选项已禁用。</div>
+{% endblock %}
+
+{% block page_config %}
+<script>window.MMH3_PAGE={id:'r2v',file:'/r2v',mode:'ref'};</script>
+{% endblock %}

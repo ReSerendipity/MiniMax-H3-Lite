@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light" data-shell="theater">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="canvas:width" content="1440">
+<meta name="canvas:height" content="900">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" content="#b3261e">
+<title>{% block title %}MM·H3 工作台{% endblock %}</title>
+<script>(function(){try{var s=localStorage.getItem('mmh3_shell');if(s)document.documentElement.setAttribute('data-shell',s);var t=localStorage.getItem('mmh3_theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="/assets/css/shared.css">
+</head>
+<body data-od-id="mmh3-workbench">
+
+{% include "partials/chrome.html" %}
+
+<div class="scrim" id="scrim"></div>
+
+<!-- 工作区：左提示词坞 + 中央舞台 + 右参数 -->
+<div class="workzone" id="workzone" data-od-id="workzone">
+
+  <aside class="side side-l" id="sideL" data-component="script-sidebar" data-od-id="script-sidebar">
+    <button class="edge-handle" id="edgeL" type="button" data-collapse="sideL" aria-label="折叠提示词侧栏" title="折叠">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
+    </button>
+    <div class="side-rail">
+      <button class="coll-btn" id="collBtnL" type="button" data-collapse="sideL" aria-label="展开提示词侧栏" title="展开" aria-expanded="false">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
+      </button>
+      <span class="rail-label">提示词 Prompt</span>
+    </div>
+    <div class="side-body">
+      {% block prompt_dock %}{% endblock %}
+    </div>
+  </aside>
+
+  {% include "partials/stage.html" %}
+
+  <aside class="side side-r" id="sideR" data-component="params-sidebar" data-od-id="params-sidebar">
+    <button class="edge-handle" id="edgeR" type="button" data-collapse="sideR" aria-label="折叠参数侧栏" title="折叠">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg>
+    </button>
+    <div class="side-body">
+      {% block params_panel %}{% endblock %}
+    </div>
+    <div class="side-rail">
+      <button class="coll-btn" id="collBtnR" type="button" data-collapse="sideR" aria-label="展开参数侧栏" title="展开" aria-expanded="false">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg>
+      </button>
+      <span class="rail-label">参数 Camera</span>
+    </div>
+  </aside>
+</div>
+
+{% include "partials/timeline.html" %}
+{% include "partials/statusbar.html" %}
+{% include "partials/history.html" %}
+
+<!-- 首访展示壳引导（shared.js 渲染内容，仅首次出现） -->
+<div class="shell-modal" id="shellModal"></div>
+
+{% block page_config %}{% endblock %}
+<script src="/assets/js/shared.js"></script>
+</body>
+</html>

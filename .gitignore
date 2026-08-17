@@ -57,3 +57,6 @@ skills-learning/
 _archive/
 # 项目内部文档（本地保留）
 docs/
+
+# 内容来源标识签名密钥（仅本机，严禁入库）
+.watermark_key

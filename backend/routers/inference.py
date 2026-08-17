@@ -18,6 +18,22 @@ from h3 import spec as h3
 from settings_store import resolve as resolve_setting
 
 
+
+
+def _attach_provenance(dest: Path, task_id: str) -> None:
+    """在产出视频落盘后附加内容来源标识（失败静默，绝不影响输出）。"""
+    import logging
+    _log = logging.getLogger(__name__)
+    try:
+        from watermark import embed_video
+        payload = f"task-{task_id}"
+        if embed_video(str(dest), str(dest), payload=payload):
+            _log.debug("来源标识已附加: %s", dest.name)
+        else:
+            _log.debug("来源标识附加未完成（无 ffmpeg 或文件不支持）: %s", dest.name)
+    except Exception as e:  # pragma: no cover
+        _log.debug("来源标识附加异常（已忽略）: %s", e)
+
 def _build_params(task_row: dict) -> dict:
     """
     将任务行规范化为结构化参数。
@@ -145,6 +161,7 @@ def run_inference(task_id: str) -> dict:
 
     if isinstance(result, (bytes, bytearray)):
         dest.write_bytes(result)
+        _attach_provenance(dest, task_id)
     elif isinstance(result, str) and Path(result).exists():
         import shutil
         shutil.move(result, str(dest))

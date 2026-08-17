@@ -5,12 +5,11 @@ clean_launch.py — 启动加固（对齐兄弟项目 Image_MultiModel / TTS_Mul
 - 自动检测并使用 WinPython / 系统 CUDA Python（家族共享约定）
 - 检查 Python 版本与依赖
 - 设置环境变量（离线模型读取、PyTorch 显存分配）
-- 启动后端 FastAPI（默认 18080）+ 前端静态服务器（默认 8080）
+- 启动后端 FastAPI（单端口 18080：Jinja2 页面 + API + 静态资源）
 - 服务就绪后自动打开浏览器
 """
 
 import os
-import shutil
 import socket
 import subprocess
 import sys
@@ -64,7 +63,6 @@ def find_winpython():
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 os.environ.setdefault("MODELSCOPE_OFFLINE", "1")
-os.environ.setdefault("COMFYUI_DISABLE_UPDATE_CHECK", "1")
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 # 工作目录
 os.chdir(str(PROJECT_ROOT))
@@ -105,6 +103,34 @@ def check_dependencies():
         print("[OK] All dependencies present")
 
 
+def find_available_port(start_port: int, host: str = "127.0.0.1", max_attempts: int = 200) -> int:
+    """从 start_port 向上查找第一个可用的端口（bind 探测）。
+
+    对齐家族项目（TTS_MultiModel / Seedvr2 / Image_MultiModel）的自动换端口策略：
+    默认端口被占用时向上顺延，避免启动直接报错退出。
+
+    Args:
+        start_port: 起始端口号（含）。
+        host: 绑定主机，默认 127.0.0.1。
+        max_attempts: 最大尝试次数，默认 200（最多尝试到 start_port+199）。
+
+    Returns:
+        int: 找到的第一个可用端口。
+
+    Raises:
+        OSError: 指定范围内未找到可用端口。
+    """
+    for offset in range(max_attempts):
+        candidate = start_port + offset
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind((host, candidate))
+                return candidate
+            except OSError:
+                continue
+    raise OSError(f"在 {start_port}~{start_port + max_attempts} 范围内未找到可用端口")
+
+
 def wait_port(port: int, timeout: int = 120) -> bool:
     """等待端口就绪"""
     start = time.time()
@@ -118,7 +144,7 @@ def wait_port(port: int, timeout: int = 120) -> bool:
 
 
 def launch():
-    """启动前端 + 后端"""
+    """启动后端（单端口：FastAPI 直出页面 + API + 静态资源）"""
     print("\n" + "=" * 60)
     print("  MM·H3 工作台 — Launching...")
     print("=" * 60)
@@ -132,11 +158,13 @@ def launch():
 
     sys.path.insert(0, str(PROJECT_ROOT))
 
-    # 端口（环境变量可覆盖，与 config.py 约定一致）
-    backend_port = int(os.environ.get("MMH3_PORT", "18080"))
-    frontend_port = 8080
+    # 端口（环境变量可覆盖起始端口；被占用时自动向上顺延）
+    backend_start = int(os.environ.get("MMH3_PORT", "18080"))
+    backend_port = find_available_port(backend_start)
+    if backend_port != backend_start:
+        print(f"[INFO] 后端端口 {backend_start} 已被占用，自动切换到 {backend_port}")
 
-    # ── 启动后端 FastAPI ───────────────────────────────────
+    # ── 启动后端 FastAPI（单端口：页面模板 + /assets + /api） ──────────
     backend_proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "backend.main:app",
          "--host", "127.0.0.1", "--port", str(backend_port)],
@@ -144,28 +172,13 @@ def launch():
     )
     print(f"[INFO] 后端启动中: http://127.0.0.1:{backend_port} (PID {backend_proc.pid})")
 
-    # ── 启动前端静态服务器（node server.js，无 Node 时用 Python http.server 兜底）──
-    frontend_proc = None
-    server_js = PROJECT_ROOT / "server.js"
-    node = shutil.which("node")
-    if node and server_js.exists():
-        frontend_proc = subprocess.Popen([node, "server.js"], cwd=str(PROJECT_ROOT))
-        print(f"[INFO] 前端启动中(Node): http://localhost:{frontend_port} (PID {frontend_proc.pid})")
-    else:
-        # 兜底：Python 内置静态服务器（零依赖）
-        frontend_proc = subprocess.Popen(
-            [sys.executable, "-m", "http.server", str(frontend_port), "--bind", "127.0.0.1"],
-            cwd=str(PROJECT_ROOT),
-        )
-        print(f"[INFO] 前端启动中(Python http.server): http://localhost:{frontend_port} (PID {frontend_proc.pid})")
-
     # ── 等待后端就绪后自动打开浏览器 ──────────────────────
     if wait_port(backend_port, timeout=120):
         time.sleep(2)
-        webbrowser.open(f"http://localhost:{frontend_port}")
-        print(f"[INFO] 服务就绪，已打开 http://localhost:{frontend_port}")
+        webbrowser.open(f"http://localhost:{backend_port}")
+        print(f"[INFO] 服务就绪，已打开 http://localhost:{backend_port}")
     else:
-        print("[WARN] 等待后端就绪超时，请手动打开 http://localhost:" + str(frontend_port))
+        print("[WARN] 等待后端就绪超时，请手动打开 http://localhost:" + str(backend_port))
 
     # 保持前台运行，等待后端退出
     try:
@@ -174,12 +187,11 @@ def launch():
     except KeyboardInterrupt:
         pass
     finally:
-        for p in (backend_proc, frontend_proc):
-            if p:
-                try:
-                    p.terminate()
-                except Exception:
-                    pass
+        if backend_proc:
+            try:
+                backend_proc.terminate()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

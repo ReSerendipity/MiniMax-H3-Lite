@@ -12,7 +12,6 @@ _STORE_PATH = settings.BASE_DIR / "data" / "settings.json"
 # 允许运行时写入的键（其余仅由 config/env 提供）
 SETTABLE_KEYS = {
     "inference_backend",
-    "inference_url",
     "quantization",
     "max_concurrency",
     "sampler",
@@ -21,14 +20,11 @@ SETTABLE_KEYS = {
     "denoise",
     "save_prefix",
     "ref_image_size",
-    "load_video_node",
-    "load_audio_node",
 }
 
 # 环境变量名 → 键
 _ENV_KEYS = {
     "MMH3_INFERENCE_BACKEND": "inference_backend",
-    "MMH3_INFERENCE_URL": "inference_url",
     "MMH3_QUANTIZATION": "quantization",
     "MMH3_MAX_CONCURRENCY": "max_concurrency",
 }
@@ -36,7 +32,6 @@ _ENV_KEYS = {
 # 键 → 默认值（未持久化也未设环境变量时）
 _DEFAULTS = {
     "inference_backend": "diffusers",
-    "inference_url": "http://127.0.0.1:8188",
     "quantization": "int8",
     "max_concurrency": 1,
     "sampler": "res_multistep",
@@ -45,8 +40,6 @@ _DEFAULTS = {
     "denoise": 1.0,
     "save_prefix": "mmh3",
     "ref_image_size": "match",
-    "load_video_node": "LoadVideo",
-    "load_audio_node": "LoadAudio",
 }
 
 

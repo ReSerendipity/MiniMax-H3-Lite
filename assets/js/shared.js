@@ -9,8 +9,9 @@
 
 /* ============ 基础工具 ============ */
 function $(id){return document.getElementById(id);}
-var API_BASE='http://127.0.0.1:18080/api';
-var API_ORIGIN=API_BASE.split('/api')[0];
+/* 单端口整合：页面与 API 同源（FastAPI 18080 直出），用相对路径 */
+var API_BASE='/api';
+var API_ORIGIN='';
 
 /* 存储安全包装：localStorage 不可用（如 Canvas 预览 iframe）时降级内存 */
 var memStore={};
@@ -18,13 +19,13 @@ function storeGet(k){try{var v=localStorage.getItem(k);return v===null?undefined
 function storeSet(k,v){try{localStorage.setItem(k,v);}catch(e){}memStore[k]=v;}
 
 /* ============ 页面配置与模式映射（与官方工作流一致） ============ */
-var PAGE=window.MMH3_PAGE||{id:'t2v',file:'index.html',mode:'text'};
+var PAGE=window.MMH3_PAGE||{id:'t2v',file:'/',mode:'text'};
 var MODE_PAGES=[
-  {id:'t2v',label:'文生',sub:'T2V',file:'index.html'},
-  {id:'i2v',label:'图生',sub:'I2V',file:'i2v.html'},
-  {id:'r2v',label:'多模态参考',sub:'R2V',file:'r2v.html'}
+  {id:'t2v',label:'文生',sub:'T2V',file:'/'},
+  {id:'i2v',label:'图生',sub:'I2V',file:'/i2v'},
+  {id:'r2v',label:'多模态参考',sub:'R2V',file:'/r2v'}
 ];
-var SHOT_MODE_PAGE={text:'index.html',first_frame:'i2v.html',last_frame:'i2v.html',first_last:'i2v.html',ref:'r2v.html'};
+var SHOT_MODE_PAGE={text:'/',first_frame:'/i2v',last_frame:'/i2v',first_last:'/i2v',ref:'/r2v'};
 var MODE_LABEL={text:'T2V',first_frame:'I2V·首',last_frame:'I2V·末',first_last:'I2V·首尾',ref:'R2V'};
 
 /* ============ 官方规格换算（与 backend/h3/spec.py 一致） ============ */
@@ -211,7 +212,7 @@ function bindSeg(s){
 function selectShot(seg){
   if(!seg)return;
   var mode=seg.dataset.mode||'text';
-  var page=SHOT_MODE_PAGE[mode]||'index.html';
+  var page=SHOT_MODE_PAGE[mode]||'/';
   /* 该镜头属于其他模式页 → 跨页跳转并选中 */
   if(page!==PAGE.file){
     location.href=page+'?project='+(currentProjectId||'')+'&shot='+seg.dataset.id;

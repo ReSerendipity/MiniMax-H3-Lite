@@ -5,9 +5,10 @@ PRD §5: FastAPI 后端 + SQLite + asyncio/线程池队列
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 # 确保 backend 目录在 sys.path 中
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -23,16 +24,10 @@ app = FastAPI(
     description="MiniMax H3 视频生成时间线工作台后端",
 )
 
-# CORS（本地开发：前端 8080 ↔ 后端 18080）
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[f"http://localhost:{settings.FRONTEND_PORT}", f"http://127.0.0.1:{settings.FRONTEND_PORT}"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Jinja2 模板（服务端渲染，单端口直出页面 + 静态；参考家族项目模板拆分）
+templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
 
-# 静态文件：结果视频 + 上传素材
+# 静态文件：结果视频 + 上传素材 + 前端资源（css/js/img）
 app.mount("/assets", StaticFiles(directory=str(settings.ASSETS_DIR)), name="assets")
 app.mount("/uploads", StaticFiles(directory=str(settings.UPLOADS_DIR)), name="uploads")
 
@@ -43,6 +38,22 @@ app.include_router(generations.router, prefix="/api", tags=["generations"])
 app.include_router(uploads.router, prefix="/api", tags=["uploads"])
 app.include_router(history.router, prefix="/api", tags=["history"])
 app.include_router(system.router, prefix="/api", tags=["system"])
+
+
+# ---- 页面路由（Jinja2 模板，单端口直出） ----
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def page_t2v(request: Request):
+    return templates.TemplateResponse(request, "t2v.html")
+
+
+@app.get("/i2v", response_class=HTMLResponse, include_in_schema=False)
+def page_i2v(request: Request):
+    return templates.TemplateResponse(request, "i2v.html")
+
+
+@app.get("/r2v", response_class=HTMLResponse, include_in_schema=False)
+def page_r2v(request: Request):
+    return templates.TemplateResponse(request, "r2v.html")
 
 
 @app.on_event("startup")

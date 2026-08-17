@@ -20,6 +20,9 @@
   --shadow-2:color-mix(in srgb,var(--seed-fg) 8%,transparent);
   --shadow-3:color-mix(in srgb,var(--seed-fg) 18%,transparent);
   --scrim-bg:color-mix(in srgb,var(--seed-fg) 35%,transparent);
+  --surface-2:var(--seed-surface);          /* 浮层/菜单面板（暗色下再抬一级） */
+  --accent-soft-alpha:13%;                  /* 强调色浅底浓度（暗色下加浓） */
+  --on-accent:#f7f8fa;                      /* 强调色底上的文字（两主题恒定，避免暗色下对比不足） */
   --side-w-l:264px; --side-w-r:296px; --density:1;
   --sans:'Inter','Segoe UI','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
   --mono:ui-monospace,'SF Mono','Cascadia Code',Consolas,'Roboto Mono',monospace;
@@ -31,12 +34,42 @@
   --acc-tv:#d99828; --acc-tv-strong:#b87c1a;
   --acc-pj:#3cb5a8; --acc-pj-strong:#2a9a8c;
   --dark-accent:#aab0bc;
+  /* 暗色质感：冷灰蓝底 + 黑色系纵深阴影 + 发丝级描边（替代浅色混出的"塑料"观感） */
+  --line:color-mix(in srgb,var(--seed-fg) 12%,var(--seed-surface));
+  --line-strong:color-mix(in srgb,var(--seed-fg) 22%,var(--seed-surface));
+  --shadow-1:0 1px 2px rgba(0,0,0,.35);
+  --shadow-2:0 4px 14px rgba(0,0,0,.45);
+  --shadow-3:0 16px 44px rgba(0,0,0,.60);
+  --scrim-bg:rgba(0,0,0,.62);
+  --faint:color-mix(in srgb,var(--seed-fg) 52%,var(--seed-surface));
+  /* 主实色（Logo/主按钮/播放键/角标/播放头）改用展示壳强调色深档——去银灰塑料感、增强氛围，且白字对比达标 */
+  --solid:var(--seed-accent-strong);
+  --solid-fg:var(--on-accent);
+  --solid-2:color-mix(in srgb,var(--seed-accent) 18%,var(--seed-surface));
+  --stage-bg:color-mix(in srgb,var(--seed-surface) 80%,var(--seed-fg));
+  --surface-2:var(--dark-surface-2);
+  --accent-soft-alpha:18%;
 }
+/* 暗色氛围：页面顶部 + 左下角随展示壳变色的环境光晕 */
+[data-theme="dark"] body{
+  background-image:
+    radial-gradient(ellipse 120% 60% at 50% -8%,color-mix(in srgb,var(--seed-accent) 11%,transparent) 0%,transparent 62%),
+    radial-gradient(ellipse 70% 42% at 10% 108%,color-mix(in srgb,var(--seed-accent) 7%,transparent) 0%,transparent 55%);
+}
+[data-theme="dark"] .chrome{background:linear-gradient(180deg,color-mix(in srgb,var(--seed-accent) 10%,var(--seed-surface)) 0%,var(--seed-surface) 80%)}
+[data-theme="dark"] .stage-area::before{
+  background:
+    radial-gradient(ellipse 72% 66% at 50% 42%,color-mix(in srgb,var(--seed-accent) 16%,transparent) 0%,transparent 66%),
+    radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--seed-fg) 5%,transparent) 1px,transparent 0) 0 0/22px 22px
+}
+[data-theme="dark"] .side-l{border-right-color:color-mix(in srgb,var(--seed-accent) 55%,var(--line))}
+[data-theme="dark"] .side-r{border-left-color:color-mix(in srgb,var(--seed-accent) 55%,var(--line))}
+[data-theme="dark"] .mode-tabs{border-color:color-mix(in srgb,var(--seed-accent) 38%,var(--line-strong))}
 /* ===== 展示壳强调色：剧场红 / 电视琉珀 / 放映机青（切模式整站跟随） ===== */
-:root{--seed-accent-strong:#26292f;--accent-soft:color-mix(in srgb,var(--seed-accent) 14%,var(--seed-surface));--curtain-a:#701610;--curtain-b:#a3241a;--curtain-hi:#c9533c;--curtain-sh:rgba(12,4,3,.5);--sc0-sky:#f6b26b;--sc0-mid:#ef8f55;--sc0-pur:#8f5a72;--sc0-sea1:#3a3f6e;--sc0-sea2:#1c2547;--sc0-sun:#ffd9a0;--sc0-sun2:#f6a860;--sc0-hi:rgba(255,180,120,.2);--sc0-sea3:rgba(20,30,60,.94);--sc0-deep:#101830;--sc1-n1:#10142e;--sc1-n2:#1b2040;--sc1-n3:#0d1126;--sc1-a:rgba(255,80,180,.5);--sc1-b:rgba(80,220,255,.45);--sc1-c:rgba(120,90,255,.4);--sc1-g:rgba(16,22,46,.92);--sc1-gl:rgba(80,180,255,.18);--sc2-a:#8fc6ea;--sc2-b:#cfe8f5;--sc2-c:#f3d9a4;--sc2-g:rgba(180,140,90,.55);--sc3-a:#bcd7ea;--sc3-b:#e8f1f7;--sc3-c:#dbe7ee;--sc3-d:#9fb6c9;--sc3-m1:#c3d8e6;--sc3-m2:#8fa8bd;--sc3-mist:rgba(232,241,247,.85);--seg-d1:#e7a05e;--seg-d2:#8f5a72;--acc-theater:#b3261e;--acc-theater-strong:#8f1d16;--acc-tv:#b07612;--acc-tv-strong:#8a5c0e;--acc-pj:#1d7873;--acc-pj-strong:#155b58;--acc-pj-warm:#e0873a;--fold-hi:rgba(255,255,255,.2);--fold-sh:rgba(0,0,0,.26);--hall-bg:#191a1f;--dark-bg:#141519;--dark-surface:#1e2026;--dark-fg:#eceef2;--dark-primary:#d6dae2;--dark-accent:#aab0bc;--ok:#3fb98f;--sm-tv:#1c1d22;--sm-tv-frame:#3a3d46;--sm-tv-glass:#2a4d6e;--sm-tv-dark:#101820;--sm-pj-bg:#25303a;--sm-pj-bg2:#0d1116;--sm-pj-scr:#2c3a44;--sm-pj-scr2:#151b20;--sm-pj-beam2:#8a4a1c}
-html[data-shell="theater"]{--seed-accent:var(--acc-theater);--seed-accent-strong:var(--acc-theater-strong);--accent-soft:color-mix(in srgb,var(--acc-theater) 13%,var(--seed-surface))}
-html[data-shell="tv"]{--seed-accent:var(--acc-tv);--seed-accent-strong:var(--acc-tv-strong);--accent-soft:color-mix(in srgb,var(--acc-tv) 13%,var(--seed-surface))}
-html[data-shell="pj"]{--seed-accent:var(--acc-pj);--seed-accent-strong:var(--acc-pj-strong);--accent-soft:color-mix(in srgb,var(--acc-pj) 13%,var(--seed-surface))}
+:root{--seed-accent-strong:#26292f;--accent-soft:color-mix(in srgb,var(--seed-accent) 14%,var(--seed-surface));--curtain-a:#701610;--curtain-b:#a3241a;--curtain-hi:#c9533c;--curtain-sh:rgba(12,4,3,.5);--sc0-sky:#f6b26b;--sc0-mid:#ef8f55;--sc0-pur:#8f5a72;--sc0-sea1:#3a3f6e;--sc0-sea2:#1c2547;--sc0-sun:#ffd9a0;--sc0-sun2:#f6a860;--sc0-hi:rgba(255,180,120,.2);--sc0-sea3:rgba(20,30,60,.94);--sc0-deep:#101830;--sc1-n1:#10142e;--sc1-n2:#1b2040;--sc1-n3:#0d1126;--sc1-a:rgba(255,80,180,.5);--sc1-b:rgba(80,220,255,.45);--sc1-c:rgba(120,90,255,.4);--sc1-g:rgba(16,22,46,.92);--sc1-gl:rgba(80,180,255,.18);--sc2-a:#8fc6ea;--sc2-b:#cfe8f5;--sc2-c:#f3d9a4;--sc2-g:rgba(180,140,90,.55);--sc3-a:#bcd7ea;--sc3-b:#e8f1f7;--sc3-c:#dbe7ee;--sc3-d:#9fb6c9;--sc3-m1:#c3d8e6;--sc3-m2:#8fa8bd;--sc3-mist:rgba(232,241,247,.85);--seg-d1:#e7a05e;--seg-d2:#8f5a72;--acc-theater:#b3261e;--acc-theater-strong:#8f1d16;--acc-tv:#b07612;--acc-tv-strong:#8a5c0e;--acc-pj:#1d7873;--acc-pj-strong:#155b58;--acc-pj-warm:#e0873a;--fold-hi:rgba(255,255,255,.2);--fold-sh:rgba(0,0,0,.26);--hall-bg:#191a1f;--dark-bg:#0e1013;--dark-surface:#1a1e25;--dark-surface-2:#22262e;--dark-fg:#e8ebf0;--dark-primary:#dde2ea;--dark-accent:#aab0bc;--ok:#3fb98f;--sm-tv:#1c1d22;--sm-tv-frame:#3a3d46;--sm-tv-glass:#2a4d6e;--sm-tv-dark:#101820;--sm-pj-bg:#25303a;--sm-pj-bg2:#0d1116;--sm-pj-scr:#2c3a44;--sm-pj-scr2:#151b20;--sm-pj-beam2:#8a4a1c}
+html[data-shell="theater"]{--seed-accent:var(--acc-theater);--seed-accent-strong:var(--acc-theater-strong);--accent-soft:color-mix(in srgb,var(--acc-theater) var(--accent-soft-alpha),var(--seed-surface))}
+html[data-shell="tv"]{--seed-accent:var(--acc-tv);--seed-accent-strong:var(--acc-tv-strong);--accent-soft:color-mix(in srgb,var(--acc-tv) var(--accent-soft-alpha),var(--seed-surface))}
+html[data-shell="pj"]{--seed-accent:var(--acc-pj);--seed-accent-strong:var(--acc-pj-strong);--accent-soft:color-mix(in srgb,var(--acc-pj) var(--accent-soft-alpha),var(--seed-surface))}
 html,body{height:100%}
 body{background:var(--seed-bg);color:var(--seed-fg);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden;transition:background .2s,color .2s}
 button{font-family:inherit;cursor:pointer}
@@ -57,7 +90,7 @@ a{color:inherit;text-decoration:none}
 .proj .meta{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.06em}
 .proj .proj-caret{display:inline-block;font-size:8px;color:var(--faint);margin-left:3px;transition:transform .15s}
 .proj.open .proj-caret{transform:rotate(180deg)}
-.proj-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;width:260px;max-height:360px;overflow-y:auto;border:1px solid var(--line-strong);border-radius:var(--seed-radius);background:var(--seed-surface);box-shadow:0 8px 24px var(--shadow-3);z-index:100;padding:4px}
+.proj-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;width:260px;max-height:360px;overflow-y:auto;border:1px solid var(--line-strong);border-radius:var(--seed-radius);background:var(--surface-2);box-shadow:0 8px 24px var(--shadow-3);z-index:100;padding:4px}
 .proj.open .proj-dropdown{display:block}
 .proj-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;transition:background .1s}
 .proj-item:hover{background:var(--accent-soft)}
@@ -80,16 +113,16 @@ a{color:inherit;text-decoration:none}
 .mtab{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--dim);border:none;background:transparent;border-right:1px solid var(--line);transition:background .15s,color .15s}
 .mtab:last-child{border-right:none}
 .mtab:hover{color:var(--seed-primary);background:var(--seed-surface)}
-.mtab.on{background:var(--seed-accent);color:var(--solid-fg)}
+.mtab.on{background:var(--seed-accent-strong);color:var(--on-accent)}
 .mtab .mt-tag{font-family:var(--mono);font-size:8px;font-weight:450;letter-spacing:.1em;text-transform:uppercase;opacity:.72}
 .mtab.on .mt-tag{opacity:.85}
-html[data-shell="pj"] .mtab.on{background:linear-gradient(100deg,var(--acc-pj) 10%,var(--acc-pj-warm) 90%)}
+html:not([data-theme="dark"])[data-shell="pj"] .mtab.on{background:linear-gradient(100deg,var(--acc-pj) 10%,var(--acc-pj-warm) 90%)}
 
 /* ===== 外观菜单（明暗 + 展示壳，低频入口） ===== */
 .app-wrap{position:relative}
 .app-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--seed-surface);display:inline-flex;align-items:center;justify-content:center;color:var(--dim);transition:border-color .15s,color .15s}
 .app-btn:hover{border-color:var(--seed-primary);color:var(--seed-primary)}
-.app-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);width:264px;max-width:78vw;background:var(--seed-surface);border:1px solid var(--line-strong);border-radius:var(--seed-radius);box-shadow:0 10px 30px var(--shadow-3);z-index:230;overflow:hidden;flex-direction:column}
+.app-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);width:264px;max-width:78vw;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--seed-radius);box-shadow:0 10px 30px var(--shadow-3);z-index:230;overflow:hidden;flex-direction:column}
 .app-menu.open{display:flex}
 .app-menu-head{padding:9px 12px;font-size:12px;font-weight:700;border-bottom:1px solid var(--line)}
 .app-group{padding:8px 10px}
@@ -197,7 +230,7 @@ html[data-shell="pj"] .mtab.on{background:linear-gradient(100deg,var(--acc-pj) 1
 .model-item{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-top:1px dashed var(--line);font-size:10px}
 .model-item:first-of-type{border-top:none}
 .model-item .m-kind{flex-shrink:0;font-family:var(--mono);font-size:8.5px;letter-spacing:.04em;color:var(--seed-accent-strong);background:var(--accent-soft);border-radius:4px;padding:1px 5px}
-.model-item .m-kind.on{color:var(--solid-fg);background:var(--seed-accent);border-color:var(--seed-accent)}
+.model-item .m-kind.on{color:var(--on-accent);background:var(--seed-accent-strong);border-color:var(--seed-accent-strong)}
 .model-item a{font-family:var(--mono);font-size:9px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .model-item a:hover{color:var(--seed-primary)}
 
@@ -279,16 +312,53 @@ body:has(.timeline.collapsed) .workzone.coll-l.coll-r .preview-shell{max-width:m
 .ref-block.flash{border-color:var(--seed-primary);box-shadow:0 0 0 3px var(--solid-2)}
 
 /* ===== 剧场壳：红幕拉开揭晓 ===== */
-.curtain{position:absolute;top:0;bottom:0;width:50%;z-index:6;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.02 0 0 0 0 0.02 0 0 0 0 0.02 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"),linear-gradient(90deg,transparent 0%,transparent 55%,rgba(255,190,160,.1) 72%,rgba(255,160,125,.05) 88%,transparent 100%),linear-gradient(90deg,rgba(0,0,0,.02) 0%,rgba(0,0,0,.1) 8%,rgba(0,0,0,.02) 18%,rgba(255,200,175,.1) 30%,rgba(255,190,165,.02) 42%,rgba(0,0,0,.12) 52%,rgba(0,0,0,.03) 62%,rgba(255,200,175,.08) 74%,rgba(255,190,165,.01) 84%,rgba(0,0,0,.08) 94%,rgba(0,0,0,.02) 100%),linear-gradient(180deg,rgba(255,170,140,.16) 0%,rgba(255,150,120,.05) 34%,transparent 55%,rgba(0,0,0,.12) 80%,rgba(0,0,0,.26) 100%),linear-gradient(180deg,var(--curtain-b) 0%,var(--curtain-a) 55%,color-mix(in srgb,var(--curtain-a) 85%,rgb(0 0 0)) 100%);box-shadow:inset -10px 0 18px var(--curtain-sh);transition:transform 1s cubic-bezier(.65,.05,.36,.99)}
+.curtain{position:absolute;top:0;bottom:0;width:50%;z-index:6;pointer-events:none;background:
+    /* 斜向柔光（弱化——主高光交给 ::before 的 3D 光照） */
+    linear-gradient(112deg,transparent 32%,color-mix(in srgb,var(--curtain-hi) 7%,transparent) 44%,color-mix(in srgb,var(--curtain-hi) 11%,transparent) 50%,color-mix(in srgb,var(--curtain-hi) 5%,transparent) 57%,transparent 66%),
+    /* 顶部受光：光落在褶皱脊线上 */
+    linear-gradient(180deg,rgba(255,238,218,.10) 0%,rgba(255,226,200,.03) 18%,transparent 40%),
+    /* 天鹅绒底座（垂褶与起伏由 ::before 浮雕层提供，这里只做体积色） */
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--curtain-b) 84%,var(--on-accent)) 0%,
+      var(--curtain-b) 12%,
+      var(--curtain-a) 50%,
+      color-mix(in srgb,var(--curtain-a) 74%,rgb(0 0 0)) 88%,
+      rgb(28,5,3) 100%);
+  box-shadow:inset -14px 0 26px var(--curtain-sh),inset 3px 0 8px rgba(255,226,200,.08);transition:transform 1s cubic-bezier(.65,.05,.36,.99)}
 .curtain.l{left:0;transform:translateX(0);clip-path:polygon(0 0,100% 0,90% 100%,0 100%)}
 .curtain.r{right:0;transform:translateX(0);clip-path:polygon(0 0,100% 0,100% 100%,10% 100%)}
-.curtain::before{content:none}
-.curtain.l::after{content:"";position:absolute;top:0;bottom:0;right:0;width:18px;background:linear-gradient(90deg,transparent,rgba(10,3,2,.5))}
-.curtain.r::after{content:"";position:absolute;top:0;bottom:0;left:0;width:18px;background:linear-gradient(270deg,transparent,rgba(10,3,2,.5))}
-.valance{position:absolute;top:0;left:0;right:0;height:24px;z-index:6;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.02 0 0 0 0 0.02 0 0 0 0 0.02 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"),linear-gradient(180deg,rgba(255,170,140,.14) 0%,rgba(0,0,0,.18) 100%),linear-gradient(90deg,rgba(0,0,0,.08) 6%,rgba(255,200,175,.08) 26%,rgba(0,0,0,.1) 48%,rgba(255,200,175,.07) 70%,rgba(0,0,0,.09) 92%),linear-gradient(180deg,var(--curtain-b) 0%,var(--curtain-a) 100%);clip-path:polygon(0 0,100% 0,100% 74%,94% 100%,88% 74%,82% 100%,76% 74%,70% 100%,64% 74%,58% 100%,52% 74%,46% 100%,40% 74%,34% 100%,28% 74%,22% 100%,16% 74%,10% 100%,4% 74%,0 100%)}
+/* 丝绸浮雕层：feTurbulence+位移+3D 光照生成的有机垂褶，soft-light 叠在令牌底色上 */
+.curtain::before{content:"";position:absolute;inset:0;z-index:0;background:url("../img/silk-relief.svg") no-repeat center/100% 100%;mix-blend-mode:soft-light;opacity:.9;pointer-events:none}
+/* 右幕镜像纹理：褶皱对称向舞台中缝汇聚，避免两侧图案完全一致 */
+.curtain.r::before{transform:scaleX(-1)}
+/* 极轻的丝绸光晕呼吸：光随褶皱缓慢游移（尊重系统减弱动效设置） */
+@media (prefers-reduced-motion: no-preference){
+  .curtain.l::before{animation:silkDriftL 16s ease-in-out infinite alternate}
+  .curtain.r::before{animation:silkDriftR 16s ease-in-out infinite alternate}
+  @keyframes silkDriftL{from{transform:translateX(-1.4%)}to{transform:translateX(1.4%)}}
+  @keyframes silkDriftR{from{transform:scaleX(-1) translateX(-1.4%)}to{transform:scaleX(-1) translateX(1.4%)}}
+}
+.curtain.l::after{content:"";position:absolute;top:0;bottom:0;right:0;width:18px;z-index:1;background:linear-gradient(90deg,transparent,rgba(10,3,2,.5))}
+.curtain.r::after{content:"";position:absolute;top:0;bottom:0;left:0;width:18px;z-index:1;background:linear-gradient(270deg,transparent,rgba(10,3,2,.5))}
+.valance{position:absolute;top:0;left:0;right:0;height:24px;z-index:6;pointer-events:none;background:
+    /* 丝绸顶光 */
+    linear-gradient(180deg,rgba(255,238,218,.14) 0%,rgba(255,224,198,.04) 30%,transparent 55%),
+    /* 底座 */
+    linear-gradient(180deg,var(--curtain-b) 0%,var(--curtain-a) 62%,color-mix(in srgb,var(--curtain-a) 70%,rgb(0 0 0)) 100%);
+  box-shadow:0 6px 16px rgba(0,0,0,.42),inset 0 2px 6px rgba(255,232,206,.10);clip-path:polygon(0 0,100% 0,100% 74%,94% 100%,88% 74%,82% 100%,76% 74%,70% 100%,64% 74%,58% 100%,52% 74%,46% 100%,40% 74%,34% 100%,28% 74%,22% 100%,16% 74%,10% 100%,4% 74%,0 100%)}
+.valance::before{content:"";position:absolute;inset:0;z-index:0;background:url("../img/silk-pleats.svg") no-repeat center/100% 100%;mix-blend-mode:soft-light;opacity:.85;pointer-events:none}
 .spot{position:absolute;top:-16%;left:50%;transform:translateX(-50%);width:64%;height:50%;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--seed-fg) 22%,transparent) 0%,transparent 68%)}
+/* 剧场模式：聚光暖化为红毯氛围光 */
+.preview-shell[data-mode="theater"] .spot{background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--acc-theater) 15%,transparent) 0%,transparent 70%)}
+/* 剧场模式：舞台地面红毯反光（暖色下摆光） */
+[data-shell="theater"] .stage-area::after{content:"";position:absolute;left:0;right:0;bottom:0;height:96px;pointer-events:none;background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--acc-theater) 11%,transparent) 100%)}
 .preview-shell[data-mode="theater"].opened .curtain.l{transform:translateX(-200%)}
 .preview-shell[data-mode="theater"].opened .curtain.r{transform:translateX(200%)}
+/* 帷幕开合错落：左右略有先后，更接近实体幕布牵引 */
+.preview-shell[data-mode="theater"].opened .curtain.l{transition-delay:.07s}
+.preview-shell[data-mode="theater"].opened .curtain.r{transition-delay:0s}
+.preview-shell[data-mode="theater"]:not(.opened) .curtain.l{transition-delay:0s}
+.preview-shell[data-mode="theater"]:not(.opened) .curtain.r{transition-delay:.07s}
 
 /* ===== 电视壳：90 年代 CRT 大头电视 + 沉浸暗场 + 扫描线 ===== */
 .tv-crt{position:absolute;inset:-16px -16px -44px -16px;z-index:2;pointer-events:none;border:16px solid color-mix(in srgb,var(--seed-fg) 30%,var(--seed-surface));border-bottom-width:44px;border-radius:26px;background:transparent;box-shadow:0 16px 42px var(--shadow-3),inset 0 2px 0 color-mix(in srgb,var(--seed-surface) 30%,transparent),inset 0 -4px 0 color-mix(in srgb,var(--seed-fg) 22%,transparent)}
@@ -416,7 +486,7 @@ body:has(.timeline.collapsed) .workzone.coll-l.coll-r .preview-shell{max-width:m
 .history-btn:hover{color:var(--seed-accent)}
 
 /* ===== 历史库面板 ===== */
-.history-panel{display:none;position:fixed;right:16px;bottom:44px;width:420px;max-width:calc(100vw - 32px);max-height:60vh;border:1px solid var(--line-strong);border-radius:var(--seed-radius);background:var(--seed-surface);box-shadow:0 12px 36px var(--shadow-3);z-index:200;flex-direction:column;overflow:hidden}
+.history-panel{display:none;position:fixed;right:16px;bottom:44px;width:420px;max-width:calc(100vw - 32px);max-height:60vh;border:1px solid var(--line-strong);border-radius:var(--seed-radius);background:var(--surface-2);box-shadow:0 12px 36px var(--shadow-3);z-index:200;flex-direction:column;overflow:hidden}
 .history-panel.open{display:flex}
 .history-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
 .history-head .h-count{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--faint)}
@@ -438,7 +508,7 @@ body:has(.timeline.collapsed) .workzone.coll-l.coll-r .preview-shell{max-width:m
 .eng-switch:hover{color:var(--seed-accent)}
 .eng-switch .eng-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block}
 .eng-switch .eng-dot.external{background:var(--seed-accent)}
-.engine-menu{display:none;position:absolute;right:0;bottom:100%;margin-bottom:6px;width:280px;max-width:60vw;background:var(--seed-surface);border:1px solid var(--line-strong);border-radius:var(--seed-radius);box-shadow:0 10px 30px var(--shadow-3);z-index:220;overflow:hidden;flex-direction:column}
+.engine-menu{display:none;position:absolute;right:0;bottom:100%;margin-bottom:6px;width:280px;max-width:60vw;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--seed-radius);box-shadow:0 10px 30px var(--shadow-3);z-index:220;overflow:hidden;flex-direction:column}
 .engine-menu.open{display:flex}
 .engine-menu-head{padding:9px 12px;font-size:12px;font-weight:700;border-bottom:1px solid var(--line)}
 .engine-list{padding:6px;display:flex;flex-direction:column;gap:2px}
@@ -453,7 +523,7 @@ body:has(.timeline.collapsed) .workzone.coll-l.coll-r .preview-shell{max-width:m
 /* ===== 首访展示壳引导弹层（一次性） ===== */
 .shell-modal{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;background:var(--scrim-bg);padding:20px}
 .shell-modal.open{display:flex}
-.sm-box{width:min(720px,94vw);max-height:88vh;overflow-y:auto;border:1px solid var(--line-strong);border-radius:14px;background:var(--seed-surface);box-shadow:0 24px 70px var(--shadow-3);padding:22px}
+.sm-box{width:min(720px,94vw);max-height:88vh;overflow-y:auto;border:1px solid var(--line-strong);border-radius:14px;background:var(--surface-2);box-shadow:0 24px 70px var(--shadow-3);padding:22px}
 .sm-title{font-size:17px;font-weight:750;letter-spacing:.01em}
 .sm-sub{margin-top:4px;font-size:12px;color:var(--dim);line-height:1.6}
 .sm-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
@@ -461,7 +531,9 @@ body:has(.timeline.collapsed) .workzone.coll-l.coll-r .preview-shell{max-width:m
 .sm-card:hover{transform:translateY(-2px);border-color:var(--seed-primary)}
 .sm-card.on{border-color:var(--seed-accent);box-shadow:0 0 0 3px var(--solid-2)}
 .sm-card .sm-visual{height:88px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.sm-card.theater .sm-visual{background:linear-gradient(160deg,var(--curtain-b),var(--curtain-a) 60%,color-mix(in srgb,var(--curtain-a) 55%,rgb(0 0 0)));box-shadow:inset 0 0 22px var(--curtain-sh)}
+.sm-card.theater .sm-visual::before{content:"";position:absolute;inset:0;z-index:1;background:url("../img/silk-relief.svg") no-repeat center/100% 100%;mix-blend-mode:soft-light;opacity:.85;pointer-events:none}
+.sm-card.theater .sm-visual{background:
+  linear-gradient(160deg,var(--curtain-b),var(--curtain-a) 60%,color-mix(in srgb,var(--curtain-a) 55%,rgb(0 0 0)));box-shadow:inset 0 0 22px var(--curtain-sh)}
 .sm-card.theater .sm-visual::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:22px;border-radius:4px;background:radial-gradient(circle at 35% 45%,var(--sc0-sun),var(--sc0-sun2) 45%,color-mix(in srgb,var(--curtain-a) 60%,rgb(0 0 0)) 100%)}
 .sm-card.tv .sm-visual{background:var(--sm-tv)}
 .sm-card.tv .sm-visual::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:60px;height:44px;border-radius:8px;border:7px solid var(--sm-tv-frame);background:radial-gradient(circle at 50% 50%,var(--sm-tv-glass),var(--sm-tv-dark) 75%)}

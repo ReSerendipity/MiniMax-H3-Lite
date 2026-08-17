@@ -1,6 +1,6 @@
 """
 MM·H3 工作台 — 统一配置管理
-风格向兄弟项目（Image_MultiModel 等）对齐：集中配置、环境变量覆盖。
+风格向兄弟项目 (Image_MultiModel 等) 对齐：集中配置、环境变量覆盖。
 """
 import os
 from pathlib import Path
@@ -27,38 +27,34 @@ class Settings:
     ASSETS_DIR: Path = _BASE_DIR / "assets"
     UPLOADS_DIR: Path = _BASE_DIR / "uploads"
 
-    # ── 服务 ──────────────────────────────────────────────
+    # ── 服务 (单端口:Jinja2 页面 + API + 静态资源统一由 FastAPI 提供) ──
     HOST: str = "127.0.0.1"
     PORT: int = 18080
-    FRONTEND_PORT: int = 8080
 
     # ── 推理 ──────────────────────────────────────────────
     MODEL_NAME: str = "MiniMaxAI/MiniMax-H3"
     MODEL_PATH: str = ""                      # 本地权重路径，空则从 HF/魔搭拉取
-    INFERENCE_BACKEND: str = "diffusers"     # diffusers | comfyui | sglang（运行时可用 /api/engine/switch 切换并持久化）
-    INFERENCE_URL: str = "http://127.0.0.1:8188"
+    INFERENCE_BACKEND: str = "diffusers"     # 本地 diffusers 推理
     QUANTIZATION: str = "int8"                # bf16 | int8 | int4 | gguf-q4_k_m
     MAX_CONCURRENCY: int = 1                  # 单机默认串行
-    INFERENCE_TIMEOUT: int = 600              # 单任务超时（秒）
+    INFERENCE_TIMEOUT: int = 600              # 单任务超时 (秒)
 
-    # ── 官方 H3 模型文件名（默认来自 h3.spec，可环境变量覆盖） ──
+    # ── 官方 H3 模型文件名 (默认来自 h3.spec，可环境变量覆盖) ──
     MODEL_FL2VA: str = H3_MODELS["fl2va"]
     MODEL_REF2VA: str = H3_MODELS["ref2va"]
     MODEL_CLIP: str = H3_MODELS["clip"]
     MODEL_VAE_VIDEO: str = H3_MODELS["vae_video"]
     MODEL_VAE_AUDIO: str = H3_MODELS["vae_audio"]
 
-    # ── 采样默认值（官方模板） ──────────────────────────
+    # ── 采样默认值 (官方模板) ──────────────────────────
     SAMPLER_NAME: str = H3_SAMPLER
     SCHEDULER: str = H3_SCHEDULER
     STEPS: int = H3_STEPS
     DENOISE: float = H3_DENOISE
 
-    # ── ComfyUI 可选执行器 ──────────────────────────────
+    # ── 保存配置 ──────────────────────────────────────────
     SAVE_PREFIX: str = "mmh3"
     REF_IMAGE_SIZE: str = "match"
-    LOAD_VIDEO_NODE: str = "LoadVideo"
-    LOAD_AUDIO_NODE: str = "LoadAudio"
 
     # ── 上传校验 ──────────────────────────────────────────
     MAX_IMAGE_COUNT: int = 9
@@ -67,7 +63,7 @@ class Settings:
     MAX_TOTAL_REFS: int = 12
     MAX_UPLOAD_SIZE_MB: int = 200
 
-    # ── 模型规格（对齐 PRD §6.1） ────────────────────────
+    # ── 模型规格 (对齐 PRD §6.1) ────────────────────────
     SUPPORTED_RATIOS: list = field(default_factory=lambda: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"])
     SUPPORTED_DURATIONS: list = field(default_factory=lambda: [4, 8, 10, 15])
     SUPPORTED_RESOLUTIONS: list = field(default_factory=lambda: ["768P", "2K"])
@@ -97,8 +93,6 @@ class Settings:
             s.MODEL_PATH = env["MMH3_MODEL_PATH"]
         if env.get("MMH3_INFERENCE_BACKEND"):
             s.INFERENCE_BACKEND = env["MMH3_INFERENCE_BACKEND"]
-        if env.get("MMH3_INFERENCE_URL"):
-            s.INFERENCE_URL = env["MMH3_INFERENCE_URL"]
         if env.get("MMH3_QUANTIZATION"):
             s.QUANTIZATION = env["MMH3_QUANTIZATION"]
         if env.get("MMH3_MAX_CONCURRENCY"):

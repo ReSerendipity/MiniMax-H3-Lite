@@ -1,8 +1,8 @@
 """
 MM·H3 工作台 — 系统路由：引擎切换 + 运行时设置
-GET    /api/engines                可用引擎列表（含激活态）
-POST   /api/engine/switch          切换当前推理引擎（持久化，env 优先）
-GET    /api/system/settings        读取可配置项（含是否被 env 锁定）
+GET    /api/engines                可用引擎列表 (含激活态)
+POST   /api/engine/switch          切换当前推理引擎 (持久化，env 优先)
+GET    /api/system/settings        读取可配置项 (含是否被 env 锁定)
 POST   /api/system/settings        更新并持久化可配置项
 """
 import sys
@@ -24,7 +24,6 @@ class SwitchRequest(BaseModel):
 
 class SettingsPatch(BaseModel):
     inference_backend: str | None = None
-    inference_url: str | None = None
     quantization: str | None = None
     max_concurrency: int | None = None
     sampler: str | None = None
@@ -33,8 +32,6 @@ class SettingsPatch(BaseModel):
     denoise: float | None = None
     save_prefix: str | None = None
     ref_image_size: str | None = None
-    load_video_node: str | None = None
-    load_audio_node: str | None = None
 
 
 @router.get("/engines")

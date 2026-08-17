@@ -32,3 +32,28 @@ Thumbs.db
 
 # Node（前端冒烟测试）
 node_modules/
+
+# ===== 本地独享内容（本地保留，不上远程 — 2026-08-17）=====
+# IDE 状态
+.trae/
+# 测试缓存与覆盖率产物
+.pytest_cache/
+.benchmarks/
+htmlcov/
+.coverage
+.coverage.*
+.coverage.xml
+# 设计与原型中间产物
+.design.json
+.canvas-meta.json
+web-prototypes/
+styles/
+# 截图（本地 UI 截图，README 未引用）
+screenshots/
+capture-screenshots.bat
+# 个人学习笔记
+skills-learning/
+# 归档旧原型
+_archive/
+# 项目内部文档（本地保留）
+docs/

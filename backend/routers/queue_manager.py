@@ -4,7 +4,6 @@ PRD §4.2: 单机串行/受限并发执行，状态机 pending → processing �
 超时与重试，失败原因记录
 """
 import sys
-import json
 import threading
 import time
 import traceback

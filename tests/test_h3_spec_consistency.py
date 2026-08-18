@@ -3,11 +3,8 @@
 使用 conftest.py fixtures 简化测试代码。
 """
 import json
-import os
 import sys
 from pathlib import Path
-
-import pytest
 
 # 将项目根目录加入路径
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -128,7 +125,7 @@ def test_mode_mapping(h3_spec):
 
 # ── 测试：引擎切换冒烟 ──────────────────────────────
 def test_engine_registry_imports():
-    from engine_registry import list_engines, active_backend, switch_backend, ENGINES
+    from engine_registry import list_engines, active_backend, ENGINES
     engs = list_engines()
     assert len(engs) == len(ENGINES), f"expected {len(ENGINES)} engines, got {len(engs)}"
     for e in engs:
@@ -143,33 +140,33 @@ def test_engine_switch_persistence(monkeypatch):
     import tempfile
     import json
     from pathlib import Path
-    
-    from engine_registry import switch_backend, active_backend, ENGINES
-    from settings_store import _load, _save, resolve, SETTABLE_KEYS, _DEFAULTS
+
+    from engine_registry import switch_backend
+    from settings_store import resolve
 
     # 创建临时文件作为数据存储路径
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         temp_settings_file = Path(f.name)
-    
+
     try:
         # 确保环境变量不干扰
         monkeypatch.delenv("MMH3_INFERENCE_BACKEND", raising=False)
-        
+
         # 桩化 load/save 函数以使用临时文件
         def mock_load():
             try:
                 return json.loads(temp_settings_file.read_text(encoding="utf-8"))
             except (json.JSONDecodeError, OSError):
                 return {}
-        
+
         def mock_save(data: dict):
             temp_settings_file.write_text(
                 json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
             )
-        
+
         monkeypatch.setattr("settings_store._load", mock_load)
         monkeypatch.setattr("settings_store._save", mock_save)
-        
+
         # 当前仅有 diffusers 引擎，切换自身→自证明有效
         result = switch_backend("diffusers")
         assert result["name"] == "diffusers"

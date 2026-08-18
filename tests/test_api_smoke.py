@@ -10,14 +10,9 @@ import sys
 import time
 from pathlib import Path
 
-import pytest
-
 # 将项目根目录加入路径
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-
-from fastapi.testclient import TestClient
-from backend.main import app
 
 
 def test_health(client):
@@ -33,12 +28,12 @@ def test_project_crud(client):
     r = client.post("/api/projects", json={"name": "冒烟测试项目"})
     assert r.status_code == 200, r.text
     pid = r.json()["id"]
-    
+
     try:
         # 列表
         lst = client.get("/api/projects").json()
         assert any(p["id"] == pid for p in lst)
-        
+
         # 重命名
         r = client.put(f"/api/projects/{pid}", json={"name": "改名"})
         assert r.status_code == 200 and r.json()["name"] == "改名"
@@ -50,17 +45,17 @@ def test_project_crud(client):
 def test_shot_crud_and_refs(client, new_project):
     """镜头 CRUD 及 refs 字段验证"""
     pid = new_project
-    
+
     # 创建镜头
     r = client.post(f"/api/projects/{pid}/shots", json={"name": "镜头 A", "prompt": "测试", "duration": 8})
     assert r.status_code == 200, r.text
     sid = r.json()["id"]
-    
+
     try:
         # 列表（含 refs 字段）
         shots = client.get(f"/api/projects/{pid}/shots").json()
         assert len(shots) == 1 and shots[0]["refs"] == []
-        
+
         # 更新镜头
         r = client.put(f"/api/shots/{sid}", json={"prompt": "新提示词", "duration": 4})
         assert r.status_code == 200 and r.json()["prompt"] == "新提示词"
@@ -72,24 +67,27 @@ def test_shot_crud_and_refs(client, new_project):
 def test_upload(client, new_project):
     """素材上传及镜头 refs 回显验证"""
     pid = new_project
-    
+
     # 创建镜头
     r = client.post(f"/api/projects/{pid}/shots", json={"name": "镜头 A"})
     assert r.status_code == 200, r.text
     sid = r.json()["id"]
-    
+
     try:
         # 上传 png
-        r = client.post("/api/upload", files={"file": ("a.png", io.BytesIO(b"fake-png"), "image/png")},
-                       data={"shot_id": sid})
+        r = client.post(
+            "/api/upload",
+            files={"file": ("a.png", io.BytesIO(b"fake-png"), "image/png")},
+            data={"shot_id": sid},
+        )
         assert r.status_code == 200, r.text
         aid = r.json()["id"]
         assert r.json()["kind"] == "image"
-        
+
         # 镜头列表 refs 带出素材
         shots = client.get(f"/api/projects/{pid}/shots").json()
         assert shots[0]["refs"][0]["id"] == aid
-        
+
         # 不支持的格式
         r = client.post("/api/upload", files={"file": ("x.exe", io.BytesIO(b"x"), "application/octet-stream")})
         assert r.status_code == 422
@@ -100,16 +98,16 @@ def test_upload(client, new_project):
 def test_generation_validation_and_submit(client, new_project, mock_inference):
     """生成任务提交 + 状态机流转验证（pending → processing → completed）"""
     pid = new_project
-    
+
     # 镜头不存在 → 404
     r = client.post("/api/generations", json={"shot_id": "nope", "mode": "text", "prompt": "x", "params": {}})
     assert r.status_code == 404
-    
+
     # 正常提交
     r = client.post(f"/api/projects/{pid}/shots", json={"name": "镜头 A", "prompt": "黄昏", "duration": 8})
     assert r.status_code == 200, r.text
     sid = r.json()["id"]
-    
+
     r = client.post("/api/generations", json={
         "shot_id": sid, "mode": "text", "prompt": "黄昏的海岸线",
         "params": {"duration": 8, "aspect": "16:9", "resolution": "768P"},
@@ -118,7 +116,7 @@ def test_generation_validation_and_submit(client, new_project, mock_inference):
     assert r.status_code == 200, r.text
     tid = r.json()["id"]
     assert r.json()["status"] == "pending"
-    
+
     # 轮询至终态
     final = None
     for _ in range(30):
@@ -127,11 +125,11 @@ def test_generation_validation_and_submit(client, new_project, mock_inference):
             final = t
             break
         time.sleep(0.2)
-    
+
     assert final is not None, "任务未在超时内进入终态"
     assert final["status"] == "completed", f"任务应完成：{final}"
     assert final["result_path"] == "assets/" + final["result_asset_id"] + ".mp4"
-    
+
     # 镜头状态同步为 completed
     shots = client.get(f"/api/projects/{pid}/shots").json()
     assert shots[0]["status"] == "completed"
@@ -140,7 +138,7 @@ def test_generation_validation_and_submit(client, new_project, mock_inference):
 def test_inference_no_placeholder():
     """推理模块不再有占位假成功路径"""
     import backend.routers.inference as inf
-    
+
     assert not hasattr(inf, "_run_placeholder"), "占位推理必须删除"
     src = Path(inf.__file__).read_text(encoding="utf-8")
     assert "演示模式" not in src and "占位" not in src, "推理模块残留占位/演示逻辑"

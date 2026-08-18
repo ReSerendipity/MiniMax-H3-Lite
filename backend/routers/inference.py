@@ -12,12 +12,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from database import get_db, new_id, now_iso
+from database import get_db, new_id
 from config import settings
 from h3 import spec as h3
 from settings_store import resolve as resolve_setting
-
-
 
 
 def _attach_provenance(dest: Path, task_id: str) -> None:
@@ -33,6 +31,7 @@ def _attach_provenance(dest: Path, task_id: str) -> None:
             _log.debug("来源标识附加未完成（无 ffmpeg 或文件不支持）: %s", dest.name)
     except Exception as e:  # pragma: no cover
         _log.debug("来源标识附加异常（已忽略）: %s", e)
+
 
 def _build_params(task_row: dict) -> dict:
     """

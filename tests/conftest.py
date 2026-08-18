@@ -20,8 +20,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.database import get_db, init_db, new_id
-from backend.config import Settings
+from backend.database import init_db
 
 
 @pytest.fixture(scope="session")

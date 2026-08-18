@@ -3,6 +3,7 @@ fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.0.0
 python-multipart>=0.0.6
+jinja2>=3.1.0
 pillow>=9.0.0
 # ── 推理依赖（真实推理需要；已验证组合：diffusers 0.39.0 + transformers 5.x）──
 diffusers==0.39.0

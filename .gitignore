@@ -120,3 +120,12 @@ Desktop.ini
 !data/uploads/.gitkeep
 !outputs/.gitkeep
 !.env.example
+
+# 提示词草稿目录（本地工作区）
+prompt/
+
+
+# pytest coverage artifacts
+coverage.xml
+.coverage
+htmlcov/

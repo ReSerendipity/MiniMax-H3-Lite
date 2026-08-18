@@ -21,13 +21,39 @@ MODE_TO_TASK = {
     "ref": REF2VA,
 }
 
-# ── 输出规格（官方） ──────────────────────────────
+# ── 输出规格（官方，固定不可改） ─────────────────────
 FPS = 24
 AUDIO_SAMPLE_RATE = 32000
-SHORT_SIDE = 768          # 768p 短边
-MAX_DIM = 1344            # 官方上限 768×1344
-FRAME_BLOCK = 17          # 17k+5 帧网格
+BIT_DEPTH = 8              # CreateVideo: bit_depth=8
+OUTPUT_FORMAT = "mp4"      # SaveVideo: format=auto / codec=auto
+FRAME_BLOCK = 17           # 17k+5 帧网格
 FRAME_MIN = 5
+
+# ── 分辨率（官方 README + ResolutionSelector Size 表，上限 768p 短边） ──
+# key = 百万像素(megapixels)，值 = 16:9 下的输出 (宽×高)，multiple=32。
+# 0.98 = H3-Base 原生画布（短边 768，capped 768×1344）；H3-Base 只输出 768p。
+# 更高分辨率（如 1080p/2K）需 H3-Regenerate-2K 模块，未随开源 Base 提供 → 不作前端档位。
+RESOLUTION_PRESETS: dict[str, tuple[int, int]] = {
+    "0.4": (864, 480),
+    "0.5": (960, 544),
+    "0.6": (1056, 608),
+    "0.7": (1152, 640),
+    "0.8": (1216, 672),
+    "0.9": (1280, 736),
+    "0.98": (1344, 768),  # H3 原生画布上限（默认且最高）
+}
+RESOLUTION_DEFAULT = "0.98"   # 官方各工作流默认（H3-Base 原生最高）
+RESOLUTION_MULTIPLE = 32      # ResolutionSelector multiple（官方 = 32）
+SHORT_SIDE = 768
+MAX_DIM = 1344                # H3 原生画布长边上限（capped 768×1344）
+# 各档位对应的「短边」（取自官方 Size 表；0.98=原生 768）
+RESOLUTION_SHORT_SIDE: dict[str, int] = {
+    "0.4": 480, "0.5": 544, "0.6": 608, "0.7": 640, "0.8": 672, "0.9": 736, "0.98": 768,
+}
+
+# ── 时长（官方 PrimitiveFloat 连续值 + MathExpr 处理） ──
+DURATION_MIN = 4              # 前端 UI 下限（官方模型实际支持 0~15s，UI 从 4s 起）
+DURATION_MAX = 15             # 官方模型上限「约 15 秒」
 
 
 # ── 帧长：官方 ComfyMathExpression 公式 ───────────
@@ -68,6 +94,35 @@ def resolution_for(aspect: str, short_side: int = SHORT_SIDE, multiple: int = 2)
         return min(v, MAX_DIM)
 
     return (_round_multi(width, multiple), _round_multi(height, multiple))
+
+
+def dims_for_resolution(preset: str | None, aspect: str | None = None, multiple: int = RESOLUTION_MULTIPLE) -> tuple[int, int]:
+    """
+    由官方分辨率档位 + 宽高比计算 (width, height)。
+    - 16:9（或无 aspect）→ 返回档位在官方 Size 表里的精确尺寸。
+    - 其它比例 → 用该档位的「短边」按比例换算，round 到 multiple(=32)，
+      长边封顶 MAX_DIM(1344)（H3-Base 原生画布上限）。
+    """
+    if not preset or preset not in RESOLUTION_PRESETS:
+        preset = RESOLUTION_DEFAULT
+    if not aspect or aspect == "16:9":
+        return RESOLUTION_PRESETS[preset]
+
+    short = RESOLUTION_SHORT_SIDE.get(preset, SHORT_SIDE)
+    w, h = RATIOS.get(aspect, (16, 9))
+    if w >= h:
+        width = short * w / h
+        height = short
+    else:
+        height = short * h / w
+        width = short
+
+    def _rc(v: float) -> int:
+        v = max(int(v), multiple)
+        v = ((v + multiple - 1) // multiple) * multiple
+        return min(v, MAX_DIM)
+
+    return (_rc(width), _rc(height))
 
 
 # ── 官方模型文件名（来自官方模板 + 模型卡） ────────

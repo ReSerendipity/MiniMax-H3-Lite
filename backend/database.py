@@ -6,7 +6,6 @@ SQLite + 原生 sqlite3（零外部依赖，与前端 server.js 零依赖风格�
 import sqlite3
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from config import settings
 
 

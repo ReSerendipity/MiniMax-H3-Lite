@@ -4,7 +4,6 @@ MM·H3 工作台 — 运行时配置持久化
 """
 import json
 import os
-from pathlib import Path
 from config import settings
 
 _STORE_PATH = settings.BASE_DIR / "data" / "settings.json"
@@ -84,7 +83,6 @@ def update(patch: dict) -> dict:
 
 def all_settings() -> dict:
     """返回全部可读配置：值 + 是否被环境变量锁定"""
-    data = _load()
     out = {}
     for key in SETTABLE_KEYS:
         env_key = next((e for e, k in _ENV_KEYS.items() if k == key), None)

@@ -12,6 +12,11 @@ from h3.spec import (
     SCHEDULER as H3_SCHEDULER,
     STEPS as H3_STEPS,
     DENOISE as H3_DENOISE,
+    RESOLUTION_PRESETS as H3_RESOLUTION_PRESETS,
+    RESOLUTION_DEFAULT as H3_RESOLUTION_DEFAULT,
+    DURATION_MIN as H3_DURATION_MIN,
+    DURATION_MAX as H3_DURATION_MAX,
+    RATIOS as H3_RATIOS,
 )
 
 
@@ -34,10 +39,12 @@ class Settings:
     # ── 推理 ──────────────────────────────────────────────
     MODEL_NAME: str = "MiniMaxAI/MiniMax-H3"
     MODEL_PATH: str = ""                      # 本地权重路径，空则从 HF/魔搭拉取
-    INFERENCE_BACKEND: str = "diffusers"     # 本地 diffusers 推理
+    INFERENCE_BACKEND: str = "diffusers"     # diffusers | comfy（B 方案：进程内复用 ComfyUI 内核）
     QUANTIZATION: str = "int8"                # bf16 | int8 | int4 | gguf-q4_k_m
     MAX_CONCURRENCY: int = 1                  # 单机默认串行
     INFERENCE_TIMEOUT: int = 600              # 单任务超时 (秒)
+    COMFY_SOURCE_DIR: str = ""                # (保留) Comfy 内核源码目录
+    COMFY_URL: str = "http://127.0.0.1:8188"  # ComfyUI HTTP 服务地址（B 方案经此提交官方工作流）
 
     # ── 官方 H3 模型文件名 (默认来自 h3.spec，可环境变量覆盖) ──
     MODEL_FL2VA: str = H3_MODELS["fl2va"]
@@ -63,17 +70,30 @@ class Settings:
     MAX_TOTAL_REFS: int = 12
     MAX_UPLOAD_SIZE_MB: int = 200
 
-    # ── 模型规格 (对齐 PRD §6.1) ────────────────────────
-    SUPPORTED_RATIOS: list = field(default_factory=lambda: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"])
-    SUPPORTED_DURATIONS: list = field(default_factory=lambda: [4, 8, 10, 15])
-    SUPPORTED_RESOLUTIONS: list = field(default_factory=lambda: ["768P", "2K"])
+    # ── 模型规格 (对齐官方工作流，spec.py 为单一事实来源) ────
+    SUPPORTED_RATIOS: list = field(default_factory=lambda: list(H3_RATIOS.keys()))
+    SUPPORTED_DURATIONS: list = field(default_factory=lambda: list(range(H3_DURATION_MIN, H3_DURATION_MAX + 1)))
+    SUPPORTED_DURATION_MIN: int = H3_DURATION_MIN
+    SUPPORTED_DURATION_MAX: int = H3_DURATION_MAX
+    RESOLUTION_PRESETS: dict = field(
+        default_factory=lambda: {
+            k: {"label": f"{k}MP", "width": v[0], "height": v[1]} for k, v in H3_RESOLUTION_PRESETS.items()
+        }
+    )
+    RESOLUTION_DEFAULT: str = H3_RESOLUTION_DEFAULT
     FPS: int = 24
     AUDIO_SAMPLE_RATE: int = 32000
+    OUTPUT_BIT_DEPTH: int = 8            # 固定输出(官方 CreateVideo bit_depth)
+    OUTPUT_FORMAT: str = "mp4"           # 固定输出(官方 SaveVideo format=auto)
     MAX_PROMPT_CHARS: int = 7000
 
     # ── 队列 ──────────────────────────────────────────────
     TASK_RETRY_MAX: int = 1
     TASK_TIMEOUT: int = 600
+
+    # ── 断点续跑 (checkpoint #7) ───────────────────────────
+    CHECKPOINT_DIR: Path = _BASE_DIR / "data" / "checkpoints"
+    CHECKPOINT_EVERY: int = 5                    # 每完成 N 个镜头保存一次进度
 
     def __post_init__(self):
         self.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -91,6 +111,10 @@ class Settings:
             s.PORT = int(env["MMH3_PORT"])
         if env.get("MMH3_MODEL_PATH"):
             s.MODEL_PATH = env["MMH3_MODEL_PATH"]
+        if env.get("MMH3_COMFY_SOURCE_DIR"):
+            s.COMFY_SOURCE_DIR = env["MMH3_COMFY_SOURCE_DIR"]
+        if env.get("MMH3_COMFY_URL"):
+            s.COMFY_URL = env["MMH3_COMFY_URL"]
         if env.get("MMH3_INFERENCE_BACKEND"):
             s.INFERENCE_BACKEND = env["MMH3_INFERENCE_BACKEND"]
         if env.get("MMH3_QUANTIZATION"):

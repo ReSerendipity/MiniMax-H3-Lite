@@ -10,15 +10,10 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 # 将项目根目录加入路径
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from fastapi.testclient import TestClient
-from backend.main import app
-from routers import uploads as uploads_router
 from routers.inference import _build_params
 
 
@@ -51,9 +46,8 @@ def _real_png(w, h):
 
 def test_pairing_resolution(client, new_project, new_shot, mock_ffprobe, h3_spec):
     """G3：配对音轨解析——refs 中配对音频带 paired_video，独立音频为 None。"""
-    pid = new_project
     sid = new_shot[1]
-    
+
     vid = _upload(client, sid, "clip.mp4", "video/mp4", b"fake")
     paid = _upload(client, sid, "track.wav", "audio/wav", b"fake", paired_with=vid)
     aid = _upload(client, sid, "standalone.wav", "audio/wav", b"fake")
@@ -65,7 +59,7 @@ def test_pairing_resolution(client, new_project, new_shot, mock_ffprobe, h3_spec
     assert by_id[paid]["paired_video"] == vid, "配对音频应解析出 paired_video"
     assert by_id[aid]["paired_video"] is None, "独立音频不应有配对"
     assert by_id[vid]["kind"] == "video"
-    
+
     # 分组结果含 ref_video_audios（成对）
     grouped = h3_spec.group_refs(params["refs"])
     assert len(grouped["ref_video_audios"]) == 1
@@ -75,9 +69,8 @@ def test_pairing_resolution(client, new_project, new_shot, mock_ffprobe, h3_spec
 
 def test_follow_first_frame_size(client, new_project, new_shot, real_png_image):
     """G7：首帧 1080×1920（竖图）→ 768×1344（短边 768，多倍数 2 对齐，1344 封顶）。"""
-    pid = new_project
     sid = new_shot[1]
-    
+
     iid = _upload(client, sid, "portrait.png", "image/png", _real_png(1080, 1920))
 
     # 默认（不跟随）：按比例 16:9 计算 → 1344×768
@@ -92,9 +85,8 @@ def test_follow_first_frame_size(client, new_project, new_shot, real_png_image):
 
 def test_seed_and_sampling_passthrough(client, new_project, new_shot):
     """G2/G5：种子、采样覆盖、ref_image_size 请求级透传。"""
-    pid = new_project
     sid = new_shot[1]
-    
+
     params = _build_params(_task_row(sid, "text", [], {
         "duration": 8, "aspect": "16:9",
         "seed": 42, "sampler": "euler", "steps": 25, "denoise": 0.9, "ref_image_size": "max",

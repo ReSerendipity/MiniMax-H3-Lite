@@ -21,7 +21,6 @@ import logging
 import os
 import struct
 import subprocess
-import tempfile
 import time
 import zlib
 from pathlib import Path

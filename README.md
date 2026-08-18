@@ -4,7 +4,7 @@
 
 前端按官方三份 ComfyUI 工作流拆分为**三个模式页**（文生 T2V / 图生 I2V / 多模态参考 R2V），由 **FastAPI + Jinja2 单端口服务端渲染**（`backend/templates/`，`base.html` + partials + 三页面模板），顶栏一键切换；展示壳（剧场 / 电视 / 放映机）首次进入引导选择并持久化，切换入口收敛在顶栏「外观」菜单。明暗双主题，响应式。
 
-> 当前状态：前端模板化（Jinja2 单端口）与后端 API 全部就绪，官方工作流能力对齐（G1–G7）已完成，后端单测 29 项 + 前端冒烟 55 项全部通过；**真实模型端到端推理**待本机模型环境就绪后验证（见「模型与推理说明」）。
+> 当前状态：前端模板化（Jinja2 单端口）与后端 API 全部就绪，官方工作流能力对齐（G1–G7）已完成，后端单测与前端冒烟本地验证通过（CI 状态以仓库 Actions 为准）；**真实模型端到端推理**待本机模型环境就绪后验证（见「模型与推理说明」）。
 
 ## 功能特性
 
@@ -96,8 +96,8 @@ npm run test:frontend   :: 等价于 python bin/render_pages.py && node tests/fr
 
 ## 文档索引
 
-- 产品需求文档（权威 spec）：[docs/PRD.md](docs/PRD.md)
-- 能力补齐实施指南：[docs/IMPLEMENTATION_GAPS.md](docs/IMPLEMENTATION_GAPS.md)
-- 设计计划：[.design.json](.design.json)
+- 产品需求文档（权威 spec）：docs/PRD.md（本地文档，不在公开仓库）
+- 能力补齐实施指南：docs/IMPLEMENTATION_GAPS.md（本地文档，不在公开仓库）
+- 设计计划：.design.json（本地文档，不在公开仓库）
 - 官方模板（能力真源）：`workflows/` 目录三份 JSON
 - 官方发布页：https://modelscope.cn/models/MiniMax/MiniMax-H3

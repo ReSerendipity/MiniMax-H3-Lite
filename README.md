@@ -92,6 +92,7 @@ npm run test:frontend   :: 等价于 python bin/render_pages.py && node tests/fr
 - 模型权重：本地路径经 `MMH3_MODEL_PATH` 指定，留空则从 HuggingFace `MiniMaxAI/MiniMax-H3` 拉取；国内下载优先魔搭 `MiniMax/MiniMax-H3`。显存有限时建议官方模板同款 int8 pruned 权重 + `MMH3_QUANTIZATION` 量化档位。
 - 真实推理前请先完成：安装推理依赖（`requirements.txt` 中 diffusers/transformers 段）、准备权重，随后执行 `python scripts/smoke_real.py` 冒烟验证，再走一遍三模式页生成闭环。
 - 许可证：MiniMax H3 Community License，商用 / 再分发 / 微调前请确认条款。
+- 代码许可 Apache-2.0；MiniMax H3 模型权重遵循 MiniMax 官方权重协议（含地域条款），使用前请阅读官方许可。
 
 ## 文档索引
 

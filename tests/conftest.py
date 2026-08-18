@@ -34,22 +34,38 @@ def temp_db_path():
     """创建临时数据库文件路径（每个测试函数独立）"""
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = Path(f.name)
-    # 使用临时路径覆盖 settings
+    # 使用临时路径覆盖 settings（双形态模块双 patch：backend.* 与顶层 config
+    # 是同一文件的两个模块对象，业务代码 `from config import settings` 读顶层，
+    # 测试/包内代码读 backend.config，必须两处都 patch 才能真正隔离真实 DB）
     original_db_path = None
+    original_top_db_path = None
     try:
         from backend import config
+        import config as top_config  # 顶层形态（backend/ 在 sys.path 上）
         original_db_path = config.settings.DB_PATH
+        original_top_db_path = top_config.settings.DB_PATH
         config.settings.DB_PATH = db_path
+        top_config.settings.DB_PATH = db_path
         init_db()
         yield db_path
     finally:
-        # 清理临时数据库
+        # 清理临时数据库（后台队列 worker 可能短暂持有连接，Windows 下会锁文件，
+        # 重试数次后容忍 PermissionError，残留由 OS 回收）
+        import time as _time
         if db_path.exists():
-            db_path.unlink()
-        # 恢复原始配置
+            for _ in range(5):
+                try:
+                    db_path.unlink()
+                    break
+                except PermissionError:
+                    _time.sleep(0.2)
+        # 恢复原始配置（双形态都恢复）
         if original_db_path:
             from backend import config
             config.settings.DB_PATH = original_db_path
+        if original_top_db_path:
+            import config as top_config
+            top_config.settings.DB_PATH = original_top_db_path
 
 
 @pytest.fixture(scope="function")

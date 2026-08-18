@@ -2,6 +2,7 @@
 MM·H3 工作台 — FastAPI 主应用
 PRD §5: FastAPI 后端 + SQLite + asyncio/线程池队列
 """
+import logging
 import sys
 from pathlib import Path
 
@@ -17,6 +18,8 @@ from database import init_db
 from config import settings
 from engine_registry import active_backend, list_engines
 from routers import projects, shots, generations, uploads, history, system
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="MM·H3 工作台 API",
@@ -59,6 +62,15 @@ def page_r2v(request: Request):
 @app.on_event("startup")
 def startup():
     init_db()
+    # 断点续跑（checkpoint #7）：扫描未完成任务并恢复续跑
+    # 失败不阻塞启动（仅 warning）
+    try:
+        from routers.queue_manager import resume_unfinished_tasks
+        restored = resume_unfinished_tasks()
+        if restored:
+            logger.info("[Checkpoint] 启动时恢复 %d 个未完成任务: %s", len(restored), restored)
+    except Exception as e:  # pragma: no cover
+        logger.warning("[Checkpoint] 启动恢复扫描失败（不影响启动）: %s", e)
 
 
 @app.get("/api/health")

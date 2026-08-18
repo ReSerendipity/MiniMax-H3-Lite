@@ -31,15 +31,15 @@ pytestmark = pytest.mark.slow
 class TestAPIPerformance:
     """API 响应时间基准测试"""
 
-    @pytest.fixture(scope="class")
-    def client(self):
-        """每个测试类共享一个 client"""
+    @pytest.fixture
+    def client(self, temp_db_path):
+        """每个测试使用隔离临时库（依赖 conftest temp_db_path，不触碰真实 mmh3.db）"""
         with TestClient(app) as c:
             yield c
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def test_project(self, client):
-        """创建测试项目供性能测试使用"""
+        """创建测试项目供性能测试使用（隔离库内）"""
         r = client.post("/api/projects", json={"name": "性能测试项目"})
         pid = r.json()["id"]
         yield pid

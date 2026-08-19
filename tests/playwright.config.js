@@ -77,10 +77,11 @@ export default defineConfig({
     },
   ],
   
-  // Web 服务器（可选，如果测试需要启动服务）
-  // webServer: {
-  //   command: 'python ../backend/main.py',
-  //   url: 'http://127.0.0.1:18080',
-  //   timeout: 120 * 1000,
-  // },
+  // Web 服务器（自动拉起后端供 E2E 测试使用）
+  webServer: {
+    command: 'python -m uvicorn backend.main:app --host 127.0.0.1 --port 18080',
+    url: 'http://127.0.0.1:18080/api/health',
+    timeout: 120 * 1000,
+    reuseExistingServer: true,
+  },
 });

@@ -17,17 +17,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+            - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
+          pip install -r requirements-lock.txt
+          pip install pytest pytest-cov pytest-benchmark
 
       - name: Run tests with coverage
         env:
@@ -78,24 +78,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+            - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Python lint tools
-        run: pip install flake8
-
-      - name: Lint Python
+            - name: Lint Python
         run: |
-          # E402：项目采用 sys.path.insert(0, ...) 后置导入的双形态架构
-          # （backend/*.py 与 tests/*.py 均可作为独立脚本/测试执行），
-          # 模块级导入必须放在路径注入之后，属架构固有，不做豁免外强制。
+          pip install flake8
           flake8 backend/ tests/*.py \
             --ignore=E501,W503,E402 \
             --max-line-length=120 \
@@ -105,7 +95,7 @@ jobs:
         run: npm ci
 
       - name: Lint JavaScript
-        run: npx eslint tests/frontend/*.js tests/*.js --no-error-on-unmatched-pattern || true
+        run: npx eslint tests/frontend/*.js tests/*.js --no-error-on-unmatched-pattern
 
   # ── 安全扫描 ──────────────────────────────────────
   security-scan:
@@ -117,10 +107,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+            - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -130,7 +120,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-lock.txt
           npm ci
 
       - name: Python security audit
@@ -163,12 +153,12 @@ jobs:
         run: |
           HITS=$(grep -rn --include='*.py' --include='*.bat' --include='*.sh' --include='*.yml' \
             -E "host[[:space:]]*=[[:space:]]*['\"]0\.0\.0\.0|--host[[:space:]]+0\.0\.0\.0" \
-            bin backend start.bat 2>/dev/null | grep -v tests || true)
+            scripts backend config.yaml start.bat start.sh 2>/dev/null | grep -v tests || true)
           if [ -n "$HITS" ]; then echo "FAIL: 发现 0.0.0.0 监听配置"; echo "$HITS"; exit 1; fi
           echo "PASS: 无 0.0.0.0 监听配置"
       - name: 入口文件一致性
         run: |
-          test -f bin/clean_launch.py || test -f backend/main.py || exit 1
+          test -f scripts/clean_launch.py || test -f backend/main.py || exit 1
           test -f requirements.txt
           echo "PASS: 入口与依赖清单存在"
       - name: 依赖锁存在性

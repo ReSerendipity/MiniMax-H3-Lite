@@ -85,34 +85,18 @@ def test_upload_duration_total_exceeded(client, new_project, new_shot, monkeypat
     assert "合计时长超限" in r.text
 
 
-def test_upload_pair_audio_to_video(client, new_project, new_shot, mock_ffprobe):
-    """G3：视频 + 配对音轨成功；shots 接口回显 paired_video；负面用例 422。"""
+def test_upload_video_and_paired_audio(client, new_project, new_shot, mock_ffprobe):
+    """上传视频 + 配对音轨成功。"""
     pid = new_project
     sid = new_shot[1]
 
-    # 上传视频
-    rv = client.post(
-        "/api/upload",
-        files={"file": ("clip.mp4", b"fake", "video/mp4")},
-        data={"shot_id": sid},
-    )
+    rv = client.post("/api/upload", files={"file": ("clip.mp4", b"fake", "video/mp4")},
+                    data={"shot_id": sid})
     assert rv.status_code == 200, rv.text
     vid = rv.json()["id"]
 
-    # 独立音频（不配对）
-    ra = client.post(
-        "/api/upload",
-        files={"file": ("standalone.wav", b"fake", "audio/wav")},
-        data={"shot_id": sid},
-    )
-    assert ra.status_code == 200, ra.text
-
-    # 配对音轨（paired_with=视频）
-    rp = client.post(
-        "/api/upload",
-        files={"file": ("track.wav", b"fake", "audio/wav")},
-        data={"shot_id": sid, "paired_with": vid},
-    )
+    rp = client.post("/api/upload", files={"file": ("track.wav", b"fake", "audio/wav")},
+                    data={"shot_id": sid, "paired_with": vid})
     assert rp.status_code == 200, rp.text
     paid = rp.json()["id"]
 
@@ -121,14 +105,35 @@ def test_upload_pair_audio_to_video(client, new_project, new_shot, mock_ffprobe)
     refs = shots[0]["refs"]
     by_id = {r["id"]: r for r in refs}
     assert by_id[paid]["paired_video"] == vid
-    assert by_id[ra.json()["id"]]["paired_video"] is None
 
-    # 负面：把音频配对到图片 → 422
-    ri = client.post(
-        "/api/upload",
-        files={"file": ("img.png", b"fake", "image/png")},
-        data={"shot_id": sid},
-    )
+def test_upload_standalone_audio_no_pair(client, new_project, new_shot, mock_ffprobe):
+    """独立音频（不配对）→ paired_video 为 None。"""
+    pid = new_project
+    sid = new_shot[1]
+
+    # 先上传视频 + 配对音频
+    rv = client.post("/api/upload", files={"file": ("v.mp4", b"fake", "video/mp4")},
+                    data={"shot_id": sid})
+    vid = rv.json()["id"]
+    client.post("/api/upload", files={"file": ("p.wav", b"fake", "audio/wav")},
+               data={"shot_id": sid, "paired_with": vid})
+
+    # 独立音频
+    ra = client.post("/api/upload", files={"file": ("standalone.wav", b"fake", "audio/wav")},
+                    data={"shot_id": sid})
+    assert ra.status_code == 200
+    aid = ra.json()["id"]
+
+    shots = client.get(f"/api/projects/{pid}/shots").json()
+    by_id = {r["id"]: r for r in shots[0]["refs"]}
+    assert by_id[aid]["paired_video"] is None
+
+
+def test_pair_audio_to_image_rejected(client, new_project, new_shot, mock_ffprobe):
+    """负面：把音频配对到图片 → 422。"""
+    sid = new_shot[1]
+    ri = client.post("/api/upload", files={"file": ("img.png", b"fake", "image/png")},
+                    data={"shot_id": sid})
     iid = ri.json()["id"]
     rbad = client.post(
         "/api/upload",
@@ -137,7 +142,11 @@ def test_upload_pair_audio_to_video(client, new_project, new_shot, mock_ffprobe)
     )
     assert rbad.status_code == 422 and "视频" in rbad.text
 
-    # 负面：配对目标不属于当前镜头 → 422
+
+def test_pair_audio_to_other_shot_video_rejected(client, new_project, new_shot, mock_ffprobe):
+    """负面：配对目标不属于当前镜头 → 422。"""
+    sid = new_shot[1]
+    # 创建第二个项目+镜头+视频
     r2 = client.post("/api/projects", json={"name": "临时项目"})
     pid2 = r2.json()["id"]
     r3 = client.post(f"/api/projects/{pid2}/shots", json={"name": "镜头 B"})
@@ -148,9 +157,7 @@ def test_upload_pair_audio_to_video(client, new_project, new_shot, mock_ffprobe)
         data={"shot_id": sid2},
     )
     vid2 = rv2.json()["id"]
-    rbad2 = client.post(
-        "/api/upload",
-        files={"file": ("x.wav", b"fake", "audio/wav")},
-        data={"shot_id": sid, "paired_with": vid2},
-    )
+    # 把 vid2（属于 sid2）配对到 sid 下的音频 → 422
+    rbad2 = client.post("/api/upload", files={"file": ("x.wav", b"fake", "audio/wav")},
+                       data={"shot_id": sid, "paired_with": vid2})
     assert rbad2.status_code == 422

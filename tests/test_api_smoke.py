@@ -95,15 +95,15 @@ def test_upload(client, new_project):
         client.delete(f"/api/shots/{sid}")
 
 
-def test_generation_validation_and_submit(client, new_project, mock_inference):
-    """生成任务提交 + 状态机流转验证（pending → processing → completed）"""
-    pid = new_project
-
-    # 镜头不存在 → 404
+def test_generation_rejects_unknown_shot(client, mock_inference):
+    """镜头不存在 → 404。"""
     r = client.post("/api/generations", json={"shot_id": "nope", "mode": "text", "prompt": "x", "params": {}})
     assert r.status_code == 404
 
-    # 正常提交
+
+def test_generation_submit_returns_pending(client, new_project, mock_inference):
+    """正常提交 → 200 + status=pending。"""
+    pid = new_project
     r = client.post(f"/api/projects/{pid}/shots", json={"name": "镜头 A", "prompt": "黄昏", "duration": 8})
     assert r.status_code == 200, r.text
     sid = r.json()["id"]
@@ -114,10 +114,23 @@ def test_generation_validation_and_submit(client, new_project, mock_inference):
         "ref_ids": [],
     })
     assert r.status_code == 200, r.text
-    tid = r.json()["id"]
     assert r.json()["status"] == "pending"
 
-    # 轮询至终态
+def test_generation_completes_and_syncs_shot(client, new_project, mock_inference):
+    """任务轮询至 completed + 镜头状态同步为 completed。"""
+    pid = new_project
+    r = client.post(f"/api/projects/{pid}/shots", json={"name": "镜头 A", "prompt": "黄昏", "duration": 8})
+    assert r.status_code == 200, r.text
+    sid = r.json()["id"]
+
+    r = client.post("/api/generations", json={
+        "shot_id": sid, "mode": "text", "prompt": "黄昏的海岸线",
+        "params": {"duration": 8, "aspect": "16:9"},
+        "ref_ids": [],
+    })
+    assert r.status_code == 200, r.text
+    tid = r.json()["id"]
+
     final = None
     for _ in range(30):
         t = client.get(f"/api/generations/{tid}").json()
@@ -130,7 +143,7 @@ def test_generation_validation_and_submit(client, new_project, mock_inference):
     assert final["status"] == "completed", f"任务应完成：{final}"
     assert final["result_path"] == "assets/" + final["result_asset_id"] + ".mp4"
 
-    # 镜头状态同步为 completed
+
     shots = client.get(f"/api/projects/{pid}/shots").json()
     assert shots[0]["status"] == "completed"
 

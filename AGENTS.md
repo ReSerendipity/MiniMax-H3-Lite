@@ -1,7 +1,7 @@
 # MiniMax-H3-lite AGENTS.md — AI 辅助开发指南
 
-> 🧬 **自进化协议版本**：v0.1
-> 📅 **最后更新日期**：2026-08-17
+> 🧬 **自进化协议版本**：v1.5
+> 📅 **最后更新日期**：2026-08-19
 > 🎯 **对应项目版本**：v0.1.0（Apache-2.0 开源协议）
 
 ---
@@ -18,9 +18,11 @@ AI Agent 打开本文件后的 **第一件事** 是执行下面的「🧪 自进
 5. **🏷️ 版本递增（Version Increment）**：每次更新本文件内容后，**必须** 做三件事：① 文件顶部「自进化协议版本号」+0.1（小改）或 +1.0（大改/框架调整）；② 更新「最后更新日期」；③ 在文件末尾「📋 自进化修订记录表」追加一行记录。
 
 ### 🧪 自进化自检清单（每次启动工作前必跑）
-- [ ] 目录结构（`backend/`、`bin/`、`scripts/`、`tests/`、`workflows/`）是否和第 3 节模块边界描述一致？
+- [ ] 目录结构（`backend/`、`scripts/`、`tests/`、`workflows/`）是否和第 3 节模块边界描述一致？
 - [ ] 单端口 18080 与 `backend/config.py → PORT` 是否一致（有无被改成其他端口）？
 - [ ] 六个 `/api/*` 路由（projects / shots / generations / uploads / history / system）是否和 `backend/main.py` 的 include_router 列表一致？
+- [ ] 是否包含 `POST /api/projects/clear`（一键清空接口）？
+- [ ] 分辨率/时长/输出规格是否以 `workflows/*.json` 为准（`h3/spec.py` 的 `RESOLUTION_PRESETS` / `DURATION_MIN..MAX`，config 只从 spec 派生）？
 - [ ] 上次工作是否踩了新坑？如果是，是否已追加到第 8 节 Known Gotchas？
 - [ ] 上次更新是否正确递增了自进化协议版本号 + 追加了修订记录表？
 - [ ] `requirements-lock.txt` 是否随 `requirements.txt` 的变更一并更新（pip-compile 或环境快照）？
@@ -34,7 +36,7 @@ AI Agent 打开本文件后的 **第一件事** 是执行下面的「🧪 自进
 > 核心特色：**单端口 18080**（Jinja2 页面 + `/api` + `/assets` + `/uploads` 统一由 FastAPI 提供）+ 三模式页面 + 项目/分镜管理 + 上传三校验（数量 / 大小 / 类型）。
 > 开源协议：**Apache-2.0**
 > 技术栈：**Python 3.10+（推荐 3.12）+ FastAPI + Uvicorn + Pydantic v2 + Jinja2 + SQLite（stdlib）+ diffusers（真实推理）**
-> 代码入口：`bin/clean_launch.py`（推荐，自动选 CUDA Python + 启动 uvicorn，端口被占用自动向上顺延）
+> 代码入口：`scripts/clean_launch.py`（推荐，自动选 CUDA Python + 启动 uvicorn，端口被占用自动向上顺延）
 > 后端 Uvicorn 入口：`python -m uvicorn backend.main:app --host 127.0.0.1 --port 18080`
 > 默认端口：**`http://127.0.0.1:18080`**（被占用时自动顺延，见第 8 节陷阱）
 > 依赖管理：`requirements.txt`（生产）+ `requirements-lock.txt`（锁定）+ `package.json` / `package-lock.json`（前端测试）
@@ -69,23 +71,22 @@ MiniMax-H3-lite/
 │   │   ├── shots.py       ← 分镜（时间线）管理
 │   │   ├── generations.py ← 任务提交 / 队列（queue_manager.enqueue）
 │   │   ├── inference.py   ← 推理（diffusers / comfy workflow 参数构建）
+│   │   ├── comfy_engine.py← B 方案：把任务参数注入官方 H3 工作流(t2v/i2v/r2v)，经本机 ComfyUI HTTP API(8188) 提交执行并取回 mp4（显存管理/解码/合成全交给 ComfyUI，避免手动复刻底层崩溃）
 │   │   ├── uploads.py     ← 上传（数量 / 大小 / 类型三校验）
 │   │   ├── history.py     ← 历史库
 │   │   ├── system.py      ← 系统信息 / 引擎列表
 │   │   └── queue_manager.py ← 任务队列管理
 │   └── templates/         ← Jinja2 页面：base / t2v / i2v / r2v + partials
-├── bin/
-│   ├── clean_launch.py    ← 启动入口（选 CUDA Python + 校验依赖 + 端口顺延 + uvicorn + 自动开浏览器）
-│   └── render_pages.py    ← 把三页面模板渲染到 tests/frontend/_rendered/（供前端 smoke 测试读取）
 ├── assets/                ← 前端静态资源（css / js / favicon）
+├── model/                 ← 本地权重（ComfyUI 单文件 safetensors，目录命名对齐 ComfyUI-aki-v3：diffusion_models/ text_encoders/ vae/ loras/）
 ├── workflows/             ← 官方推理工作流 JSON（video_minimax_h3_{t2v,i2v,r2v}.json）
-├── scripts/               ← smoke_real.py / verify_watermark.py
+├── scripts/               ← clean_launch.py（启动入口：选 CUDA Python + 校验依赖 + 端口顺延 + uvicorn + 自动开浏览器）/ render_pages.py（把三页面模板渲染到 tests/frontend/_rendered/ 供前端 smoke 测试读取）/ smoke_real.py / verify_watermark.py / cleanup_garbage.py（原 bin 目录的 clean_launch.py / render_pages.py 已并入本目录）
 ├── tests/                 ← pytest（test_api_smoke / test_h3_spec_consistency / test_performance …）+ Playwright 前端冒烟
 ├── requirements.txt        ← 生产依赖
 ├── requirements-lock.txt   ← 锁定依赖版本
 ├── pytest.ini              ← pytest 配置
 ├── package.json            ← 前端测试依赖（Playwright）
-└── start.bat               ← Windows 一键（→ bin/clean_launch.py）
+└── start.bat               ← Windows 一键（→ scripts/clean_launch.py）
 ```
 
 ### 🔴 关键约束
@@ -100,12 +101,12 @@ MiniMax-H3-lite/
 ## 4. 启动命令
 
 ### 4.1 一键启动（推荐）
-- **Windows**：双击 `start.bat` → 自动检测系统 Python / 兄弟项目 WinPython → 启动 `bin/clean_launch.py` → 自动打开浏览器。
+- **Windows**：双击 `start.bat` → 自动检测系统 Python / 兄弟项目 WinPython → 启动 `scripts/clean_launch.py` → 自动打开浏览器。
 
 ### 4.2 手动启动
 ```bash
 # 方式 A（推荐，含 CUDA Python 切换 + 依赖校验 + 端口顺延）
-python bin/clean_launch.py
+python scripts/clean_launch.py
 # → 默认 http://127.0.0.1:18080（被占用则自动向上顺延）
 
 # 方式 B（纯 Uvicorn，调试用）
@@ -127,19 +128,41 @@ python -m uvicorn backend.main:app --host 127.0.0.1 --port 18080 --reload
 | `MMH3_HOST` | HOST | 监听地址（保持 127.0.0.1） |
 | `MMH3_PORT` | PORT | 起始端口（默认 18080） |
 | `MMH3_MODEL_PATH` | MODEL_PATH | 本地权重路径，空则从 HF / 魔搭拉取 |
-| `MMH3_INFERENCE_BACKEND` | INFERENCE_BACKEND | 默认 `diffusers` |
+| `MMH3_INFERENCE_BACKEND` | INFERENCE_BACKEND | `comfy`（默认，B 方案）/ `diffusers` |
+| `MMH3_COMFY_SOURCE_DIR` | COMFY_SOURCE_DIR | (保留，已不主用) Comfy 内核源码目录 |
+| `MMH3_COMFY_URL` | COMFY_URL | ComfyUI HTTP 服务地址（默认 `http://127.0.0.1:8188`，B 方案经此提交官方工作流） |
 | `MMH3_QUANTIZATION` | QUANTIZATION | `bf16 / int8 / int4 / gguf-q4_k_m` |
 | `MMH3_MAX_CONCURRENCY` | MAX_CONCURRENCY | 单机默认串行（1） |
 | `MMH3_MODEL_*` | MODEL_FL2VA / REF2VA / CLIP / VAE_VIDEO / VAE_AUDIO | 官方模型文件名覆盖 |
 
-> 上传限制（`MAX_IMAGE_COUNT=9` / `MAX_VIDEO_COUNT=3` / `MAX_AUDIO_COUNT=3` / `MAX_TOTAL_REFS=12` / `MAX_UPLOAD_SIZE_MB=200`）与模型规格（`SUPPORTED_RATIOS` / `SUPPORTED_DURATIONS=[4,8,10,15]` / `SUPPORTED_RESOLUTIONS=["768P","2K"]` / `MAX_PROMPT_CHARS=7000`）均可在 `backend/config.py` 调整。
+> 上传限制（`MAX_IMAGE_COUNT=9` / `MAX_VIDEO_COUNT=3` / `MAX_AUDIO_COUNT=3` / `MAX_TOTAL_REFS=12` / `MAX_UPLOAD_SIZE_MB=200`）与模型规格（`SUPPORTED_RATIOS` / `SUPPORTED_DURATIONS`=4~15 整秒 / `RESOLUTION_PRESETS`=0.4~0.98 MP / `MAX_PROMPT_CHARS=7000`，均从 `backend/h3/spec.py` 派生，勿在 config 另写一套）均可在 `backend/config.py` 调整（仅改 spec 为准）。
+
+### 5.1 官方规格对照表（单一事实来源：`workflows/*.json` + `github.com/MiniMax-AI/MiniMax-H3`）
+
+> 发生冲突时以官方来源为准；修任何一边都要同步 `backend/h3/spec.py` + `tests/test_h3_spec_consistency.py`。
+
+| 类别 | 官方要求（README） | 项目定位/值 | 备注 |
+|---|---|---|---|
+| 时长 | 输出 **4–15 秒** | `h3.spec` `DURATION_MIN..MAX`=4..15，`config.SUPPORTED_DURATIONS`=range(4,16) | 前端 4–15 整秒档位 |
+| 宽高比 | 21:9 / 16:9 / 4:3 / 1:1 / 3:4 / 9:16 | `h3.spec.RATIOS` → `SUPPORTED_RATIOS` | 与 README 一致 |
+| 分辨率 | 短边默认 768；**2K 需 H3-Regenerate-2K（未开源）** | `RESOLUTION_PRESETS`=0.4~**0.98**（16:9→864×480…**1344×768**）；`dims_for_resolution()` multiple=32、长边封顶 1344 | 0.98=原生上限；`>0.98` 不作前端档位 |
+| 帧率 | 24 FPS（固定） | `FPS=24` | 前端不展示/不可改 |
+| 输出音频 | 32 kHz 立体声（固定） | `AUDIO_SAMPLE_RATE=32000` | 固定 |
+| 输出封装 | —（ComfyUI mp4 / 8bit） | `OUTPUT_FORMAT=mp4`、`OUTPUT_BIT_DEPTH=8` | 仅在 spec 声明，前端不展示 |
+| Ref2VA 图 | ≤ 9 张 | `MAX_IMAGE_COUNT=9` | |
+| Ref2VA 视频 | ≤ 3 段；每段 **2–15s**；同类合计 **≤15s** | `MAX_VIDEO_COUNT=3`；`uploads.py` `MIN/MAX_SEGMENT_DURATION` + `MAX_TOTAL_KIND_DURATION`(ffprobe) | 未生效会拒传 |
+| Ref2VA 音频 | ≤ 3 段；每段 2–15s；同类合计 ≤15s | `MAX_AUDIO_COUNT=3`；同上 | 音频须配图或视频 |
+| Ref2VA 混合 | 文件总数 ≤ 12 | `MAX_TOTAL_REFS=12` | |
+| FL2VA | 0/1/2 张图（文生/首帧/末帧/首尾帧） | `MODE_TO_TASK` text/first_frame/last_frame/first_last → t2va/fl2va | i2v 额外「跟随首帧」= 官方 Use Image Size 可选组 |
+
+**README 关键澄清**：① H3-Base 只输出 768p；2K 走 H3-Regenerate-2K（未随开源 Base 提供）→ 本地分辨率封顶 0.98。② H3-Context-IR 未开源（官方强烈建议接入）→ 本项目「指令优化」仅为轻量本地增强，前端已如实标注非等价物。③ 模型仓库为 `MiniMaxAI/MiniMax-H3`（HF），`config.MODEL_NAME` 与之同名；`MODELS` 内的 safetensors 文件名来自 Comfy-Org 工作流导出，供参数对齐。
 
 ---
 
 ## 6. 测试约定
 
 - pytest 配置在 `pytest.ini`，测试文件在 `tests/`（`test_api_smoke.py` / `test_h3_spec_consistency.py` / `test_gaps_uploads.py` / `test_build_params.py` / `test_performance.py`）。
-- 前端冒烟：`tests/frontend/smoke.js` 读取 `tests/frontend/_rendered/*.html`（由 `bin/render_pages.py` 生成）；Playwright 配置在 `tests/playwright.config.js` + `tests/e2e`。
+- 前端冒烟：`tests/frontend/smoke.js` 读取 `tests/frontend/_rendered/*.html`（由 `scripts/render_pages.py` 生成）；Playwright 配置在 `tests/playwright.config.js` + `tests/e2e`。
 - 命名规范：类 `Test<被测类>`，方法 `test_<场景>_<期望>_<条件>`；**严禁 `assert True` 凑覆盖率**。
 - 依赖完整性：`test_h3_spec_consistency.py` 保证 `h3/spec.py` 与 workflows JSON 默认值一致，改了任意一边记得跑它。
 
@@ -171,10 +194,26 @@ Scope 建议：`backend` / `routers` / `inference` / `i2v` / `r2v` / `t2v` / `up
 
 | # | 坑点标题 | 触发场景 | 现象/报错 | 正确做法 | 首次发现日期 |
 |---|---------|---------|---------|---------|------------|
-| 1 | **端口被占用自动顺延，URL 不再是 18080** | 18080 被其他进程占用后运行 `bin/clean_launch.py` | 启动日志提示"后端端口 18080 已被占用，自动切换到 1808X"，浏览器打开的是新端口 | `clean_launch.py` 的 `find_available_port()` 会从起始端口向上探测；若手动打开 18080 没反应，看启动日志里的实际端口，或 `MMH3_PORT` 指定其它起始位 | 2026-08-17 |
-| 2 | **`bin/clean_launch.py` 会 `os.execv` 重启为 CUDA Python** | 当前 Python 与 `find_winpython()` 找到的 CUDA 环境不是同一个 | 进程会看似"退出又起来一次"，日志里有 `[INFO] Relaunching with CUDA Python: ...` | 这是有意的（保证用带 CUDA 的 Python 跑 diffusers）；不是崩溃，别 kill。离线环境禁用下载时靠 `HF_HUB_OFFLINE=1` 等环境变量兜底 | 2026-08-17 |
-| 3 | **`tests/frontend/_rendered/*.html` 是渲染产物，易被误提交** | `bin/render_pages.py` 把三页面模板渲染成 HTML 供前端冒烟 | 生成物进 git，渲染逻辑变更后前三页快照与模板漂移 | 该目录是构建产物：确认是否应加入 `.gitignore`（`tests/frontend/_rendered/`）；真需要快照对比就让 CI 生成而非手工提交 | 2026-08-17 |
+| 1 | **端口被占用自动顺延，URL 不再是 18080** | 18080 被其他进程占用后运行 `scripts/clean_launch.py` | 启动日志提示"后端端口 18080 已被占用，自动切换到 1808X"，浏览器打开的是新端口 | `clean_launch.py` 的 `find_available_port()` 会从起始端口向上探测；若手动打开 18080 没反应，看启动日志里的实际端口，或 `MMH3_PORT` 指定其它起始位 | 2026-08-17 |
+| 2 | **`scripts/clean_launch.py` 会 `os.execv` 重启为 CUDA Python** | 当前 Python 与 `find_winpython()` 找到的 CUDA 环境不是同一个 | 进程会看似"退出又起来一次"，日志里有 `[INFO] Relaunching with CUDA Python: ...` | 这是有意的（保证用带 CUDA 的 Python 跑 diffusers）；不是崩溃，别 kill。离线环境禁用下载时靠 `HF_HUB_OFFLINE=1` 等环境变量兜底 | 2026-08-17 |
+| 3 | **`tests/frontend/_rendered/*.html` 是渲染产物，易被误提交** | `scripts/render_pages.py` 把三页面模板渲染成 HTML 供前端冒烟 | 生成物进 git，渲染逻辑变更后前三页快照与模板漂移 | 该目录是构建产物：确认是否应加入 `.gitignore`（`tests/frontend/_rendered/`）；真需要快照对比就让 CI 生成而非手工提交 | 2026-08-17 |
 | 4 | **单端口直出，模板路径必须在 `backend/templates/`** | 新增页面时把 `.html` 放到别处 | `Jinja2Templates(directory=...)` 找不到模板 → 页面 404 / TemplateNotFound | 页面模板统一放 `backend/templates/`，在 `backend/main.py` 加页面路由（`templates.TemplateResponse(request, "xxx.html")`），不要在 Python 里手拼 HTML | 2026-08-17 |
+| 5 | **diffusers ModularPipeline 参数名 ≠ 官方 ComfyUI 工作流参数名** | T2V/I2V/R2V 提交后推理抛 `TypeError: pipe() got an unexpected keyword argument 'first_image'` | 任务状态变 `failed`，前端只能看到 `TypeError: ...` | `_run_diffusers` 已做"原名 + 常见别名（image/video/audio）"两轮尝试，最终仍失败会把 `原错误 / 别名后错误 / 当前入参 / pipeline.__call__ 签名` 一并写入 RuntimeError，看 `generation_tasks.error` 字段即可定位 | 2026-08-17 |
+| 6 | **测试会大量灌入 `proj_*` 项目 & 4 字节空 PNG/WAV，挤爆 `uploads/`** | 跑 `tests/test_performance.py` / `test_api_smoke.py` 后 | SQLite 有几百条 `性能测试_*` / `冒烟测试项目`，`uploads/` 几千个 4 字节空文件 | 用 `scripts/cleanup_garbage.py` 一键清空（删全部项目 + 任务 + 资产 + uploads/assets 内文件）；UI 也接入了 `POST /api/projects/clear` 按钮 | 2026-08-17 |
+| 7 | **官方 t2v 工作流实际调用 `MiniMaxH3ImageToVideo` 节点（与 i2v 共用 FL2VA 模型）** | 查 `workflows/video_minimax_h3_t2v.json` 时疑惑"为什么 t2v 也是 I2V 子图" | 误以为前端 T2V 应换模型 | `minimax_h3_fl2va_pruned_int8_convrot.safetensors` 同时驱动 T2V/I2V（first_frame/last_frame 为空时退化为 T2V）；前端 T2V 页面应显示 T2VA 任务标签 + 该模型文件名，而非改模型 | 2026-08-17 |
+| 8 | **分辨率/时长/输出格式需以官方工作流 + 官方模型页为准，不能硬编码 `["768P","2K"]` 或 `[4,8,10,15]`** | 用户指出"前端后端都未对齐 workflows"，并援引官方 README 纠偏 2K | 前端只给 768P/2K（2K 误标），时长只有 4/8/10/15，还显示固定的"输出规格 24fps·32kHz"可点行 | 以 `workflows/*.json` + `github.com/MiniMax-AI/MiniMax-H3` 为事实来源写入 `backend/h3/spec.py`：**H3-Base 原生上限 = 0.98MP(1344×768，短边 768)**，`RESOLUTION_PRESETS` 只到 0.98（>0.98 需 H3-Regenerate-2K 模块，未随开源 Base 提供 → 不作前端档位），`dims_for_resolution()` 按 aspect×MP算出（multiple=32，长边封顶 1344）；时长 = `DURATION_MIN..MAX`(4~15 全部整秒)；输出固定（fps24/bit_depth8/mp4/32k 立体声）只在 spec 声明、前端不显示；config 的 `SUPPORTED_*` 从 spec 派生 | 2026-08-17 |
+| 9 | **diffusers 模型未下载 / 离线模式 → 任务 failed 且报 `Could not find or load 'modular_model_index.json' or 'model_index.json'`** | 未设 `MMH3_MODEL_PATH` 且本机 HF 缓存无 `MiniMaxAI/MiniMax-H3`（`clean_launch.py` 默认 `HF_HUB_OFFLINE=1`） | 任务 `failed`，错误是底层 diffusers/hf_hub 裸 traceback（`LocalEntryNotFoundError` / `OfflineModeIsEnabled`），用户不知下一步 | 用默认 **comfy 后端（B 方案）**：`comfy_engine.py` 把参数注入官方 H3 工作流（t2v/i2v/r2v）经本机 ComfyUI `MMH3_COMFY_URL`(8188) HTTP 提交执行并取回 mp4，无需 diffusers 格式权重；仅当坚持 diffusers 后端才需 `inference.py` 的 `_model_available_locally/_model_missing_error` 预检（本地目录校验 `model_index.json`、依赖 diffusers 格式权重）。官方 `modular_model_index.json` = 单个 `MiniMaxH3ModularPipeline` | 2026-08-18 |
+| 10 | **comfy 后端（B 方案）的正确跑法 = HTTP 提交官方工作流，而非进程内手动调 Comfy 内核** | 早期 `comfy_engine` 在 C:\Python312 手动 `comfy.sd.load_diffusion_model` + `VAE.decode`，12GB 卡上采样后解码 OOM / conv3d NotImplementedError / 段错误(0xC0000005)，纯 CPU 兜底又致内存过载 | 任务 failed，报 `CUDA OOM` / `slow_conv3d_forward CUDA backend` / `Input type (float) and bias type (c10::Half)`，甚至进程崩溃重启 | 改走 **ComfyUI HTTP 方案**：`comfy_engine.run` 加载 aki-v3 官方工作流 `user/default/workflows/video_minimax_h3_{t2v,i2v,r2v}.json` → `_extract_api` 转 API(剔除 `MarkdownNote/Note/Reroute`) → `_inject_common` 注入宽高/时长(PrimitiveFloat 秒数)/种子/prompt/steps + 统一 clip 名为 `qwen3vl_32b_minimax_h3_abliterated_nvfp4.safetensors`（aki 只有这个，官方 i2v/r2v 引用的 `nvfp4_awq` 不存在需改写）→ POST /prompt → 轮询 /history → 拷贝 output mp4 到 `assets/generated/`。显存/解码/合成全交给 ComfyUI(aimdo 动态显存)，已实测 4s t2va 产出 1.06MB mp4。**注意：官方工作流 editor 转 API 时 `ResolutionSelector`→`MiniMaxH3ImageToVideo` 的 width/height 连接会丢失，需在注入时把宽高写进主节点或 ResolutionSelector** | 2026-08-18 |
+| 11 | **akiv3 自带官方工作流引用的 clip 名与实际模型不一致（i2v/r2v 用 `nvfp4_awq`，实际只有 `abliterated_nvfp4`）** | 用官方 i2v/r2v 工作流直接提交 → CLIPLoader 找不到 `qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors` | 提交时加载 CLIP 失败 / 400 | `_inject_common` 强制把 CLIPLoader.clip_name 统一改为 aki 实际存在的 `qwen3vl_32b_minimax_h3_abliterated_nvfp4.safetensors`（本机唯一）。模型权重需硬链接到 aki `models/{unet,vae,text_encoders}` 目录（同卷不占空间） | 2026-08-18 |
+| 12 | **全局环境装了最新版 torch（2.13+cu132）与 H3 不兼容，导致 diffusers 加载模型即失败** | 之前误装了当前最新 torch，`MiniMaxAI/MiniMax-H3` 模型无法加载 | `RuntimeError: Failed to load config from 'MiniMaxAI/MiniMax-H3'` / conv3d 崩溃（参见 #10） | 用 **项目 venv 隔离**：`python -m venv .venv` 后离线安装 `torch 2.9.1+cu130 / torchvision 0.24.1+cu130 / torchaudio 2.9.1+cu130`（dowload-r2 直链，manual 目录），CUDA conv3d 验证通过。aki ComfyUI 内核实测也与该版本配套 | 2026-08-19 |
+| 13 | **PyTorch cu130 wheel 有文件名陷阱：官方直链偶发把 torchvision 内容错当 torchaudio / 下载不完整，装错包且看不出** | 用 `download-r2.pytorch.org/whl/cu130` 多线程下载 torchvision/torchaudio | 文件名是 `torchvision-…win_amd64.whl` 但 `pip show` 装出来是 torchaudio；或 wheel 仅几 MB（真实应数十 MB） | 装前置校验 wheel 的 METADATA：`zipfile` 读 `*.dist-info/METADATA` 的 `Name/Version`，与文件名严格一致才安装；大小过小多半是 404 错误页被落盘 | 2026-08-19 |
+| 14 | **脱离 ComfyUI 独立运行 = 内置 comfy_kernel 引擎进程内执行官方工作流，而非 HTTP 或手动复刻底层** | 用户要求"完全脱离 ComfyUI"；此前 HTTP(8188) 依赖外部服务、进程内手动调内核 12GB 卡崩溃（#10） | 服务未启则任务 failed / crash | 项目内置完整 `comfy_kernel/`（复制 aki ComfyUI 源码，**必须补齐 `comfy/ldm/models/`、`comfy_api/input/` 等被缩小遗漏的目录**）；进程内：`folder_paths.add_model_folder_path` 绑定项目 `model/` → `nodes.init_extra_nodes` 注册 601 节点 → `execution.validate_prompt`（拓扑补全，返回 `outputs_to_execute`）→ `scene/kernel` 的 `PromptExecutor.execute` → 从 `history_result["outputs"]` 或输出目录兜底找最新 mp4。默认走进程内；显式设 `MMH3_COMFY_URL` 才走 HTTP | 2026-08-19 |
+| 15 | **comfy_kernel 进程内 init 用 `/XD input` 会误删源码里的 `comfy_api/input` 目录** | 用 robocopy 同步 comfy_kernel 时把 `input` 当运行时目录排除 | `ImportError: No module named 'comfy_api.input'` | robocopy 排除目录必须用**绝对路径**（`/XD "…\ComfyUI\input"` 而非 `input`），否则会命中 `comfy_api/input` 等源码同名目录 | 2026-08-19 |
+| 16 | **项目 model/ 权重文件名 ≠ 官方工作流引用的文件名（大小写/量化后缀不同），直接提交会校验失败** | 固化 API 引用 `minimax_h3_fl2va_pruned_int8_convrot.safetensors`，项目实为 `MiniMax_H3_FL2VA_pruned_int8_convrot.safetensors`；clip 官方 `awq`、项目只有 `abliterated` | `validate_prompt` 报 `Value not in list: unet_name: ... not in [...]` | `comfy_engine._inject_models` 扫描项目 `model/` 实际文件名，与 API 引用做「子串/共同前缀」改写（UNET/CLIP/VAE/Lora）；官方 subgraph 工作流需经 `extract_api_prompt` 一次性展开固化到 `workflows/api/*.api.json`（运行时不再依赖 aki 工具） | 2026-08-19 |
+| 17 | **12GB 卡进程内跑 20GB H3 模型必须启用 DynamicVRAM（comfy-aimdo），否则采样阶段 CUDA OOM** | 服务常驻下提交生成 → 节点执行到 `SamplerCustomAdvanced`（node 号视工作流而异）报 `CUDA error: out of memory` | 显存不足，任务 failed；独立脚本偶发成功因进程退出释放显存 | `_ensure_kernel` 需：①在 comfy 模块加载前设 `cli_args.args.lowvram=True`；②对 N 卡依次 `comfy_aimdo.control.init()`（先加载 DLL！只调 `init_devices` 会因 `lib=None` 静默返回 False）→ `init_devices((idx, headroom))` → `CoreModelPatcher=ModelPatcherDynamic` + `aimdo_enabled=True` ③**`execution.py/model_prefetch` 在 control.init() 前已 import model_vbar，其顶层 `lib=control.lib` 快照为 None → 必须 `importlib.reload(comfy_aimdo.model_vbar)` 等**，否则执行器调 vbar API 报 `'NoneType' object has no attribute 'vbars_reset_watermark_limits'` | 2026-08-19 |
+| 18 | **comfy-aimdo 必须 `control.init()` 先加载 DLL，纯 `init_devices` 判定 `lib is None` 会静默失败** | 直接调 `comfy_aimdo.control.init_devices(...)` 想启用动态显存 | 返回 False，`aimdo_enabled` 永远 False，后续 OOM/crash | 先 `control.init()`（失败可查日志 "comfy-aimdo failed to load"），再 `init_devices`；若 `lib` 为 None 说明 DLL 未装载（CTRL 直连 CDLL 可测） | 2026-08-19 |
+| 19 | **headless 进程内内核初始化时两个内置 comfy_extras 节点导入失败告警（`comfy_angle` 缺失 / `PromptServer.instance` 无）** | 项目后端启动时 `nodes.init_extra_nodes` 扫描 `nodes.py` 的 `extras_files` 全量列表 | `WARNING:root:IMPORT FAILED: nodes_glsl.py`（`No module named 'comfy_angle'`）+ `nodes_glsl.py` / `nodes_replacements.py` | 这俩模块与 H3 无关且需 GUI 服务端/ATGL：在 `comfy_kernel/nodes.py` 的 `extras_files` 列表里删除 `"nodes_glsl.py"` 与 `"nodes_replacements.py"` 两行即可（`init_builtin_extra_nodes` 跑出 `IMPORT_FAILED: []`）；`expandable_segments not supported` 是 Windows CUDA 缓存分配器良性告警，忽略即可 | 2026-08-19 |
+| 20 | **model/ 整类目录级 Junction 会暴露 ComfyUI 顶层占位文件到扫描列表（无害）** | 把 `model/{diffusion_models,text_encoders,vae,loras}` 改为整类目录 Junction 指向 ComfyUI 后，`_scan_project_models`（`glob("*") + is_file()`）扫出 ComfyUI 顶层 0 字节占位文件（`put_*_here` / `desktop.ini`） | 扫描候选列表出现 `put_diffusion_model_files_here` / `desktop.ini` 等非模型文件名；但 `_inject_models` 按「子串/共同前缀」匹配 API 引用，占位文件不会被选中，功能无影响 | 占位文件是 ComfyUI 空目录标记，可忽略；若想列表干净，删除 ComfyUI 对应目录顶层的 `put_*_here`/`desktop.ini`（不影响两侧）。MiniMax 侧模型平铺于类别根层，故用**整类目录 Junction**；若模型按子目录嵌套（如 Image_MultiModel 的 FLUX.1-dev-fp8/），则应像 Image 那样按**每模型子目录**建 Junction，避免暴露同类别其他内容 | 2026-08-19 |
 
 ---
 
@@ -193,9 +232,31 @@ Scope 建议：`backend` / `routers` / `inference` / `i2v` / `r2v` / `t2v` / `up
 3. 重新生成 `requirements-lock.txt`（若涉及依赖）。
 
 #### SOP-3: Debug 一个端口顺延 / 启动问题
-1. 先看 `bin/clean_launch.py` 打印的 `[INFO] 后端启动中: http://127.0.0.1:<port>`，确认实际端口。
+1. 先看 `scripts/clean_launch.py` 打印的 `[INFO] 后端启动中: http://127.0.0.1:<port>`，确认实际端口。
 2. 看是否有 `[INFO] Relaunching with CUDA Python`（属于正常的 Python 切换）。
 3. `python -m uvicorn backend.main:app --host 127.0.0.1 --port 18080` 前台直跑，能看到真实 traceback。
+
+#### SOP-4: 一键清空临时项目 / 测试残留
+1. 首选 UI：顶栏项目下拉里点 `⌫ 一键清空全部`（POST /api/projects/clear）。
+2. 命令行：`python scripts/cleanup_garbage.py`（同步清空 SQLite + uploads/ + assets/）。
+3. 仅清数据库保留文件：`POST /api/projects/clear {"keep_uploads": true}` 或 `Invoke-WebRequest -Body '{"keep_uploads":true}' -Method POST .../api/projects/clear`。
+4. 上线前必跑一次（开发期间积压几百个 `性能测试_*` 很正常）。
+
+#### SOP-5: 调试 I2V/R2V 推理失败（ModularPipeline 参数名）
+1. 看 `generation_tasks.error` 字段（前端历史库会展示），新格式会把 `原错误 / 别名后错误 / 当前入参 / pipeline.__call__ 签名` 一并写入 RuntimeError。
+2. 官方 ComfyUI 工作流节点名（`MiniMaxH3ImageToVideo` / `MiniMaxH3ReferenceToVideo`）≠ diffusers ModularPipeline 实际参数名。常见映射：
+   - `first_image` / `last_image` → `image`（同时只接受一个）
+   - `ref_images` → `image`（List）
+   - `ref_videos` / `ref_audios` / `ref_video_audios` → `video` / `audio`（可能不直接对应）
+3. 若 diffusers 升级后参数名变化，扩展 `backend/routers/inference.py → _run_diffusers` 的 `alias_map` + 增加新候选即可。
+4. 确认 `backend/h3/spec.py` 的 `MODELS / SAMPLER / SCHEDULER / STEPS` 与 workflows JSON 一致（`pytest tests/test_h3_spec_consistency.py`）。
+
+#### SOP-6: 进程内 comfy_kernel 引擎出片（脱离外部 ComfyUI）
+1. 前提：`comfy_kernel/` 必须完整（含 `comfy/ldm/models/`、`comfy_api/input/`），`model/` 有 7 个官方单文件权重，`workflows/api/*.api.json` 为已固化的扁平 API 图（由官方 subgraph 实流经 `extract_api_prompt` 展开一次生成）。
+2. `comfy_engine.run(params)` 默认走进程内：`_load_api` 读 `workflows/api/*.api.json` → `_inject_common`（宽高/时长/种子/prompt/steps + `_inject_models` 把 API 引用改写为项目实际权重名）→ `_run_in_process`（`_ensure_kernel` 惰性初始化：folder_paths 绑定 model/ + init_extra_nodes 注册 601 节点 + PromptExecutor；`validate_prompt` 校验 → `executor.execute` → 找最新 mp4）。
+3. 需外部 ComfyUI 联调时，设 `MMH3_COMFY_URL` 走 HTTP 旧路径。
+4. 模型文件名差异很大时，先跑 `python -c` 打印项目 `model/` 各子目录实际文件名，确认 `_inject_models` 的匹配规则（子串 → 共同前缀）能命中。
+5. 首次在某环境跑通后，把 `assets/generated/` 的 mp4 当作端到端成功标志；`executor.success=False` 时看 `status_messages` 里的 `execution_error`。
 
 ---
 
@@ -204,5 +265,28 @@ Scope 建议：`backend` / `routers` / `inference` / `i2v` / `r2v` / `t2v` / `up
 | 自进化版本 | 日期 | 触发原因 | 更新内容摘要 | 对应项目版本 |
 |:---------:|------|---------|------------|:------------:|
 | v0.1 | 2026-08-17 | 初始建立自进化协议（对齐家族 TTS/Image/SeedVR2 约定） | 建立自进化协议（5 条铁律 + 自检清单）；项目概览（MM·H3 三模式视频工作台，单端口 18080）；模块边界（backend/main.py + h3/spec.py 单一事实来源 + 6 个 /api 路由）；启动命令（bin/clean_launch.py + 端口顺延 + CUDA Python 切换）；配置与环境变量（MMH3_*）；测试约定；Known Gotchas（端口顺延 / execv 重启 / _rendered 产物 / 模板路径）；SOP-1~3 | v0.1.0 |
+| v0.2 | 2026-08-17 | 修复 I2V/R2V 推理 + 一键清空 + 前端 T2VA 对齐 + 清理测试残留 | `_run_diffusers` 加 alias 容错 + 详细错误上报（`RuntimeError` 含原错误/别名错误/入参/签名）；新增 `POST /api/projects/clear` + UI 按钮（顶栏项目下拉）+ `scripts/cleanup_garbage.py`；T2V 页面 PROMPT/STAG/me-tag 改为 T2VA（官方 t2v 工作流与 i2v 共用 FL2VA 模型，参见 Gotcha #7）；清空 232 个测试项目 + 236 个 4 字节空文件；自检清单新增"是否含 clear 接口"；Known Gotchas +3 条（#5 ModularPipeline 参数名 / #6 测试残留 / #7 t2v 与 i2v 共用模型）；SOP-4 / SOP-5 | v0.1.0 |
+| v0.3 | 2026-08-17 | bin 并入 scripts | 删除 `bin/` 目录，`clean_launch.py` / `render_pages.py` 移入 `scripts/`；同步更新所有引用：start.bat（检查 + 调用 + 报错文案）、第 3 节目录树（bin/ 段并入 scripts/）、第 4 节启动命令、第 6 节测试约定、Gotcha #1~3、SOP-3、README.md 目录树与测试命令、`.github/workflows/test.yml` 入口断言、package.json 的 test:template/test:frontend、tests/frontend/smoke.js 注释、.gitignore 注释 | v0.1.0 |
+| v0.4 | 2026-08-17 | 前端/后端分辨率、时长、输出格式对齐官方 workflows | 以 `workflows/video_minimax_h3_{t2v,i2v,r2v}.json` 为事实来源写入 `backend/h3/spec.py`：新增 `RESOLUTION_PRESETS`（0.4~2.0 MP + 16:9 精确尺寸，0.98 原生 1344×768，2.0=1920×1088 原生即支持）、`RESOLUTION_SHORT_SIDE`、`dims_for_resolution()`（aspect×MP，multiple=32，原生档长边封顶 1344）、`DURATION_MIN..MAX`(4~15)；`config.py` 的 `SUPPORTED_DURATIONS`=range(4,16)、`RESOLUTION_PRESETS`/`RESOLUTION_DEFAULT` 改为从 spec 派生、`OUTPUT_BIT_DEPTH/FORMAT` 声明固定输出；`inference._build_params` 用 `dims_for_resolution`（兼容旧值 768P/2K）；前端三模板分辨率改 megapixel 档、时长 4~15、移除"输出规格"可点行与"2K 重绘禁用"占位；`shared.js` 新增 `H3_RES_*`/`dimsForResolution` 并同步 `getActiveParams`/`readbackParams`/resPx；Gotcha #8；自检清单新增"分辨率/时长/输出以 workflows 为准" | v0.1.0 |
+| v0.5 | 2026-08-17 | 按官方 README 纠偏分辨率上限（之前误把 2.0MP 当原生支持） | 用户指出"最多 0.98，后面不支持"，并给官方页 `github.com/MiniMax-AI/MiniMax-H3`：README 明确 "2K \| generation can be achieved with **H3-Regenerate-2K**"，H3-Base 只输出 768p。修正：`spec.py` 的 `RESOLUTION_PRESETS`/`RESOLUTION_SHORT_SIDE` 砍掉 1.2/1.5/2.0，只到 **0.98(1344×768)**；`dims_for_resolution` 长边统一封顶 1344；`inference` 旧值 "2K"→回退原生 0.98；`shared.js` 同步；前端三模板分辨率档改 0.4~0.98、时长补全 4~15 全部整秒、页脚注明"≥1080p/2K 需 H3-Regenerate-2K（未随开源 Base 提供）"；`scripts/verify_pages.py` 校验档位封顶与时长补全 | v0.1.0 |
+| v0.6 | 2026-08-17 | 将「官方 README ↔ 项目设置」对照表沉淀进 AGENTS | 完整读取官方 README 后，新增第 5.1 节「官方规格对照表」（时长 4–15 / 六宽高比 / 分辨率 0.4~0.98 封顶 1344×768 / 24FPS / 32kHz 立体声 / mp4·8bit / Ref2VA 图 9·视频 3·音频 3·混合 12·每段 2–15s·同类≤15s / FL2VA 0-2 图），并注明 README 关键澄清（2K 需未开源的 H3-Regenerate-2K、Context-IR 未开源）。顺带修正第 5 节说明里残留的旧"RESOLUTION_PRESETS=0.4~2.0 MP"为"0.4~0.98 MP" | v0.1.0 |
+| v0.7 | 2026-08-18 | 用户贴出 `from_pretrained` 找不到 `model_index.json` 的裸 traceback | 根因：模型未下载 + `HF_HUB_OFFLINE=1` 离线，非代码逻辑错。`inference.py` 新增 `_model_available_locally` / `_model_missing_error` 预检：本地目录校验 `model_index.json`、HF id 校验本地缓存；缺失时抛可操作中文指引（下载 + `MMH3_MODEL_PATH`，或取消 `HF_HUB_OFFLINE` 在线拉取）；`tests/test_build_params.py` 新增 `test_model_missing_preflight`。核实 HF 根 `modular_model_index.json` = 单个 `MiniMaxH3ModularPipeline`（含 transformer+transformer_ref），三任务均走根目录；Gotcha #9 | v0.1.0 |
+| v0.8 | 2026-08-18 | 用户下载 7 个 ComfyUI 单文件权重到 `model/`，要求按类存放 | 在 `model/` 下建 `transformer/`（FL2VA+Ref2VA 主干）、`text_encoder/`（qwen3vl）、`vae_video/`、`vae_audio/`、`lora/`（fl2v_8step / ref2v_4step turbo）并移动归类；第 3 节目录树新增 `model/` 行（注明是 ComfyUI 单文件权重，非 diffusers 格式） | v0.1.0 |
+| v0.9 | 2026-08-18 | 用户要求目录命名对齐 ComfyUI-aki-v3 的 models 布局 | `model/` 子目录改名/合并：`transformer/`→`diffusion_models/`、`text_encoder/`→`text_encoders/`、`vae_video/`+`vae_audio/`→合并 `vae/`、`lora/`→`loras/`；第 3 节目录树 `model/` 行更新为对齐 ComfyUI 的四目录命名 | v0.1.0 |
+| v1.0 | 2026-08-18 | 用户定夺：Image_MultiModel 与 MiniMax-H3-lite 都用 B 方案（进程内 Comfy 内核） | **Image_MultiModel**：`config.yaml` 默认引擎 `z_image_turbo_diffusers`→`z_image_turbo_native`（comfy_kernel 已就位、权重路径已匹配）。**MiniMax-H3-lite**：新增 `backend/routers/comfy_engine.py`（B 方案 native 引擎：进程内复用 aki-v3/comfy_kernel 内核 → `comfy.sd.load_diffusion_model`/`load_clip(MINIMAX)` → H3 节点条件构建 → KSamplerSelect/BasicScheduler/BasicGuider/RandomNoise/SamplerCustomAdvanced 采样 → 视频/音频 VAE 解码 → imageio-ffmpeg 合成 mp4）；`config.py` 新增 `COMFY_SOURCE_DIR`（`MMH3_COMFY_SOURCE_DIR`）；`engine_registry.py` 注册 `comfy` 后端并设为默认（settings.json→comfy）；`inference.run_inference` 按 backend 分发；`requirements.txt` 加 `av`/`imageio-ffmpeg`/`soundfile` 并重生成 lock；`tests/test_comfy_engine.py`（5 用例）；health 测试允许值加 `comfy`。Gotcha #9 更新 + #10 新增 | v0.1.0 |
+| v1.1 | 2026-08-18 | 验证后把 comfy 后端改为 HTTP 提交官方工作流（进程内手动调内核在 12GB 卡上解码 OOM/段错误崩溃） | 重写 `backend/routers/comfy_engine.py`：改为加载 aki-v3 官方 `user/default/workflows/video_minimax_h3_{t2v,i2v,r2v}.json` → `_extract_api`(剔除 `MarkdownNote/Note/Reroute`) → `_inject_common`(宽高/时长(PrimitiveFloat 秒数)/种子/prompt/steps + 统一 clip 为 `qwen3vl_32b_minimax_h3_abliterated_nvfp4`) → HTTP POST /prompt(`/MMH3_COMFY_URL` 8188) → 轮询 /history → 拷贝 mp4 到 `assets/generated/`；`config.py` 新增 `COMFY_URL`(`MMH3_COMFY_URL`)；`tests/test_comfy_engine.py` 重写为 9 用例(任务→工作流映射/假节点剔除/参数注入/clip 名 pin/参考图绑定/URL)。全部 35 项测试通过。**已实测**：ComfyUI 完整执行官方 t2v 出 `MiniMax_H3_00006_.mp4`，comfy_engine.run 出 `assets/generated/h3_t2va_*.mp4`(1.06MB)。模型权重硬链接到 aki `models/{unet,vae,text_encoders}`。Gotcha #9/#10 更新 + #11 | v0.1.0 |
+| v1.2 | 2026-08-19 | 为脱离 ComfyUI + 修复全局最新 torch 不兼容，给项目建 venv 隔离 torch 2.9.1+cu130 | 新建 `.venv`（`python -m venv .venv`），离线安装 `torch 2.9.1+cu130 / torchvision 0.24.1+cu130 / torchaudio 2.9.1+cu130`（download-r2 直链到 `_dl/manual`，装前校验 METADATA 防文件名陷阱）；其余依赖（fastapi 0.141 / diffusers 0.39 / transformers 5.15 / av / imageio-ffmpeg / soundfile / safetensors 等）均已入 venv。已验证 `import torch 2.9.1 + CUDA 13.0 + RTX 5070 Ti + conv3d ok`。Gotcha #12（全局最新 torch 不兼容→venv 隔离 2.9.1）+ #13（cu130 wheel 文件名陷阱） | v0.1.0 |
+| v1.3 | 2026-08-19 | 实现「完全脱离 ComfyUI 独立运行」 | **comfy_engine 改为进程内复用内置 comfy_kernel 引擎**（复制 aki ComfyUI 源码，补齐 `comfy/ldm/models/`、`comfy_api/input/`；`comfy_engine.run` 默认进程内，HTTP 仅在显式 `MMH3_COMFY_URL` 时启用）；官方 subgraph 工作流经 `extract_api_prompt` 一次性展开固化到 `workflows/api/*.api.json`（运行时不再依赖 aki 工具）；`folder_paths` 绑定项目 `model/`（diffusion_models/text_encoders/vae/loras）；主流程 `validate_prompt` → `PromptExecutor.execute` → 输出目录兜底找 mp4。**`_inject_models` 扫描项目 model/ 实际文件名改写 API 引用**（处理 `minimax_h3_…` vs `MiniMax_H3_…`、`awq` vs `abliterated` 差异）。为 venv 补装 comfy 内核依赖（einops/aiohttp/psutil/alembic/sqlalchemy/blake3/simpleeval/yarl/torchsde/scipy/sentencepiece/comfy-kitchen/comfy-aimdo/PyOpenGL/kornia/pydantic-settings/spandrel 等）。`clean_launch.py` 优先使用项目 `.venv`。**已实测**：进程内独立出 `assets/generated/h3_t2va_*.mp4`(352KB)，13 项测试通过。Gotcha #14/#15/#16；SOP-6 | v0.1.0 |
+| v1.4 | 2026-08-19 | UI 服务端到端冒烟发现 12GB 卡采样 OOM → 启用 DynamicVRAM 修复 | 进程内引擎仅 `init_devices` 时 `aimdo` 未真正启用（需先 `control.init()` 载 DLL），且 `execution.py` 前已 import 的 `model_vbar.lib` 快照为 None → 报 `NoneType.vbars_reset_watermark_limits`。修复 `_ensure_kernel`：`cli_args.args.lowvram=True` + `control.init()` → `init_devices` → `CoreModelPatcher=ModelPatcherDynamic`、`aimdo_enabled=True`、reload `comfy_aimdo.model_vbar` 等。**已实测**：UI API 全链路（建项目→镜头→提交生成→轮询 completed）进程内成功出 `video/MiniMax_H3_00005_.mp4`(718KB 含音轨)，asset 入库，`/api/health` 报 `backend_requires_external:false`。Gotcha #17/#18；版本 v1.3→v1.4；修订记录 +1 | v0.1.0 |
+| v1.5 | 2026-08-19 | model/ 权重迁移 ComfyUI + Junction 复用（零冗余），对齐 Image_MultiModel 方式 | 将 `model/` 下 FL2VA/Ref2VA×2/qwen3vl te/video+audio vae/turbo lora×2 共 8 个模型（~90.2GB）逐文件移动至 ComfyUI `models/{diffusion_models,text_encoders,vae,loras}`，`model/` 四子目录改建**整类目录级 Junction** 指向 ComfyUI（两侧共用、无冗余、无需改代码：`_scan_project_models` 的 `Path.glob/is_file` 与 `folder_paths.add_model_folder_path` 均穿透 Junction）；新增 `model/README.md`；新增 Gotcha #20（整类目录 Junction 暴露 ComfyUI 顶层 0 字节占位文件，扫描列表无害）；说明与 Image 差异（Image 每模型子目录 Junction vs MiniMax 整类目录 Junction）；版本 v1.4→v1.5 | v0.1.0 |
 
 <!-- 🔄 下次更新 AGENTS.md 时，在上面表格末尾追加新一行，不要删除历史记录 -->
+
+## 路线图落地新增模块（2026-08-18，未提交）
+- backend/checkpoint.py — TaskCheckpoint 断点保存（移植自 TTS_MultiModel）
+- backend/routers/queue_manager.py — 接入任务级 + worker 级 checkpoint 快照与恢复
+- backend/main.py — startup 调用 resume_unfinished_tasks()
+- backend/config.py — 新增 CHECKPOINT_DIR / CHECKPOINT_EVERY
+- scripts/check_comfy_kernel.py — Comfy 内核复用只读检查
+- docs/comfy-kernel-reuse-poc.md — Comfy 内核进程内复用 PoC 评估
+- tests/test_api_integration.py（10 用例）、tests/test_checkpoint.py（13 用例）

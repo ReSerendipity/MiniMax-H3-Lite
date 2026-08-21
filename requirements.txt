@@ -9,6 +9,30 @@ pillow>=9.0.0
 diffusers==0.39.0
 transformers>=4.41.2,<6
 
+# ── Comfy 内核进程内推理（B 方案，脱离外部 ComfyUI）────────
+# av 供 comfy 的 video_types 导入 + 视频参考帧读取；imageio-ffmpeg 提供 ffmpeg 用于 mp4 合成
+av>=13.0.0
+imageio-ffmpeg>=0.5.0
+soundfile>=0.12.0
+# comfy_kernel 内置引擎（进程内 PromptExecutor）所需运行时依赖
+einops>=0.7.0
+aiohttp>=3.11.8
+psutil>=5.9.0
+alembic>=1.10.0
+SQLAlchemy>=2.0.0
+blake3>=0.4.0
+simpleeval>=1.0.0
+yarl>=1.18.0
+torchsde>=0.2.6
+scipy>=1.11.0
+sentencepiece>=0.1.99
+comfy-kitchen==0.2.31
+comfy-aimdo==0.4.13
+PyOpenGL>=3.1.8
+kornia>=0.7.1
+pydantic-settings~=2.0
+spandrel>=0.3.0
+
 # ── 测试依赖 ──────────────────────────────────────
 pytest>=7.4.0
 pytest-cov>=4.1.0

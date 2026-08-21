@@ -32,7 +32,7 @@
   --seed-primary:var(--dark-primary);
   --acc-theater:#e0453a; --acc-theater-strong:#c93328;
   --acc-tv:#d99828; --acc-tv-strong:#b87c1a;
-  --acc-pj:#3cb5a8; --acc-pj-strong:#2a9a8c;
+  --acc-pj:#3cb2a5; --acc-pj-strong:#1a7369;
   --dark-accent:#aab0bc;
   /* 暗色质感：冷灰蓝底 + 黑色系纵深阴影 + 发丝级描边（替代浅色混出的"塑料"观感） */
   --line:color-mix(in srgb,var(--seed-fg) 12%,var(--seed-surface));
@@ -66,7 +66,7 @@
 [data-theme="dark"] .side-r{border-left-color:color-mix(in srgb,var(--seed-accent) 55%,var(--line))}
 [data-theme="dark"] .mode-tabs{border-color:color-mix(in srgb,var(--seed-accent) 38%,var(--line-strong))}
 /* ===== 展示壳强调色：剧场红 / 电视琉珀 / 放映机青（切模式整站跟随） ===== */
-:root{--seed-accent-strong:#26292f;--accent-soft:color-mix(in srgb,var(--seed-accent) 14%,var(--seed-surface));--curtain-a:#701610;--curtain-b:#a3241a;--curtain-hi:#c9533c;--curtain-sh:rgba(12,4,3,.5);--sc0-sky:#f6b26b;--sc0-mid:#ef8f55;--sc0-pur:#8f5a72;--sc0-sea1:#3a3f6e;--sc0-sea2:#1c2547;--sc0-sun:#ffd9a0;--sc0-sun2:#f6a860;--sc0-hi:rgba(255,180,120,.2);--sc0-sea3:rgba(20,30,60,.94);--sc0-deep:#101830;--sc1-n1:#10142e;--sc1-n2:#1b2040;--sc1-n3:#0d1126;--sc1-a:rgba(255,80,180,.5);--sc1-b:rgba(80,220,255,.45);--sc1-c:rgba(120,90,255,.4);--sc1-g:rgba(16,22,46,.92);--sc1-gl:rgba(80,180,255,.18);--sc2-a:#8fc6ea;--sc2-b:#cfe8f5;--sc2-c:#f3d9a4;--sc2-g:rgba(180,140,90,.55);--sc3-a:#bcd7ea;--sc3-b:#e8f1f7;--sc3-c:#dbe7ee;--sc3-d:#9fb6c9;--sc3-m1:#c3d8e6;--sc3-m2:#8fa8bd;--sc3-mist:rgba(232,241,247,.85);--seg-d1:#e7a05e;--seg-d2:#8f5a72;--acc-theater:#b3261e;--acc-theater-strong:#8f1d16;--acc-tv:#b07612;--acc-tv-strong:#8a5c0e;--acc-pj:#1d7873;--acc-pj-strong:#155b58;--acc-pj-warm:#e0873a;--fold-hi:rgba(255,255,255,.2);--fold-sh:rgba(0,0,0,.26);--hall-bg:#191a1f;--dark-bg:#0e1013;--dark-surface:#1a1e25;--dark-surface-2:#22262e;--dark-fg:#e8ebf0;--dark-primary:#dde2ea;--dark-accent:#aab0bc;--ok:#3fb98f;--sm-tv:#1c1d22;--sm-tv-frame:#3a3d46;--sm-tv-glass:#2a4d6e;--sm-tv-dark:#101820;--sm-pj-bg:#25303a;--sm-pj-bg2:#0d1116;--sm-pj-scr:#2c3a44;--sm-pj-scr2:#151b20;--sm-pj-beam2:#8a4a1c}
+:root{--seed-accent-strong:#26292f;--accent-soft:color-mix(in srgb,var(--seed-accent) 14%,var(--seed-surface));--curtain-a:#701610;--curtain-b:#a3241a;--curtain-hi:#c9533c;--curtain-sh:rgba(12,4,3,.5);--sc0-sky:#f6b26b;--sc0-mid:#ef8f55;--sc0-pur:#8f5a72;--sc0-sea1:#3a3f6e;--sc0-sea2:#1c2547;--sc0-sun:#ffd9a0;--sc0-sun2:#f6a860;--sc0-hi:rgba(255,180,120,.2);--sc0-sea3:rgba(20,30,60,.94);--sc0-deep:#101830;--sc1-n1:#10142e;--sc1-n2:#1b2040;--sc1-n3:#0d1126;--sc1-a:rgba(255,80,180,.5);--sc1-b:rgba(80,220,255,.45);--sc1-c:rgba(120,90,255,.4);--sc1-g:rgba(16,22,46,.92);--sc1-gl:rgba(80,180,255,.18);--sc2-a:#8fc6ea;--sc2-b:#cfe8f5;--sc2-c:#f3d9a4;--sc2-g:rgba(180,140,90,.55);--sc3-a:#bcd7ea;--sc3-b:#e8f1f7;--sc3-c:#dbe7ee;--sc3-d:#9fb6c9;--sc3-m1:#c3d8e6;--sc3-m2:#8fa8bd;--sc3-mist:rgba(232,241,247,.85);--seg-d1:#e7a05e;--seg-d2:#8f5a72;--acc-theater:#b3261e;--acc-theater-strong:#8f1d16;--acc-tv:#b07612;--acc-tv-strong:#8a5c0e;--acc-pj:#15726c;--acc-pj-strong:#0e4f4b;--acc-pj-warm:#e68a2e;--acc-pj-warm-strong:#a9561a;--fold-hi:rgba(255,255,255,.2);--fold-sh:rgba(0,0,0,.26);--hall-bg:#191a1f;--dark-bg:#0e1013;--dark-surface:#1a1e25;--dark-surface-2:#22262e;--dark-fg:#e8ebf0;--dark-primary:#dde2ea;--dark-accent:#aab0bc;--ok:#3fb98f;--sm-tv:#1c1d22;--sm-tv-frame:#3a3d46;--sm-tv-glass:#2a4d6e;--sm-tv-dark:#101820;--sm-pj-bg:#25303a;--sm-pj-bg2:#0d1116;--sm-pj-scr:#2c3a44;--sm-pj-scr2:#151b20;--sm-pj-beam2:#95521a}
 html[data-shell="theater"]{--seed-accent:var(--acc-theater);--seed-accent-strong:var(--acc-theater-strong);--accent-soft:color-mix(in srgb,var(--acc-theater) var(--accent-soft-alpha),var(--seed-surface))}
 html[data-shell="tv"]{--seed-accent:var(--acc-tv);--seed-accent-strong:var(--acc-tv-strong);--accent-soft:color-mix(in srgb,var(--acc-tv) var(--accent-soft-alpha),var(--seed-surface))}
 html[data-shell="pj"]{--seed-accent:var(--acc-pj);--seed-accent-strong:var(--acc-pj-strong);--accent-soft:color-mix(in srgb,var(--acc-pj) var(--accent-soft-alpha),var(--seed-surface))}
@@ -103,6 +103,9 @@ a{color:inherit;text-decoration:none}
 .proj-item .pi-ren:hover{color:var(--seed-accent)}
 .proj-new{display:flex;align-items:center;gap:7px;width:100%;padding:7px 10px;border:none;border-top:1px dashed var(--line);background:transparent;font-size:12px;color:var(--dim);cursor:pointer;border-radius:6px}
 .proj-new:hover{color:var(--seed-accent);background:var(--accent-soft)}
+.proj-clear{display:flex;align-items:center;gap:7px;width:100%;padding:7px 10px;border:none;border-top:1px dashed var(--line);background:transparent;font-size:12px;color:var(--faint);cursor:pointer;border-radius:6px}
+.proj-clear:hover{color:#c0392b;background:color-mix(in srgb,#c0392b 8%,transparent)}
+.proj-clear:disabled{opacity:.6;cursor:not-allowed}
 .chrome-right{margin-left:auto;display:flex;align-items:center;gap:7px}
 .icon-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--seed-surface);display:inline-flex;align-items:center;justify-content:center;color:var(--dim);transition:border-color .15s,color .15s}
 .icon-btn:hover{border-color:var(--seed-primary);color:var(--seed-primary)}
@@ -116,7 +119,24 @@ a{color:inherit;text-decoration:none}
 .mtab.on{background:var(--seed-accent-strong);color:var(--on-accent)}
 .mtab .mt-tag{font-family:var(--mono);font-size:8px;font-weight:450;letter-spacing:.1em;text-transform:uppercase;opacity:.72}
 .mtab.on .mt-tag{opacity:.85}
-html:not([data-theme="dark"])[data-shell="pj"] .mtab.on{background:linear-gradient(100deg,var(--acc-pj) 10%,var(--acc-pj-warm) 90%)}
+html:not([data-theme="dark"])[data-shell="pj"] .mtab.on{background:linear-gradient(100deg,var(--acc-pj) 10%,var(--acc-pj-warm-strong) 90%)}
+/* ===== 青橙(pj)壳专属对比度修正（WCAG 2.1 AA；仅 pj 作用域，另两套壳零影响） ===== */
+html[data-shell="pj"] .mtab.on .mt-tag{opacity:.95}
+/* 暗色下：深档作为「实底白字」使用；标签/状态文字改用亮主色保证 AA */
+html[data-theme="dark"][data-shell="pj"] .mode-engine .me-tag,
+html[data-theme="dark"][data-shell="pj"] .tag-guide .tg-chip,
+html[data-theme="dark"][data-shell="pj"] .model-item .m-kind:not(.on),
+html[data-theme="dark"][data-shell="pj"] .fs-head .fs-state,
+html[data-theme="dark"][data-shell="pj"] .dock-meta .count.over{color:var(--seed-accent)}
+/* 暗色下：生成指示点改用亮主色 */
+html[data-theme="dark"][data-shell="pj"] .gen-status::before{background:var(--seed-accent)}
+/* ===== 青橙(pj)壳 · 亮色去白：面板淡青白、舞台退后，减少大面积纯白（仅 pj 亮色，暗色与另两套壳零影响） ===== */
+html:not([data-theme="dark"])[data-shell="pj"]{
+  --seed-bg:#e3eae9;        /* 页面底色：青灰 */
+  --seed-surface:#f0f5f4;   /* 顶栏/侧栏/卡片/浮层：淡青白（替代纯白） */
+  --accent-soft-alpha:10%;  /* 浅底减淡，保证主色文字在淡青白浅底上对比 ≥4.5 */
+}
+html:not([data-theme="dark"])[data-shell="pj"] .stage-area{background:var(--seed-bg)}
 
 /* ===== 外观菜单（明暗 + 展示壳，低频入口） ===== */
 .app-wrap{position:relative}
@@ -233,6 +253,48 @@ html:not([data-theme="dark"])[data-shell="pj"] .mtab.on{background:linear-gradie
 .model-item .m-kind.on{color:var(--on-accent);background:var(--seed-accent-strong);border-color:var(--seed-accent-strong)}
 .model-item a{font-family:var(--mono);font-size:9px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .model-item a:hover{color:var(--seed-primary)}
+
+/* ===== 高级参数（可折叠，默认收起） ===== */
+.param-collapse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--line);
+}
+.param-collapse-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--dim);
+  cursor: pointer;
+  user-select: none;
+  transition: color .15s;
+}
+.param-collapse-toggle:hover {
+  color: var(--seed-primary);
+}
+.param-collapse-toggle::after {
+  content: "▾";
+  font-size: 9px;
+  color: var(--faint);
+  transition: transform .15s;
+}
+.param-collapse-header.collapsed .param-collapse-toggle::after {
+  transform: rotate(-90deg);
+}
+.param-collapse-body {
+  transition: max-height .25s ease-out, opacity .25s ease-out;
+  max-height: 800px;
+  opacity: 1;
+  overflow: hidden;
+}
+.param-collapse-header.collapsed + .param-collapse-body {
+  max-height: 0 !important;
+  opacity: 0;
+}
 
 /* ===== 高级参数（可折叠，默认收起） ===== */
 .adv-block{margin-top:12px;border:1px solid var(--line-strong);border-radius:var(--seed-radius);background:var(--seed-surface);overflow:hidden}
@@ -386,31 +448,26 @@ body:has(.timeline.collapsed) .workzone.coll-l.coll-r .preview-shell{max-width:m
 .preview-shell[data-mode="theater"] .playbar{left:12%;right:12%}
 .preview-shell[data-mode="theater"] .stage-hint{right:12%}
 
-/* ===== 放映机壳：胶片放映机 + 影院银幕（暗场强沉浸） ===== */
-.pj-frame{position:absolute;inset:-8px;z-index:2;pointer-events:none;border:8px solid color-mix(in srgb,var(--seed-fg) 88%,var(--seed-surface));border-radius:10px;box-shadow:0 0 0 2px color-mix(in srgb,var(--seed-fg) 45%,transparent),0 22px 60px var(--shadow-3)}
-.pj-letterbox{position:absolute;left:0;right:0;height:6%;z-index:2;pointer-events:none;background:color-mix(in srgb,var(--seed-fg) 92%,var(--seed-surface))}
-.pj-letterbox.t{top:0}
-.pj-letterbox.b{bottom:0}
-.pj-vignette{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 58%,color-mix(in srgb,var(--seed-fg) 26%,transparent) 100%)}
-.pj-grain{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:.38;background-image:radial-gradient(circle,color-mix(in srgb,var(--seed-fg) 12%,transparent) 1px,transparent 1.6px);background-size:6px 6px}
-.pj-sheen{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(115deg,color-mix(in srgb,var(--seed-surface) 24%,transparent) 0%,transparent 32%)}
-.pj-mount{position:absolute;top:-96px;left:50%;transform:translateX(-50%);width:10px;height:48px;background:var(--solid);z-index:8;pointer-events:none;border-radius:3px}
-.pj-mount::before{content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:36px;height:8px;border-radius:4px;background:var(--solid)}
-.pj-beam{position:absolute;top:100%;left:6%;right:6%;height:170px;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--acc-pj-warm) 32%,transparent) 0%,transparent 62%)}
-.pj-unit{position:absolute;top:-54px;left:50%;transform:translateX(-50%);z-index:9;width:150px;height:70px;pointer-events:none}
-.pj-body{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:118px;height:30px;border-radius:8px;background:var(--solid);box-shadow:0 6px 16px var(--shadow-2)}
-.pj-body::after{content:"";position:absolute;left:50%;bottom:5px;transform:translateX(-50%);width:44px;height:7px;background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--seed-surface) 42%,transparent) 0 2px,transparent 2px 5px);opacity:.75}
-.pj-lens{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);width:24px;height:15px;border-radius:50% 50% 5px 5px;background:var(--seed-surface);border:4px solid var(--solid)}
-.pj-lens::before{content:"";position:absolute;top:2px;left:4px;width:7px;height:4px;border-radius:50%;background:var(--acc-pj-warm)}
-.pj-reel{position:absolute;top:0;width:40px;height:40px;border-radius:50%;border:3px solid var(--solid);background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--seed-fg) 55%,var(--seed-surface)) 0deg 8deg,var(--seed-surface) 8deg 30deg)}
-.pj-reel::after{content:"";position:absolute;inset:0;margin:auto;width:10px;height:10px;border-radius:50%;background:var(--solid)}
-.pj-reel.a{left:6px}
-.pj-reel.b{right:6px}
-.pj-on{position:absolute;right:14px;bottom:9px;width:8px;height:8px;border-radius:50%;background:var(--acc-pj-warm);box-shadow:0 0 0 2px var(--solid),0 0 8px color-mix(in srgb,var(--acc-pj-warm) 70%,transparent)}
-.pj-label{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:5;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:color-mix(in srgb,var(--seed-fg) 88%,var(--acc-pj-warm));background:var(--seed-surface);border:1px dashed color-mix(in srgb,var(--acc-pj-warm) 65%,var(--line-strong));border-radius:4px;padding:2px 8px;white-space:nowrap}
-.preview-shell[data-mode="theater"] .pj-frame,.preview-shell[data-mode="theater"] .pj-letterbox,.preview-shell[data-mode="theater"] .pj-vignette,.preview-shell[data-mode="theater"] .pj-sheen,.preview-shell[data-mode="theater"] .pj-grain,.preview-shell[data-mode="theater"] .pj-beam,.preview-shell[data-mode="theater"] .pj-unit,.preview-shell[data-mode="theater"] .pj-mount{display:none}
-.preview-shell[data-mode="tv"] .pj-frame,.preview-shell[data-mode="tv"] .pj-letterbox,.preview-shell[data-mode="tv"] .pj-vignette,.preview-shell[data-mode="tv"] .pj-sheen,.preview-shell[data-mode="tv"] .pj-grain,.preview-shell[data-mode="tv"] .pj-beam,.preview-shell[data-mode="tv"] .pj-unit,.preview-shell[data-mode="tv"] .pj-mount{display:none}
-.preview-shell[data-mode="pj"] .curtain,.preview-shell[data-mode="pj"] .valance,.preview-shell[data-mode="pj"] .spot,.preview-shell[data-mode="pj"] .curtain-hint,.preview-shell[data-mode="pj"] .curtain-close,.preview-shell[data-mode="pj"] .tv-crt,.preview-shell[data-mode="pj"] .tv-antenna,.preview-shell[data-mode="pj"] .tv-glass,.preview-shell[data-mode="pj"] .tv-scan,.preview-shell[data-mode="pj"] .tv-console,.preview-shell[data-mode="pj"] .tv-feet,.preview-shell[data-mode="pj"] .tv-src{display:none}
+/* ===== 放映机壳：电视机身 + 青橙配色（v0.3：电视壳并入放映机，仅保留剧场/放映机两壳） ===== */
+.preview-shell[data-mode="pj"] .curtain,.preview-shell[data-mode="pj"] .valance,.preview-shell[data-mode="pj"] .spot,.preview-shell[data-mode="pj"] .curtain-hint,.preview-shell[data-mode="pj"] .curtain-close{display:none}
+/* ===== 放映机壳 · 青橙渐变应用（v0.4：空舞台 / 顶栏 / 生成按钮 / 播放键 / 进度 / 播放头，仅 pj） ===== */
+html[data-shell="pj"] .stage-scene,
+html[data-shell="pj"] .stage-scene > .shot-scene:not(.s0):not(.s1):not(.s2):not(.s3){background:linear-gradient(165deg,color-mix(in srgb,var(--acc-pj) 22%,var(--seed-surface)) 0%,var(--seed-surface) 45%,color-mix(in srgb,var(--acc-pj-warm) 17%,var(--seed-surface)) 100%)}
+html[data-theme="dark"][data-shell="pj"] .stage-scene,
+html[data-theme="dark"][data-shell="pj"] .stage-scene > .shot-scene:not(.s0):not(.s1):not(.s2):not(.s3){background:linear-gradient(165deg,color-mix(in srgb,var(--acc-pj) 26%,var(--seed-surface)) 0%,color-mix(in srgb,var(--seed-surface) 82%,var(--seed-fg)) 46%,color-mix(in srgb,var(--acc-pj-warm) 19%,var(--seed-surface)) 100%)}
+html[data-shell="pj"] .chrome{position:relative;border-bottom:none}
+html[data-shell="pj"] .chrome::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--acc-pj),var(--acc-pj-warm-strong))}
+/* 亮色：acc → warm-strong；暗色：青端改用深档（亮青端白字对比不足） */
+html:not([data-theme="dark"])[data-shell="pj"] .btn-gen,
+html:not([data-theme="dark"])[data-shell="pj"] .pb-play{background:linear-gradient(120deg,var(--acc-pj) 10%,var(--acc-pj-warm-strong) 90%);color:var(--on-accent)}
+html[data-theme="dark"][data-shell="pj"] .btn-gen,
+html[data-theme="dark"][data-shell="pj"] .pb-play{background:linear-gradient(120deg,var(--acc-pj-strong) 10%,var(--acc-pj-warm-strong) 90%);color:var(--on-accent)}
+html:not([data-theme="dark"])[data-shell="pj"] .pb-scrub i{background:linear-gradient(90deg,var(--acc-pj),var(--acc-pj-warm-strong))}
+html[data-theme="dark"][data-shell="pj"] .pb-scrub i{background:linear-gradient(90deg,var(--acc-pj),var(--acc-pj-warm))}
+html:not([data-theme="dark"])[data-shell="pj"] .playhead::before{background:linear-gradient(180deg,var(--acc-pj),var(--acc-pj-warm-strong))}
+html:not([data-theme="dark"])[data-shell="pj"] .playhead::after{border-top-color:var(--acc-pj-warm-strong)}
+html[data-theme="dark"][data-shell="pj"] .playhead::before{background:linear-gradient(180deg,var(--acc-pj),var(--acc-pj-warm-strong))}
+html[data-theme="dark"][data-shell="pj"] .playhead::after{border-top-color:var(--acc-pj-warm-strong)}
 
 /* ===== 首映揭晓卡 + 闭幕提示 / 闭幕按钮 ===== */
 @keyframes theaterCard{0%,26%{opacity:0}34%,66%{opacity:1}74%,100%{opacity:0}}
@@ -480,6 +537,9 @@ body:has(.timeline.collapsed) .workzone.coll-l.coll-r .preview-shell{max-width:m
 .statusbar{flex-shrink:0;display:flex;align-items:center;gap:16px;padding:calc(5px*var(--density)) 14px;background:var(--seed-bg);border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--dim);z-index:50}
 .sb-right{margin-left:auto;display:flex;gap:14px;align-items:center}
 .sb-item{display:flex;align-items:center;gap:6px}
+.sb-social{display:flex;gap:12px;align-items:center;padding-left:12px;border-left:1px solid var(--line);font-family:var(--sans);font-size:10px}
+.sb-social a{color:var(--dim);text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:color .15s}
+.sb-social a:hover{color:var(--seed-accent)}
 .sb-dot{width:6px;height:6px;border-radius:50%;background:var(--solid)}
 .sb-sep{width:1px;height:12px;background:var(--line)}
 .history-btn{cursor:pointer;transition:color .15s}
@@ -592,3 +652,103 @@ body:has(.timeline.collapsed) .workzone.coll-l.coll-r .preview-shell{max-width:m
   .pb-shot small{display:none}
   .pb-time{font-size:9.5px}
 }
+
+/* ===== 时长/Steps 滑块控件 ===== */
+.ctrl-group{display:flex;align-items:center;gap:6px}
+.ctrl-duration input[type=range],.ctrl-steps input[type=range]{width:90px;height:4px;-webkit-appearance:none;background:var(--line);border-radius:3px;outline:none}
+.ctrl-duration input[type=range]::-webkit-slider-thumb,.ctrl-steps input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--seed-accent);cursor:pointer;border:2px solid var(--seed-surface)}
+.ctrl-group input[type=number]{width:56px;font-family:var(--mono);font-size:11px;color:var(--seed-fg);border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:var(--seed-bg);text-align:center}
+.ctrl-unit{font-size:10.5px;color:var(--dim);min-width:18px;text-align:left}
+@media (max-width:720px){.ctrl-duration input[type=range],.ctrl-steps input[type=range]{width:70px}.ctrl-group input[type=number]{width:48px}}
+
+/* ===== 折叠组件优化（增大字体）===== */
+.fold-group{margin:6px 0;border:1px solid var(--line);border-radius:8px;background:var(--seed-bg);overflow:hidden}
+.fold-header{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;user-select:none;transition:background .15s}
+.fold-header:hover{background:var(--accent-soft)}
+.fold-label{font-size:12.5px;color:var(--dim);flex-shrink:0;font-weight:500}
+.fold-current{font-size:13px;color:var(--seed-fg);font-weight:600;margin-left:4px}
+.fold-res-px{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--dim);background:var(--seed-bg);border:1px dashed var(--line-strong);border-radius:6px;padding:3px 10px;display:inline-flex;align-items:center;gap:5px;font-weight:500}
+.fold-res-px b{color:var(--seed-fg);font-weight:700}
+.fold-toggle{width:9px;height:9px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(-45deg);transition:transform .2s;margin-left:4px}
+.fold-header[data-folded="false"] .fold-toggle{transform:rotate(45deg)}
+.fold-body{max-height:0;overflow:hidden;transition:max-height .25s ease-out;padding:0 12px}
+.fold-header[data-folded="false"]+.fold-body{max-height:320px;padding:10px 12px;border-top:1px dashed var(--line);overflow-y:auto}
+.fold-body .seg{display:inline-block;margin:3px 2px;padding:3px 9px;font-size:11px;border-radius:6px}
+/* 侧栏整体可滚动，保证折叠面板展开后选项都能看到 */
+.side-body{overscroll-behavior:contain}
+@media (max-width:720px){.fold-label{font-size:11.5px}.fold-current{font-size:12px}.fold-res-px{font-size:9.5px;padding:2px 8px}}
+
+/* ===== LoRA 组件样式 ===== */
+.lora-body{padding:0!important}.lora-slots{padding:10px 12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.lora-slot{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--seed-bg);transition:border-color .15s}.lora-slot.active{border-color:var(--seed-accent);background:color-mix(in srgb,var(--seed-accent) 5%,var(--seed-bg))}.lora-slot.disabled{opacity:.5;pointer-events:none}.lora-slot-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.lora-slot-num{font-family:var(--mono);font-size:9px;color:var(--faint);font-weight:600}.lora-slot-name{font-size:10.5px;color:var(--dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:6px}.lora-slot-btn{width:100%;padding:4px 0;font-size:10px;color:var(--dim);border:1px dashed var(--line);border-radius:5px;background:var(--seed-surface);cursor:pointer;transition:all .15s}.lora-slot-btn:hover{border-color:var(--seed-primary);color:var(--seed-primary)}.lora-slot.active .lora-slot-btn{display:none}.lora-remove{display:none;width:100%;padding:4px 0;font-size:10px;color:#c0392b;border:1px solid #e74c3c;border-radius:5px;background:#fff;background:var(--seed-surface);cursor:pointer;margin-top:4px}.lora-slot.active .lora-remove{display:block}.lora-slot.active .lora-slot-btn{display:none}
+@media (max-width:720px){.lora-slots{grid-template-columns:1fr}}
+
+
+/* ===== 舞台展示区域：白色中性背景（保留占位场景 s0-s3）===== */
+.stage-area{background:#ffffff !important}
+.stage-scene{background:#ffffff !important}
+/* 暗色模式下舞台用中性暗 surface，不随展示壳彩色化 */
+[data-theme="dark"] .stage-area{background:#1a1e25 !important}
+[data-theme="dark"] .stage-scene{background:#1a1e25 !important}
+/* 仅移除会污染色彩的装饰性光晕/点阵/红毯反光（不影响占位场景图） */
+.stage-area::before{content:none !important}
+.stage-area::after{content:none !important}
+[data-theme='dark'] .stage-area::before{content:none !important}
+
+
+/* ===== 手机 / 平板设备外壳（无天线、非电视外观）===== */
+/* 隐藏电视特征元素（天线/玻璃/扫描线/旋钮/底座）*/
+.preview-shell.device-phone .tv-crt,
+.preview-shell.device-phone .tv-antenna,
+.preview-shell.device-phone .tv-glass,
+.preview-shell.device-phone .tv-scan,
+.preview-shell.device-phone .tv-console,
+.preview-shell.device-phone .tv-feet,
+.preview-shell.device-phone .tv-speaker,
+.preview-shell.device-phone .tv-knob,
+.preview-shell.device-phone .tv-brand,
+.preview-shell.device-phone .tv-src,
+.preview-shell.device-tablet .tv-crt,
+.preview-shell.device-tablet .tv-antenna,
+.preview-shell.device-tablet .tv-glass,
+.preview-shell.device-tablet .tv-scan,
+.preview-shell.device-tablet .tv-console,
+.preview-shell.device-tablet .tv-feet,
+.preview-shell.device-tablet .tv-speaker,
+.preview-shell.device-tablet .tv-knob,
+.preview-shell.device-tablet .tv-brand,
+.preview-shell.device-tablet .tv-src{display:none !important}
+
+/* ---- 手机外壳：圆角机身 + 刘海 + 细黑边框 ---- */
+.preview-shell.device-phone{border-radius:30px;box-shadow:0 0 0 9px #141519,0 0 0 11px #3a3d46,0 22px 52px var(--shadow-3)}
+.preview-shell.device-phone .stage-scene{border-radius:24px}
+.preview-shell.device-phone::before{content:'';position:absolute;top:7px;left:50%;transform:translateX(-50%);width:36%;height:16px;background:#141519;border-radius:0 0 12px 12px;z-index:9}
+.preview-shell.device-phone::after{content:'';position:absolute;top:9px;right:14px;width:3px;height:3px;border-radius:50%;background:repeating-radial-gradient(circle,#7df06d 0,transparent 0.5px);z-index:9;box-shadow:0 0 3px #7df06d}
+
+/* ---- 平板外壳：圆角机身 + 顶部居中摄像头 ---- */
+.preview-shell.device-tablet{border-radius:20px;box-shadow:0 0 0 8px #2a2d33,0 0 0 10px #454952,0 22px 52px var(--shadow-3)}
+.preview-shell.device-tablet .stage-scene{border-radius:14px}
+.preview-shell.device-tablet::before{content:'';position:absolute;top:9px;left:50%;transform:translateX(-50%);width:9px;height:6px;background:radial-gradient(circle at 50% 50%,#101216 0,#101216 45%,#3a3d46 55%,transparent 70%);border-radius:3px;z-index:9}
+
+
+
+/* ===== 舞台显示控制开关 ===== */
+.stage-controls{position:absolute;top:12px;right:12px;z-index:10;display:flex;gap:6px}
+.sc-btn{width:27px;height:27px;border-radius:7px;border:1px solid var(--line-strong);background:var(--seed-surface);color:var(--faint);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:.72;transition:opacity .15s,color .15s,background .15s,border-color .15s;box-shadow:0 1px 2px var(--shadow-1)}
+.sc-btn:hover{opacity:1;color:var(--seed-primary);border-color:var(--seed-primary)}
+.sc-btn[aria-pressed="true"]{color:var(--on-accent);background:var(--solid);border-color:var(--solid);opacity:.9}
+body.ctrl-hide-tags .slate-top{display:none !important}
+body.ctrl-hide-tags .tv-src{display:none !important}
+body.ctrl-hide-text .stage-hint{display:none !important}
+
+/* 手机/平板全面屏：移除刘海、摄像头、状态灯挖孔 */
+.preview-shell.device-phone::before{content:none !important}
+.preview-shell.device-phone::after{content:none !important}
+.preview-shell.device-tablet::before{content:none !important}
+
+
+
+/* ===== 外观菜单：舞台显示控制（标签/水印开关 + 水印输入）===== */
+.app-opt .ao-ic{width:14px;height:14px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)}
+.app-opt.on .ao-ic{color:var(--seed-accent)}
+.app-input{width:100%;margin-top:6px;padding:5px 9px;font-size:11.5px;color:var(--seed-fg);border:1px solid var(--line);border-radius:6px;background:var(--seed-bg);outline:none;transition:border-color .15s}
+.app-input:focus{border-color:var(--seed-primary)}

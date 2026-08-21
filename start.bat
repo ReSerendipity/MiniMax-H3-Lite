@@ -7,11 +7,20 @@ echo   MiniMax H3 Video Studio - Workbench
 echo ============================================================
 echo.
 
-:: Detect Python interpreter (prefer system Python, fallback to bundled WinPython)
+:: Detect Python interpreter (prefer isolated .venv, fallback to system Python / bundled WinPython)
 set "PYTHON_CMD="
 
 :: ============================================================
-:: 1. First, try system Python (preferred)
+:: 1. First, try project .venv (isolated, highest priority)
+:: ============================================================
+if exist "%~dp0.venv\Scripts\python.exe" (
+    set "PYTHON_CMD=%~dp0.venv\Scripts\python.exe"
+    echo [OK] Found isolated venv: %~dp0.venv\Scripts\python.exe
+    goto :python_found
+)
+
+:: ============================================================
+:: 2. First, try system Python (preferred)
 :: ============================================================
 
 :: 1a. Check common system Python installation paths
@@ -151,8 +160,8 @@ exit /b 1
 echo Using Python: %PYTHON_CMD%
 echo.
 
-if not exist "%~dp0bin\clean_launch.py" (
-    echo Error: Launch script not found at bin\clean_launch.py
+if not exist "%~dp0scripts\clean_launch.py" (
+    echo Error: Launch script not found at scripts\clean_launch.py
     pause
     exit /b 1
 )
@@ -161,7 +170,7 @@ echo Starting MiniMax H3 Workbench...
 echo.
 
 cd /d "%~dp0"
-"%PYTHON_CMD%" bin\clean_launch.py
+"%PYTHON_CMD%" scripts\clean_launch.py
 
 if errorlevel 1 (
     echo.

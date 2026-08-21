@@ -64,7 +64,7 @@ docs/
 # 本地管理规则（仅所有者）
 LOCAL_RULES.md
 
-# 前端冒烟测试渲染产物（bin/render_pages.py 生成，不入库）
+# 前端冒烟测试渲染产物（scripts/render_pages.py 生成，不入库）
 tests/frontend/_rendered/
 
 # ── 统一模板 v0.1 补充段（2026-08-17，与其余三仓对齐；不含删除性修改）──────────────────
@@ -82,11 +82,11 @@ ENV/
 WPy64-*/
 WinPython*/
 python/
-pretrained_models/*.pth
-pretrained_models/*.safetensors
-pretrained_models/*.bin
-pretrained_models/*.pt
-pretrained_models/*.ckpt
+model/*.pth
+model/*.safetensors
+model/*.bin
+model/*.pt
+model/*.ckpt
 *.ckpt
 *.onnx
 *.gguf
@@ -115,15 +115,33 @@ tests/playwright-report/
 *.tmp
 *.bak
 Desktop.ini
-!pretrained_models/.gitkeep
+!model/.gitkeep
 !logs/.gitkeep
 !data/uploads/.gitkeep
 !outputs/.gitkeep
 !.env.example
 
-# 提示词草稿目录（本地工作区）
-prompt/
+# MiniMax H3 本地模型权重（存放于 model/ 目录，由上方 model/*.safetensors 与 *.safetensors 规则忽略）
 
+# ── 重/大第三方与运行时目录（不入仓库）───────────────────────────
+# 内置 Comfy 内核源码（第三方，体积大，可从 ComfyUI 复制重建，不入库）
+comfy_kernel/
+# torch wheel 手动下载缓存（下载中/可再生，不入库）
+_dl/
+# model/ 是整类目录 Junction 指向 ComfyUI 模型库：整目录忽略防泄漏，
+# 仅保留项目自身文档与占位（权重已被上方 *.safetensors 等规则忽略）
+model/
+!model/.gitkeep
+!model/README.md
+# prompt/ 草稿：忽略二进制图片与会话 JSON，保留 skill 文档与分镜 txt
+prompt/*.png
+prompt/*.jpg
+prompt/*.jpeg
+prompt/*.gif
+prompt/*.json
+prompt/**/*.png
+prompt/**/*.jpg
+prompt/**/*.jpeg
 
 # pytest coverage artifacts
 coverage.xml

@@ -32,10 +32,8 @@ MiniMax-H3-lite/
 │   └── favicon.svg / favicon-32.png / apple-touch-icon.png
 ├── workflows/            # 官方三份 ComfyUI 模板（t2v / i2v / r2v，能力真源）
 ├── tests/                # 后端 pytest 单测 + tests/frontend/ 前端冒烟（读 render_pages.py 渲染产物）
-├── bin/
-│   ├── clean_launch.py   # 一键启动（单端口 uvicorn + 开浏览器）
-│   └── render_pages.py   # 渲染 Jinja2 模板 → tests/frontend/_rendered（供前端冒烟）
-├── start.bat             # 一键启动（调用 bin/clean_launch.py）
+├── scripts/              # clean_launch.py 一键启动 / render_pages.py 渲染模板→_rendered / smoke_real.py / verify_watermark.py / cleanup_garbage.py
+├── start.bat             # 一键启动（调用 scripts/clean_launch.py）
 ├── docs/                 # PRD.md（权威 spec）/ TASKS.md / IMPLEMENTATION_GAPS.md（补齐指南）
 └── _archive/             # 已归档旧原型 + legacy-standalone-html/（改造前独立 HTML）
 ```
@@ -67,7 +65,7 @@ python -m pytest tests/ -q
 
 :: 前端冒烟（先渲染 Jinja2 模板，再对三模式页跑 jsdom 交互断言）
 npm install          :: 首次安装 jsdom（devDependency）
-npm run test:frontend   :: 等价于 python bin/render_pages.py && node tests/frontend/smoke.js
+npm run test:frontend   :: 等价于 python scripts/render_pages.py && node tests/frontend/smoke.js
 ```
 
 ## 官方能力对齐与已知边界

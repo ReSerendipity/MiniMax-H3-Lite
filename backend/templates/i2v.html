@@ -25,13 +25,6 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
         生成当前镜头
       </button>
-      <div class="label">预设标签</div>
-      <div class="presets">
-        <button class="preset" type="button">首帧起推 · 电影感</button>
-        <button class="preset" type="button">人物运镜 · 环绕</button>
-        <button class="preset" type="button">产品展示 · 慢推</button>
-        <button class="preset" type="button">场景延展 · 横移</button>
-      </div>
       <div class="foot-note">图生视频（I2V / FL2VA）以首帧、末帧或首尾帧图像为锚点生成运动；图像在右侧槽位上传，第 1 张作为首帧、第 2 张作为末帧（提交顺序由槽位决定）。<br>时间锚点写法：At 0.00s, &lt;Picture 1&gt; is fully referenced. 之后按 [Shot 1]...[Shot N] 分段描述时间与镜头。</div>
 {% endblock %}
 
@@ -59,12 +52,33 @@
         </div>
         <input type="file" id="fsInput" accept="image/*" multiple style="display:none">
       </div>
-      <div class="p-row"><span class="k">画面比例</span><span class="v"><span class="seg on" data-value="16:9">16:9</span><span class="seg" data-value="21:9">21:9</span><span class="seg" data-value="4:3">4:3</span><span class="seg" data-value="1:1">1:1</span><span class="seg" data-value="3:4">3:4</span><span class="seg" data-value="9:16">9:16</span></span></div>
-      <div class="p-row"><span class="k">生成尺寸</span><span class="v"><span class="seg on" data-value="768p">768P 短边（默认）</span><span class="seg" data-value="follow_first">跟随首帧</span></span></div>
-      <div class="p-row"><span class="k">分辨率</span><span class="v"><span class="seg on" data-value="768p">768P 短边</span><span class="res-px" id="resPx" title="按所选比例换算：短边 768 · 长边上限 1344 · 32 倍数对齐">16:9 → <b>1344×768</b></span><span class="seg disabled" data-value="2k" title="H3-Regenerate-2K 未开源，不可用">2K 重绘</span></span></div>
-      <div class="p-row"><span class="k">时长</span><span class="v"><span class="seg on" data-value="8s">8s</span><span class="seg" data-value="4s">4s</span><span class="seg" data-value="10s">10s</span><span class="seg" data-value="15s">15s</span></span></div>
+      <div class="fold-group" id="aspectFold">
+        <div class="fold-header" data-folded="true">
+          <span class="fold-label">画面比例</span>
+          <span class="fold-current" id="aspectCurrent">16:9</span>
+          <span class="fold-toggle"></span>
+        </div>
+        <div class="fold-body">
+          <span class="seg on" data-value="16:9">16:9</span><span class="seg" data-value="21:9">21:9</span><span class="seg" data-value="4:3">4:3</span><span class="seg" data-value="1:1">1:1</span><span class="seg" data-value="3:4">3:4</span><span class="seg" data-value="9:16">9:16</span>
+        </div>
+      </div>
+      <div class="p-row"><span class="k">生成尺寸</span><span class="v"><span class="seg on" data-value="0.98M">0.98M 原生（默认）</span><span class="seg" data-value="follow_first">跟随首帧</span></span></div>
+      <div class="p-row"><span class="k">分辨率</span><span class="v"><span class="res-px" id="resPx" title="按所选比例 × 百万像素换算，multiple=32 · H3-Base 原生上限 0.98">16:9 → <b>1344×768</b></span><span class="seg on" data-value="0.98" title="H3 原生画布 · 16:9→1344×768（最高）">0.98M 原生</span><span class="seg" data-value="0.4" title="16:9→864×480">0.4M</span><span class="seg" data-value="0.5" title="16:9→960×544">0.5M</span><span class="seg" data-value="0.6" title="16:9→1056×608">0.6M</span><span class="seg" data-value="0.7" title="16:9→1152×640">0.7M</span><span class="seg" data-value="0.8" title="16:9→1216×672">0.8M</span><span class="seg" data-value="0.9" title="16:9→1280×736">0.9M</span></span></div>
+      <div class="p-row"><span class="k">时长</span><span class="v">
+        <div class="ctrl-group ctrl-duration">
+          <input type="range" id="durationSlider" min="4" max="15" value="8" step="1" title="拖动调整时长"/>
+          <input type="number" id="durationInput" min="4" max="15" value="8" step="1" title="输入整数秒，4–15s"/>
+          <span class="ctrl-unit">秒</span>
+        </div>
+      </span></div>
       <div class="p-row"><span class="k">种子</span><span class="v"><input type="text" id="seedInput" class="seed-in" inputmode="numeric" placeholder="留空=随机" title="固定噪声种子，留空则每次随机"><button class="seg" id="seedRand" type="button" title="生成随机种子">随机</button></span></div>
-      <div class="p-row"><span class="k">输出规格</span><span class="v"><span class="seg on">24fps</span><span class="seg on">32kHz 立体声</span></span></div>
+      <div class="p-row"><span class="k">Steps</span><span class="v">
+        <div class="ctrl-group ctrl-steps">
+          <input type="range" id="stepsSlider" min="1" max="50" value="20" step="1" title="拖动调整采样步数"/>
+          <input type="number" id="mainSteps" min="1" max="50" value="20" step="1" title="采样步数，常调"/>
+          <span class="ctrl-unit">步</span>
+        </div>
+      </span></div>
       <div class="spec-block">
         <div class="sp-title">官方模板规格 <span class="sp-sub">MiniMax H3</span></div>
         <div class="spec-line"><span>Sampler</span><b>res_multistep</b></div>
@@ -82,16 +96,75 @@
           <div class="bridge-note" style="margin-top:8px">模型权重：从 HuggingFace 或魔搭下载后放入 models 目录。国内下载优先魔搭 Studio/MiniMax/MiniMax-H3。</div>
         </div>
       </details>
+      <div class="param-collapse-header collapsed" id="paramCollapseHeader">
+        <div class="param-collapse-toggle">高级参数（点击展开）</div>
+      </div>
+      <div class="param-collapse-body" id="paramCollapseBody">
       <details class="adv-block">
-        <summary>高级参数 <span class="sp-sub">采样器覆盖（留空=全局）</span></summary>
+        <summary>采样覆盖 <span class="sp-sub">留空=全局默认</span></summary>
         <div class="adv-body">
           <div class="adv-row"><span class="k">Sampler</span><span class="v"><select id="advSampler"><option value="">默认</option><option value="res_multistep">res_multistep</option><option value="dpmpp_2m">dpmpp_2m</option><option value="euler">euler</option></select></span></div>
-          <div class="adv-row"><span class="k">Steps</span><span class="v"><input type="number" id="advSteps" min="1" max="50" placeholder="默认"></span></div>
-          <div class="adv-row"><span class="k">Denoise</span><span class="v"><input type="number" id="advDenoise" min="0" max="1" step="0.05" placeholder="默认"></span></div>
+          <div class="adv-row"><span class="k">Denoise（去噪强度）</span><span class="v"><input type="number" id="advDenoise" min="0" max="1" step="0.05" placeholder="默认 (1.0)"><span class="adv-tip" style="font-size:9px;color:var(--faint);margin-left:6px">控制生成自由度，越高越创新</span></span></div>
           <div class="adv-row"><span class="k">说明</span><span class="v"><span class="adv-empty">diffusers 后端暂不支持采样器覆盖，仅 ComfyUI 生效</span></span></div>
         </div>
       </details>
-      <div class="bridge-note">2K 重绘（H3-Regenerate-2K）未开源，本期不可用——选项已禁用。</div>
+      </div>
+      <div class="bridge-note">
+<div class="fold-group" id="loraFold">
+        <div class="fold-header" data-folded="true">
+          <span class="fold-label">LoRA</span>
+          <span class="fold-count" id="loraCount">0/6</span>
+          <span class="fold-toggle"></span>
+        </div>
+        <div class="fold-body lora-body">
+          <div class="lora-slots">
+            <div class="lora-slot" data-index="0">
+              <div class="lora-slot-head">
+                <span class="lora-slot-num">1</span>
+                <span class="lora-slot-name">未选择</span>
+              </div>
+              <button type="button" class="lora-slot-btn" data-slot="0">＋ 添加</button>
+            </div>
+            <div class="lora-slot" data-index="1">
+              <div class="lora-slot-head">
+                <span class="lora-slot-num">2</span>
+                <span class="lora-slot-name">未选择</span>
+              </div>
+              <button type="button" class="lora-slot-btn" data-slot="1">＋ 添加</button>
+            </div>
+            <div class="lora-slot" data-index="2">
+              <div class="lora-slot-head">
+                <span class="lora-slot-num">3</span>
+                <span class="lora-slot-name">未选择</span>
+              </div>
+              <button type="button" class="lora-slot-btn" data-slot="2">＋ 添加</button>
+            </div>
+            <div class="lora-slot" data-index="3">
+              <div class="lora-slot-head">
+                <span class="lora-slot-num">4</span>
+                <span class="lora-slot-name">未选择</span>
+              </div>
+              <button type="button" class="lora-slot-btn" data-slot="3">＋ 添加</button>
+            </div>
+            <div class="lora-slot" data-index="4">
+              <div class="lora-slot-head">
+                <span class="lora-slot-num">5</span>
+                <span class="lora-slot-name">未选择</span>
+              </div>
+              <button type="button" class="lora-slot-btn" data-slot="4">＋ 添加</button>
+            </div>
+            <div class="lora-slot" data-index="5">
+              <div class="lora-slot-head">
+                <span class="lora-slot-num">6</span>
+                <span class="lora-slot-name">未选择</span>
+              </div>
+              <button type="button" class="lora-slot-btn" data-slot="5">＋ 添加</button>
+            </div>
+          </div>
+          <input type="file" id="loraInput" accept=".safetensors,.pt,.bin" multiple style="display:none">
+        </div>
+      </div>
+「跟随首帧」采用官方 i2v 工作流的 Use Image Size 组（按输入图尺寸生成）；其余档位为官方 ResolutionSelector 分辨率。H3-Base 原生上限 = 0.98M（16:9 → 1344×768）。</div>
 {% endblock %}
 
 {% block page_config %}

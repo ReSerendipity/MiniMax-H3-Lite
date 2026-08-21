@@ -38,11 +38,14 @@ def submit_generation(body: GenRequest):
         db.close()
         raise HTTPException(422, f"提示词超限，上限 {settings.MAX_PROMPT_CHARS} 字符")
 
-    # 时长校验
+    # 时长校验（官方模型支持 0~15s，UI 从 DURATION_MIN 起；整秒档位）
     duration = body.params.get("duration", shot["duration"])
     if duration not in settings.SUPPORTED_DURATIONS:
         db.close()
-        raise HTTPException(422, f"时长不合法，可选 {settings.SUPPORTED_DURATIONS}")
+        raise HTTPException(
+            422,
+            f"时长不合法，可选 {settings.SUPPORTED_DURATION_MIN}–{settings.SUPPORTED_DURATION_MAX} 秒（整秒）",
+        )
 
     # 模式 × 参考素材校验（PRD §6.1 / §8）
     mode = body.mode

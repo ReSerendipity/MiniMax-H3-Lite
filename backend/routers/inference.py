@@ -3,6 +3,7 @@ MM·H3 工作台 — 推理客户端
 使用本地 diffusers ModularPipeline 进行推理，完全独立不依赖外部服务。
 参数映射以 backend/h3/spec.py（源自三份官方工作流）为单一事实源。
 """
+import os
 import sys
 import json
 import time
@@ -14,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from database import get_db, new_id
 from config import settings
+from engine_registry import active_backend
 from h3 import spec as h3
 from settings_store import resolve as resolve_setting
 
@@ -45,9 +47,13 @@ def _build_params(task_row: dict) -> dict:
     mode = task_row["mode"]
     duration = params.get("duration", 8)
     aspect = params.get("aspect", "16:9")
-    resolution = params.get("resolution", "768P")
-    short_side = 768 if resolution == "768P" else 1440  # 2K 未开源，暂不支持
-    width, height = h3.resolution_for(aspect, short_side=short_side, multiple=2)
+    # 分辨率档 = 官方 megapixel preset（如 "0.98"）；兼容旧值 "768P"。
+    # 注意：H3-Base 原生上限 = 0.98(1344×768)。旧值 "2K" 需 H3-Regenerate-2K（未随开源 Base 提供）→ 回退到原生 0.98。
+    resolution = params.get("resolution", h3.RESOLUTION_DEFAULT)
+    preset = resolution
+    if resolution == "768P" or resolution == "2K":
+        preset = h3.RESOLUTION_DEFAULT
+    width, height = h3.dims_for_resolution(preset, aspect, multiple=h3.RESOLUTION_MULTIPLE)
     num_frames = h3.frames_for_duration(duration)
     task_type = h3.MODE_TO_TASK.get(mode, h3.T2VA)
 
@@ -151,7 +157,13 @@ def run_inference(task_id: str) -> dict:
         raise ValueError(f"任务不存在：{task_id}")
 
     params = _build_params(dict(row))
-    result = _run_diffusers(params)
+    backend = active_backend()
+    if backend == "comfy":
+        # B 方案：进程内复用 ComfyUI 内核（routers/comfy_engine.py）
+        from routers.comfy_engine import run as run_comfy
+        result = run_comfy(params)
+    else:
+        result = _run_diffusers(params)
 
     aid = new_id("ast_")
     ext = ".mp4"
@@ -191,6 +203,42 @@ def run_inference(task_id: str) -> dict:
     return {"asset_id": aid, "path": f"assets/{stored_name}"}
 
 
+def _model_available_locally(model_source: str) -> bool:
+    """权重是否已就绪（本地目录 / HF 缓存），用于推理前预检。"""
+    if settings.MODEL_PATH:
+        p = Path(model_source)
+        return p.exists() and (
+            (p / "model_index.json").exists() or (p / "modular_model_index.json").exists()
+        )
+    # HF id：检查本机 HF 缓存中是否已有该 repo 的快照（离线也可读本地缓存）
+    try:
+        from huggingface_hub import scan_cache_dir
+        repo_id = "/".join(model_source.split("/")[:2])
+        return any(r.repo_id == repo_id for r in scan_cache_dir().repos)
+    except Exception:
+        return False
+
+
+def _model_missing_error(model_source: str) -> RuntimeError:
+    """权重缺失时的可操作报错：说明下载方式 + MMH3_MODEL_PATH 配置。"""
+    offline = os.environ.get("HF_HUB_OFFLINE", "").strip().lower() in ("1", "true")
+    mode = "离线模式（HF_HUB_OFFLINE=1）" if offline else "当前网络"
+    if settings.MODEL_PATH:
+        return RuntimeError(
+            f"本地权重目录缺失或不是完整 diffusers 仓库：{settings.MODEL_PATH}\n"
+            "  · 请下载 MiniMaxAI/MiniMax-H3（需含根目录 model_index.json / modular_model_index.json "
+            "及 text_encoder / transformer / transformer_ref / vae / audio_vae / scheduler 等子目录）到本地；\n"
+            "  · 再设置环境变量 MMH3_MODEL_PATH 指向该目录后重启服务。"
+        )
+    return RuntimeError(
+        f"模型权重未下载：{model_source}\n"
+        f"  · {mode}无法从 HuggingFace 拉取，且本机 HF 缓存中没有 MiniMaxAI/MiniMax-H3；\n"
+        "  · 推荐做法：手动下载 MiniMaxAI/MiniMax-H3 到本地（单模型约 33GB，全量约 354GB），"
+        "设置 MMH3_MODEL_PATH 指向该目录后重启；\n"
+        "  · 或取消 HF_HUB_OFFLINE 环境变量（并确保可访问 huggingface.co）后在线拉取（体积巨大，慎用）。"
+    )
+
+
 def _run_diffusers(params: dict) -> str:
     """
     使用 diffusers ModularPipeline 本地推理（PRD §6.2: MiniMaxAI/MiniMax-H3）。
@@ -205,14 +253,19 @@ def _run_diffusers(params: dict) -> str:
             "diffusers 推理后端依赖缺失，请先安装：pip install diffusers torch"
         ) from e
 
+    task_type = params.get("task_type", h3.T2VA)
     model_id = settings.MODEL_PATH or settings.MODEL_NAME
+    # 预检：权重是否已就绪（本地目录或 HF 缓存）。缺失时直接给出可操作指引，而非底层 traceback。
+    if not _model_available_locally(model_id):
+        raise _model_missing_error(model_id)
     tmp_path = settings.ASSETS_DIR / f"tmp_{uuid.uuid4().hex}.mp4"
     try:
         pipe = ModularPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
         if settings.QUANTIZATION:
             pipe.enable_model_cpu_offload()
 
-        inputs: dict = {
+        # 构造 inputs：对 ModularPipeline 未知参数名做多套候选，按顺序尝试
+        base_kwargs = {
             "prompt": params["prompt"],
             "width": params["width"],
             "height": params["height"],
@@ -220,42 +273,83 @@ def _run_diffusers(params: dict) -> str:
             "fps": params["fps"],
             "audio_sample_rate": params["audio_sample_rate"],
         }
-        if params["task_type"] == h3.FL2VA:
-            if params.get("first_image"):
-                inputs["image"] = params["first_image"]
+
+        if task_type == h3.FL2VA:
+            base_kwargs["first_image"] = params.get("first_image")
             if params.get("last_image"):
-                inputs["last_image"] = params["last_image"]
-        elif params["task_type"] == h3.REF2VA:
-            grouped = h3.group_refs(params["refs"])
+                base_kwargs["last_image"] = params["last_image"]
+        elif task_type == h3.REF2VA:
+            grouped = h3.group_refs(params.get("refs") or [])
             ref_size_mode = params.get("ref_image_size") or "match"
             if grouped["image"]:
-                inputs["ref_images"] = _scale_ref_images(grouped["image"], params["width"], params["height"], ref_size_mode)
+                base_kwargs["ref_images"] = _scale_ref_images(
+                    grouped["image"], params["width"], params["height"], ref_size_mode
+                )
             if grouped["video"]:
-                inputs["ref_videos"] = grouped["video"]
+                base_kwargs["ref_videos"] = grouped["video"]
             if grouped["audio"]:
-                inputs["ref_audios"] = grouped["audio"]
+                base_kwargs["ref_audios"] = grouped["audio"]
             if grouped.get("ref_video_audios"):
-                import inspect as _inspect
-                try:
-                    _sig = _inspect.signature(pipe.__call__)
-                    _supports_pair = "ref_video_audios" in _sig.parameters
-                except Exception:
-                    _supports_pair = False
-                if _supports_pair:
-                    inputs["ref_video_audios"] = grouped["ref_video_audios"]
-                else:
-                    merged = list(inputs.get("ref_audios") or [])
-                    merged += [p["audio"] for p in grouped["ref_video_audios"]]
-                    inputs["ref_audios"] = merged
+                base_kwargs["ref_video_audios"] = grouped["ref_video_audios"]
 
-        output = pipe(**inputs)
+        # diffusers ModularPipeline 实际签名与官方 ComfyUI 工作流参数名可能略有差异。
+        # 先做"剔除空值"再尝试；参数名不匹配时改为 strict=False 让 pipeline 自己挑。
+        kwargs = {k: v for k, v in base_kwargs.items() if v is not None}
+
+        try:
+            output = pipe(**kwargs)
+        except TypeError as e:
+            # 典型：ModularPipeline 不接受 first_image（要 image）/ ref_images（要 list[str]）等。
+            # 重命名为最常见等价物后重试；最终仍失败则把"原参数名 + 期望参数"如实上报。
+            alias_map = {
+                "first_image": "image",
+                "last_image": "image",
+                "ref_images": "image",
+                "ref_videos": "video",
+                "ref_audios": "audio",
+                "ref_video_audios": "audio",
+            }
+            retry = dict(kwargs)
+            for k, alias in alias_map.items():
+                if k in retry:
+                    val = retry.pop(k)
+                    if alias not in retry:
+                        retry[alias] = val
+            try:
+                output = pipe(**retry)
+            except TypeError as e2:
+                sig = ""
+                try:
+                    sig = str(_safe_signature(pipe))
+                except Exception:
+                    pass
+                raise RuntimeError(
+                    f"ModularPipeline 拒绝入参：原错误={e!r}；"
+                    f"重试别名后仍失败：{e2!r}；"
+                    f"当前入参={sorted(kwargs.keys())}；"
+                    f"pipeline 签名={sig}"
+                ) from e2
         output.save(str(tmp_path))
+    except RuntimeError:
+        raise
     except Exception as e:
-        raise RuntimeError(f"diffusers 推理失败:{type(e).__name__}: {e}") from e
+        raise RuntimeError(
+            f"diffusers 推理失败 [{task_type}]:{type(e).__name__}: {e}"
+        ) from e
 
     if not tmp_path.exists() or tmp_path.stat().st_size == 0:
         raise RuntimeError("diffusers 推理未产出有效视频文件")
     return str(tmp_path)
+
+
+def _safe_signature(pipe) -> str:
+    """安全获取 pipe.__call__ 签名，便于排错。"""
+    import inspect
+    try:
+        sig = inspect.signature(pipe.__call__)
+        return str(sig)
+    except Exception as e:
+        return f"<签名获取失败:{type(e).__name__}:{e}>"
 
 
 def _scale_ref_images(paths, width, height, mode):

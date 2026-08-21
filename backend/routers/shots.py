@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 class ShotCreate(BaseModel):
-    name: str = "新镜头"
+    name: str = "镜头 01"
     prompt: str = ""
     mode: str = "text"
     duration: int = 8

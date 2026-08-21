@@ -1,6 +1,7 @@
 """
 MM·H3 工作台 — 推理引擎注册表
-仅支持本地 diffusers 推理，完全独立不依赖外部服务。
+- diffusers：进程内 ModularPipeline 推理
+- comfy：进程内复用 ComfyUI 内核源码加载官方单文件权重（B 方案，默认）
 """
 import os
 from settings_store import resolve, update
@@ -8,18 +9,24 @@ from settings_store import resolve, update
 ENGINES = {
     "diffusers": {
         "display_name": "本地 · diffusers",
-        "description": "进程内 ModularPipeline 推理 (唯一支持的后端)",
+        "description": "进程内 ModularPipeline 推理（需 diffusers 格式权重目录）",
+        "external": False,
+        "implemented": True,
+    },
+    "comfy": {
+        "display_name": "本地 · Comfy 内核",
+        "description": "进程内复用 ComfyUI 内核加载官方单文件权重 (B 方案)",
         "external": False,
         "implemented": True,
     },
 }
 
-DEFAULT_BACKEND = "diffusers"
+DEFAULT_BACKEND = "comfy"
 ENV_BACKEND = "MMH3_INFERENCE_BACKEND"
 
 
 def active_backend() -> str:
-    """当前激活引擎：环境变量 > 运行时持久化 > 默认 diffusers"""
+    """当前激活引擎：环境变量 > 运行时持久化 > 默认 comfy"""
     env_val = os.environ.get(ENV_BACKEND)
     if env_val:
         return env_val if env_val in ENGINES else DEFAULT_BACKEND

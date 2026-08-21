@@ -11,6 +11,7 @@
     <div class="proj-dropdown" id="projDropdown">
       <div id="projList"></div>
       <button class="proj-new" id="projNew" type="button">＋ 新建项目</button>
+      <button class="proj-clear" id="projClear" type="button" title="清空所有项目（数据库 + uploads/ 与 assets/ 文件）">⌫ 一键清空全部</button>
     </div>
   </div>
   <div class="chrome-right">
@@ -34,8 +35,13 @@
         <div class="app-group">
           <div class="ag-title">展示壳 Display Shell</div>
           <button class="app-opt" data-app="shell" data-value="theater" type="button"><span class="ao-swatch" style="background:#b3261e"></span>剧场<span class="ao-desc">THEATER</span></button>
-          <button class="app-opt" data-app="shell" data-value="tv" type="button"><span class="ao-swatch" style="background:#b07612"></span>电视<span class="ao-desc">TV</span></button>
-          <button class="app-opt" data-app="shell" data-value="pj" type="button"><span class="ao-swatch" style="background:#1d7873"></span>放映机<span class="ao-desc">PROJECTOR</span></button>
+          <button class="app-opt" data-app="shell" data-value="pj" type="button"><span class="ao-swatch" style="background:#15726c"></span>放映机<span class="ao-desc">PROJECTOR</span></button>
+        </div>
+        <div class="app-group">
+          <div class="ag-title">舞台显示 Overlay</div>
+          <button class="app-opt" data-app="stagetags" data-on="1" type="button" title="显示 / 隐藏左上角标签"><span class="ao-ic">▭</span>左上角标签<span class="ao-desc">ON</span></button>
+          <button class="app-opt" data-app="stagehint" data-on="0" type="button" title="显示 / 隐藏右下角水印"><span class="ao-ic">A</span>右下角水印<span class="ao-desc">OFF</span></button>
+          <input class="app-input" id="stageWatermarkInput" type="text" maxlength="40" placeholder="自定义水印文字，如 © 2026 MM·H3">
         </div>
       </div>
     </div>

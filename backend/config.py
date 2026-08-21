@@ -45,6 +45,10 @@ class Settings:
     INFERENCE_TIMEOUT: int = 600              # 单任务超时 (秒)
     COMFY_SOURCE_DIR: str = ""                # (保留) Comfy 内核源码目录
     COMFY_URL: str = "http://127.0.0.1:8188"  # ComfyUI HTTP 服务地址（B 方案经此提交官方工作流）
+    COMFY_ENABLE: bool = False                # 是否自动拉起本机 ComfyUI（脱离 ComfyUI 手动启动、无人值守使用）
+    COMFY_PYTHON: str = ""                    # ComfyUI 进程用 Python（aki python / python.exe），空则自动探测
+    COMFY_MAIN_PY: str = ""                   # ComfyUI 的 main.py 绝对路径，空则自动探测
+    COMFY_LAUNCH_TIMEOUT: int = 120           # 自动拉起后等待就绪的最大秒数
 
     # ── 官方 H3 模型文件名 (默认来自 h3.spec，可环境变量覆盖) ──
     MODEL_FL2VA: str = H3_MODELS["fl2va"]

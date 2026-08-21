@@ -123,8 +123,8 @@ async function captureAllViewports(page, viewports, themes) {
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  // 自动关闭 MiniMax-H3 展示壳选择弹窗（避免遮挡截图）
-  await page.addInitScript(() => { localStorage.setItem('mmh3_shell', 'theater'); });
+  // 自动关闭 MiniMax-H3 展示壳选择弹窗（避免遮挡截图）；默认壳已改为放映机
+  await page.addInitScript(() => { localStorage.setItem('mmh3_shell', 'pj'); });
 
   try {
     console.log('Checking if server is running...');

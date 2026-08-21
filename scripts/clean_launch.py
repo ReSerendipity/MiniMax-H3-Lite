@@ -26,7 +26,23 @@ BIN_DIR = Path(__file__).resolve().parent
 # 优先项目内 WPy64，其次兄弟项目共享 WinPython，再系统级 CUDA Python，
 # 最后回退到当前 Python。
 def find_winpython():
-    """查找带 CUDA 的 python.exe 路径"""
+    """查找带 CUDA 的 python.exe 路径。
+
+    优先级：项目 venv（.venv，隔离环境，torch 2.9.1+cu130 已验证）→ 项目内 WinPython
+    → 兄弟项目共享 WinPython → 系统 CUDA Python → 当前 Python。
+    """
+    # 0. 项目 venv（推荐）：脱离 ComfyUI / 全局环境的隔离推理环境
+    venv_py = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
+    if venv_py.exists():
+        try:
+            code = subprocess.run(
+                [str(venv_py), "-c", "import torch; assert torch.cuda.is_available()"],
+                capture_output=True, timeout=30,
+            )
+            if code.returncode == 0:
+                return str(venv_py)
+        except Exception:
+            pass
     # 1. 项目内 WinPython
     for wpy_dir in PROJECT_ROOT.glob("WPy64-*"):
         py = wpy_dir / "python" / "python.exe"

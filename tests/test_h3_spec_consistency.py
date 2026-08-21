@@ -182,7 +182,7 @@ def test_health_backend_field(client):
     h = client.get("/api/health").json()
     assert "backend" in h, f"health missing 'backend': {h}"
     assert "backend_requires_external" in h, f"health missing 'backend_requires_external': {h}"
-    assert h["backend"] in ("diffusers", "comfyui", "sglang")
+    assert h["backend"] in ("diffusers", "comfy", "comfyui", "sglang")
 
 
 def test_engines_endpoint(client):

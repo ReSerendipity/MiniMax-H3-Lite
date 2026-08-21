@@ -6,7 +6,7 @@ const path = require('path');
 const { JSDOM } = require('jsdom');
 
 const ROOT = path.join(__dirname, '..', '..');
-// 改造后前端由 Jinja2 模板渲染，smoke 读取 bin/render_pages.py 的产物
+// 改造后前端由 Jinja2 模板渲染，smoke 读取 scripts/render_pages.py 的产物
 const RENDERED = path.join(__dirname, '_rendered');
 // 页面标识 → 渲染产物文件（t2v/i2v/r2v）
 const PAGE_FILE = { t2v: 't2v.html', i2v: 'i2v.html', r2v: 'r2v.html' };

@@ -5,7 +5,7 @@ render_pages.py — 将 Jinja2 页面模板渲染为 HTML，供前端 smoke 测�
 jsdom smoke 测试无法执行 Jinja2，因此先由本脚本把三个页面模板
 渲染到 tests/frontend/_rendered/ ，smoke.js 再读取。
 
-用法: python bin/render_pages.py
+用法: python scripts/render_pages.py
 """
 from pathlib import Path
 

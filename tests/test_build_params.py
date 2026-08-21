@@ -9,12 +9,16 @@ import io
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 # 将项目根目录加入路径
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from routers.inference import _build_params
+from fastapi.testclient import TestClient
+from backend.main import app
+from routers import uploads as uploads_router
+from routers.inference import _build_params, _model_available_locally, _model_missing_error
 
 
 def _upload(client, sid, filename, mime, content, paired_with=None):
@@ -97,3 +101,30 @@ def test_seed_and_sampling_passthrough(client, new_project, new_shot):
     assert params["steps"] == 25
     assert params["denoise"] == 0.9
     assert params["ref_image_size"] == "max"
+
+
+def test_model_missing_preflight(tmp_path, monkeypatch):
+    """模型缺失预检：无权重 → 不可用；缺失报错必须给出可操作指引（MMH3_MODEL_PATH / HF_HUB_OFFLINE）。"""
+    from routers import inference as inf
+
+    # 空 MODEL_PATH + HF 缓存无该 repo → 不可用（离线/联网都只读本地缓存）
+    monkeypatch.setattr(inf.settings, "MODEL_PATH", "")
+    monkeypatch.setattr("huggingface_hub.scan_cache_dir", lambda: SimpleNamespace(repos=[]))
+    assert inf._model_available_locally("MiniMaxAI/MiniMax-H3") is False
+
+    # 本地目录缺 model_index.json → 不可用；补上后 → 可用
+    monkeypatch.setattr(inf.settings, "MODEL_PATH", str(tmp_path))
+    assert inf._model_available_locally(str(tmp_path)) is False
+    (tmp_path / "model_index.json").write_text("{}")
+    assert inf._model_available_locally(str(tmp_path)) is True
+
+    # 缺失报错应包含可操作指引（HF id 分支：含 HF_HUB_OFFLINE 与 MMH3_MODEL_PATH）
+    monkeypatch.setattr(inf.settings, "MODEL_PATH", "")
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    err = str(inf._model_missing_error("MiniMaxAI/MiniMax-H3"))
+    assert "MMH3_MODEL_PATH" in err and "HF_HUB_OFFLINE" in err
+
+    # 本地路径缺失时报错同样给出 MMH3_MODEL_PATH 指引
+    monkeypatch.setattr(inf.settings, "MODEL_PATH", str(tmp_path))
+    err_local = str(inf._model_missing_error(str(tmp_path)))
+    assert "MMH3_MODEL_PATH" in err_local

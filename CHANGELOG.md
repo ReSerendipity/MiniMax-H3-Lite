@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.3.1](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.3.0...v2.3.1) (2026-08-22)
+
+
+### Documentation
+
+* README 顶部补齐 CI 徽章 ([a1758ca](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/a1758caedaf5c80a52bede9e482c62b7ee3462d5))
+
+
+### CI/CD
+
+* release-please 加 continue-on-error，避免发布异常显示红叉 ([b1a26ec](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/b1a26ec955fd6e181616b55a85ee89fa697a1ffe))
+* 开启 actions 创建/审批 PR 权限，重跑 release-please ([0897c30](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/0897c30ae952ce47572afdb20a18dc4f3ddff266))
+* 降低质量门禁严格程度，避免频繁失败 ([597bf2f](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/597bf2fbcd07cd522d1103f510e94cd2b9f941b8))
+
 ## [2.3.0](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.2.0...v2.3.0) (2026-08-21)
 
 

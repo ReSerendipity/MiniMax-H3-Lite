@@ -1,5 +1,7 @@
 # MM·H3 工作台 · MiniMax H3 视频生成时间线工作台
 
+[![CI](https://github.com/ReSerendipity/MiniMax-H3-lite/actions/workflows/test.yml/badge.svg)](https://github.com/ReSerendipity/MiniMax-H3-lite/actions)
+
 一个面向开发者的本地视频生成工作台：以**多镜头时间线**编排视频项目，输入提示词 / 参数 / 参考素材，调用本地 **MiniMax H3**（H3-Base）推理服务逐镜头生成视频并预览成片。
 
 前端按官方三份 ComfyUI 工作流拆分为**三个模式页**（文生 T2V / 图生 I2V / 多模态参考 R2V），由 **FastAPI + Jinja2 单端口服务端渲染**（`backend/templates/`，`base.html` + partials + 三页面模板），顶栏一键切换；展示壳（剧场 / 电视 / 放映机）首次进入引导选择并持久化，切换入口收敛在顶栏「外观」菜单。明暗双主题，响应式。

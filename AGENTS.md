@@ -1,14 +1,28 @@
 # MiniMax-H3-lite AGENTS.md — AI 辅助开发指南
 
-> 🧬 **自进化协议版本**：v1.7
+> 🧬 **自进化协议版本**：v1.8
 > 📅 **最后更新日期**：2026-08-27  
 > 🎯 **对应项目版本**：v0.1.0（Apache-2.0 开源协议）
 
 ---
 
+## 0. 文档优先级（单一事实来源）
+
+当以下文档相互矛盾时，**以此顺序为准**，并立即按铁律 #1 修正靠后者：
+
+1. 代码与配置本身（`pyproject.toml` / `package.json` / `.pre-commit-config.yaml` / 源码）
+2. `docs/official_spec.md`（若本仓存在；当前本仓无此文件）
+3. `AGENTS.md`
+4. `README.md` / `docs/**`
+5. `CHANGELOG.md`
+
+> 判据：**能被机器验证的事实永远优先于自然语言描述。**
+
+---
+
 ## ⚠️ 🤖 Agent 行为契约（自进化协议 · 必须严格遵守）
 
-AI Agent 打开本文件后的 **第一件事** 是执行下面的「🧪 自进化自检清单」，并遵守以下 5 条铁律：
+AI Agent 打开本文件后的**第一件事**是执行下面的「🧪 自进化自检清单」，并遵守以下 5 条铁律：
 
 ### 🔴 6 条自进化铁律
 1. **🔄 同步规则（Synchronize First）**：如果发现项目实际情况（目录结构、依赖版本、技术栈、配置文件名、端口等）与本文件描述 **不一致** → **立即更新本文件**，不要只改代码不改 AGENTS.md。这是最高优先级的规则。
@@ -101,6 +115,15 @@ MiniMax-H3-lite/
 
 ---
 
+## 🚫 禁区目录（禁止 AI 自动修改，必须人工确认）
+
+| 路径 | 为什么禁 | 改动需什么 |
+|---|---|---|
+| `model/` | 权重误改导致推理结果静默劣化 | 人工逐项确认 + SHA-256 复验 |
+| `comfy_kernel/` | vendored 上游（ComfyUI 内核），改动后与上游 diff 会丢失可更新性 | 记录进 ADR + 保留 patch 文件 |
+| `outputs/`、`data/checkpoints/` | 生成物与断点快照，手改即失效 | 只通过生成命令更新 |
+| `_archive/` | 归档不可回写 | 只新增，不修改 |
+
 ## 4. 启动命令
 
 ### 4.1 一键启动（推荐）
@@ -164,6 +187,7 @@ python -m uvicorn backend.main:app --host 127.0.0.1 --port 18080 --reload
 
 ## 6. 测试约定
 
+- 覆盖率门禁（诚实设定，家族治理 D9）：本仓**未配置** `fail_under`（无 pyproject，依赖为 requirements.txt）；当前以集成用例 + `test_h3_spec_consistency.py` 规格一致性用例为质量基线，M1 阶段评估是否引入 pytest-cov 门禁。
 - pytest 配置在 `pytest.ini`，测试文件在 `tests/`（`test_api_smoke.py` / `test_h3_spec_consistency.py` / `test_gaps_uploads.py` / `test_build_params.py` / `test_performance.py`）。
 - 前端冒烟：`tests/frontend/smoke.js` 读取 `tests/frontend/_rendered/*.html`（由 `scripts/render_pages.py` 生成）；Playwright 配置在 `tests/playwright.config.js`，E2E spec 位于 `tests/frontend/e2e/`（`testDir` 实测指向此；进 `tests/` 目录执行 `npx playwright test` 运行）。
 - 命名规范：类 `Test<被测类>`，方法 `test_<场景>_<期望>_<条件>`；**严禁 `assert True` 凑覆盖率**。
@@ -285,6 +309,7 @@ Scope 建议：`backend` / `routers` / `inference` / `i2v` / `r2v` / `t2v` / `up
 | v1.6 | 2026-08-27 | 幻影引用清理（家族规范审计 T5） | §6 测试约定中指向不存在的 e2e 目录引用（`tests` 下旧写法）RETARGET 为 `tests/frontend/e2e`（`tests/playwright.config.js` 的 `testDir: './frontend/e2e'` 实测指向此，spec 为 `smoke.spec.js`），并补记真实运行命令（`tests/` 下 `npx playwright test`，已用 `--list` 验证可发现全部用例）；其余内容未动 | v0.1.0  | — |
 
 | v1.7 | 2026-08-27 | **家族规范完整性审计（Phase B · B4）：自进化协议打补丁（第 6 条铁律 + 修订表已校验列）** | ① 新增第 6 条铁律「证据绑定（Evidence Binding）」：可执行路径必须当时可验证存在、未实现项须显式标注、禁止虚构 CI 门禁；② 自检清单追加两项：路径真实存在校验（跑 `python scripts/check_spec_refs.py`）与 pre-commit 双向一致校验；③ 修订记录表增加「已校验」列，历史行统一填 `—`（未校验），新条目须填 `✓ (check_spec_refs)` 或 `✗`；④ 本仓新增 `scripts/check_spec_refs.py` 家族审计 wrapper 与 `.github/workflows/docs-consistency.yml`（本地/含审计器环境强校验，纯 CI 环境找不到审计器时降级跳过保持绿）。本行即首个填写「已校验」的条目 | v0.1.0| ✓ (check_spec_refs) |
+| v1.8 | 2026-08-27 | **家族规范治理 Phase C/D/E 落地（一致性·补齐·账本）** | C2 合规文档统一命名 COMPLIANCE_CHECKLIST.md；C0 未入库 docs 链接标注；D1 §0 仲裁节；D3 FILEMAP+同步脚本；D4 禁区章节；D5 .github 治理层补齐；D8 SECURITY.md 空壳重写为 6.2KB 事实文档；D9 覆盖率路线图（诚实设定）；E3 AGENTS 体量拆分 48.4KB（达标）。docs/ 被 .gitignore:59 忽略，治理文档以本地文档形式存在 | v0.1.0 | ✓ (check_spec_refs) |
 
 <!-- 🔄 下次更新 AGENTS.md 时，在上面表格末尾追加新一行，不要删除历史记录 -->
 
@@ -294,12 +319,12 @@ Scope 建议：`backend` / `routers` / `inference` / `i2v` / `r2v` / `t2v` / `up
 - backend/main.py — startup 调用 resume_unfinished_tasks()
 - backend/config.py — 新增 CHECKPOINT_DIR / CHECKPOINT_EVERY
 - scripts/check_comfy_kernel.py — Comfy 内核复用只读检查
-- docs/comfy-kernel-reuse-poc.md — Comfy 内核进程内复用 PoC 评估
+- docs/comfy-kernel-reuse-poc.md（本地文档，未随仓库发布） — Comfy 内核进程内复用 PoC 评估
 - tests/test_api_integration.py（10 用例）、tests/test_checkpoint.py（13 用例）
 
 ## 📂 文件归档与放置规范（重要：新增文件必须遵守）
 
-> 本仓库目录已于 2026-08-23 系统整理（见 `docs/整理记录_20260823.md`）。后续任何新增/生成文件，**先判断类型再放置**，不要随意丢在仓库根目录或其他位置。
+> 本仓库目录已于 2026-08-23 系统整理（见 `docs/整理记录_20260823.md`（本地文档，未随仓库发布））。后续任何新增/生成文件，**先判断类型再放置**，不要随意丢在仓库根目录或其他位置。
 
 **docs/ 分类（项目文档）**
 - `docs/project/`：需求(PRD)、架构、API、技术选型、设计上下文

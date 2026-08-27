@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   # ── Python 后端测试 ──────────────────────────────────────
   python-test:
@@ -98,13 +101,13 @@ jobs:
           flake8 backend/ tests/*.py \
             --ignore=E501,W503,E402 \
             --max-line-length=120 \
-            --count --show-source --statistics || true
+            --count --show-source --statistics
 
       - name: Install Node lint tools
         run: npm ci
 
       - name: Lint JavaScript
-        run: npx eslint tests/frontend/*.js tests/*.js --no-error-on-unmatched-pattern || true
+        run: npx eslint tests/frontend/*.js tests/*.js --no-error-on-unmatched-pattern
 
   # ── 安全扫描 ──────────────────────────────────────
   security-scan:

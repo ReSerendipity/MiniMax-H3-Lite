@@ -10,8 +10,12 @@ on:
 jobs:
   # ── Python 后端测试 ──────────────────────────────────────
   python-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     continue-on-error: true
 
     steps:

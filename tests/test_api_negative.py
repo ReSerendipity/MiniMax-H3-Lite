@@ -19,9 +19,6 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from fastapi.testclient import TestClient
-from backend.main import app
-
 
 def _png_bytes() -> bytes:
     """生成最小合法 PNG（8×8 纯色，可被 PIL 解析）。"""

@@ -8,7 +8,6 @@
 - all_settings：含 locked 标记
 - 异常态：无效键被忽略
 """
-import json
 import sys
 from pathlib import Path
 
@@ -33,8 +32,6 @@ from settings_store import (
 def isolated_store(monkeypatch, tmp_path):
     """隔离的 settings.json + 清理环境变量。"""
     store_path = tmp_path / "settings.json"
-    import backend.config as bcfg
-    import config as tcfg
     # patch _STORE_PATH 在两个模块中的引用
     import settings_store as ss
     monkeypatch.setattr(ss, "_STORE_PATH", store_path, raising=True)

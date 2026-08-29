@@ -11,7 +11,6 @@
 
 不依赖外部 ffmpeg（帧级测试纯 numpy），视频级测试标记 @slow。
 """
-import struct
 import sys
 from pathlib import Path
 

@@ -1,5 +1,4 @@
 """Isolation self-test: assert test settings point at temp DB, not real data/mmh3.db."""
-import pytest
 
 from backend.config import settings as pkg_settings
 import config as top_settings

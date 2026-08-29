@@ -13,10 +13,8 @@
 - _scan_project_models：模型目录扫描
 - _input_image_name 硬编码路径修复验证
 """
-import json
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 

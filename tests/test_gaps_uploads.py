@@ -91,12 +91,12 @@ def test_upload_video_and_paired_audio(client, new_project, new_shot, mock_ffpro
     sid = new_shot[1]
 
     rv = client.post("/api/upload", files={"file": ("clip.mp4", b"fake", "video/mp4")},
-                    data={"shot_id": sid})
+                     data={"shot_id": sid})
     assert rv.status_code == 200, rv.text
     vid = rv.json()["id"]
 
     rp = client.post("/api/upload", files={"file": ("track.wav", b"fake", "audio/wav")},
-                    data={"shot_id": sid, "paired_with": vid})
+                     data={"shot_id": sid, "paired_with": vid})
     assert rp.status_code == 200, rp.text
     paid = rp.json()["id"]
 
@@ -106,6 +106,7 @@ def test_upload_video_and_paired_audio(client, new_project, new_shot, mock_ffpro
     by_id = {r["id"]: r for r in refs}
     assert by_id[paid]["paired_video"] == vid
 
+
 def test_upload_standalone_audio_no_pair(client, new_project, new_shot, mock_ffprobe):
     """独立音频（不配对）→ paired_video 为 None。"""
     pid = new_project
@@ -113,14 +114,14 @@ def test_upload_standalone_audio_no_pair(client, new_project, new_shot, mock_ffp
 
     # 先上传视频 + 配对音频
     rv = client.post("/api/upload", files={"file": ("v.mp4", b"fake", "video/mp4")},
-                    data={"shot_id": sid})
+                     data={"shot_id": sid})
     vid = rv.json()["id"]
     client.post("/api/upload", files={"file": ("p.wav", b"fake", "audio/wav")},
-               data={"shot_id": sid, "paired_with": vid})
+                data={"shot_id": sid, "paired_with": vid})
 
     # 独立音频
     ra = client.post("/api/upload", files={"file": ("standalone.wav", b"fake", "audio/wav")},
-                    data={"shot_id": sid})
+                     data={"shot_id": sid})
     assert ra.status_code == 200
     aid = ra.json()["id"]
 
@@ -133,7 +134,7 @@ def test_pair_audio_to_image_rejected(client, new_project, new_shot, mock_ffprob
     """负面：把音频配对到图片 → 422。"""
     sid = new_shot[1]
     ri = client.post("/api/upload", files={"file": ("img.png", b"fake", "image/png")},
-                    data={"shot_id": sid})
+                     data={"shot_id": sid})
     iid = ri.json()["id"]
     rbad = client.post(
         "/api/upload",
@@ -159,5 +160,5 @@ def test_pair_audio_to_other_shot_video_rejected(client, new_project, new_shot, 
     vid2 = rv2.json()["id"]
     # 把 vid2（属于 sid2）配对到 sid 下的音频 → 422
     rbad2 = client.post("/api/upload", files={"file": ("x.wav", b"fake", "audio/wav")},
-                       data={"shot_id": sid, "paired_with": vid2})
+                        data={"shot_id": sid, "paired_with": vid2})
     assert rbad2.status_code == 422

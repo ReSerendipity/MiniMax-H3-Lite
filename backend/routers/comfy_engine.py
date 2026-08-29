@@ -18,7 +18,6 @@ import asyncio
 import os
 import json
 import logging
-import re
 import sys
 import time
 import urllib.request
@@ -126,10 +125,6 @@ def _inject_common(api: dict, params: dict) -> None:
         api[main]["inputs"]["height"] = height
 
     # 3) 时长：ComfyMathExpression 的表达式按秒数算帧数，PrimitiveFloat.value 为秒数
-    try:
-        pf = _find(api, "ComfyMathExpression")  # 用其输入 PrimitiveFloat
-    except RuntimeError:
-        pf = None
     for nid, n in api.items():
         if n.get("class_type") == "PrimitiveFloat":
             api[nid]["inputs"]["value"] = float(params.get("duration") or 4)
@@ -208,6 +203,8 @@ def _prefix_len(a: str, b: str) -> int:
 
 
 _model_scan_cache = None
+
+
 def _scan_project_models() -> dict:
     """扫描项目 model/ 目录，返回 {目录名: [文件名]}。结果缓存。"""
     global _model_scan_cache
@@ -323,8 +320,10 @@ class _MinimalServer:
     client_id = None
     last_node_id = None
     last_prompt_id = None
+
     def send_sync(self, *args, **kwargs):
         pass
+
     def queue_updated(self, *args, **kwargs):
         pass
 

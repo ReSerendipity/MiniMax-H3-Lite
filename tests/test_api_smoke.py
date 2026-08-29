@@ -116,6 +116,7 @@ def test_generation_submit_returns_pending(client, new_project, mock_inference):
     assert r.status_code == 200, r.text
     assert r.json()["status"] == "pending"
 
+
 def test_generation_completes_and_syncs_shot(client, new_project, mock_inference):
     """任务轮询至 completed + 镜头状态同步为 completed。"""
     pid = new_project
@@ -142,7 +143,6 @@ def test_generation_completes_and_syncs_shot(client, new_project, mock_inference
     assert final is not None, "任务未在超时内进入终态"
     assert final["status"] == "completed", f"任务应完成：{final}"
     assert final["result_path"] == "assets/" + final["result_asset_id"] + ".mp4"
-
 
     shots = client.get(f"/api/projects/{pid}/shots").json()
     assert shots[0]["status"] == "completed"

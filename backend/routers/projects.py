@@ -8,7 +8,6 @@ DELETE /api/projects/{id}      删除项目（级联镜头/历史）
 POST   /api/projects/clear     一键清空所有项目（级联镜头/历史/任务/资产/上传文件）
 """
 import sys
-import shutil
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 

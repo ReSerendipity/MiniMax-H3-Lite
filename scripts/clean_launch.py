@@ -119,6 +119,24 @@ def check_dependencies():
         print("[OK] All dependencies present")
 
 
+_LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+def _require_loopback(host: str) -> str:
+    """强制 host 为回环地址；非回环直接失败（防止 0.0.0.0 公网暴露）。
+
+    对齐兄弟项目 Image_MultiModel 的 ``ServerConfig.host_must_be_loopback`` 校验器：
+    MMH3_HOST 若为回环则原样返回，否则启动即失败（fail-fast），不让错误配置静默生效。
+    """
+    h = (host or "").strip()
+    if h not in _LOOPBACK_HOSTS:
+        raise SystemExit(
+            f"[ERROR] MMH3_HOST 必须为回环地址（127.0.0.1 / localhost / ::1），得到: {h!r}。"
+            " 禁止绑定 0.0.0.0 以免服务暴露到公网。"
+        )
+    return h
+
+
 def find_available_port(start_port: int, host: str = "127.0.0.1", max_attempts: int = 200) -> int:
     """从 start_port 向上查找第一个可用的端口（bind 探测）。
 
@@ -174,16 +192,21 @@ def launch():
 
     sys.path.insert(0, str(PROJECT_ROOT))
 
+    # 主机（MMH3_HOST 可覆盖；强制回环，禁止 0.0.0.0 公网暴露——对齐家族安全红线）
+    # 修复安全评估 M1：此前硬编码 127.0.0.1 且 settings.HOST 从未被消费，
+    # 导致 MMH3_HOST 是「声明了但没人读」的假控制。现改为读取并强制回环校验。
+    host = _require_loopback(os.environ.get("MMH3_HOST", "127.0.0.1"))
+
     # 端口（环境变量可覆盖起始端口；被占用时自动向上顺延）
     backend_start = int(os.environ.get("MMH3_PORT", "18080"))
-    backend_port = find_available_port(backend_start)
+    backend_port = find_available_port(backend_start, host=host)
     if backend_port != backend_start:
         print(f"[INFO] 后端端口 {backend_start} 已被占用，自动切换到 {backend_port}")
 
     # ── 启动后端 FastAPI（单端口：页面模板 + /assets + /api） ──────────
     backend_proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "backend.main:app",
-         "--host", "127.0.0.1", "--port", str(backend_port)],
+         "--host", host, "--port", str(backend_port)],
         cwd=str(PROJECT_ROOT),
     )
     print(f"[INFO] 后端启动中: http://127.0.0.1:{backend_port} (PID {backend_proc.pid})")

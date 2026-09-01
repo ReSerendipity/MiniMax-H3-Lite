@@ -180,3 +180,8 @@ jobs:
         run: |
           test -f requirements-lock.txt || (echo "FAIL: 缺少 requirements-lock.txt" && exit 1)
           echo "PASS: 依赖锁存在"
+      - name: 配置-实现一致性门禁（幽灵控制检测）
+        # 安全评估 M1 根因门禁：MMH3_* 环境变量覆盖的 Settings 字段必须被代码真实
+        # 应用，否则判失败（声明即生效的假安全感）。纯标准库，无需安装依赖。
+        run: |
+          python scripts/check_config_refs.py

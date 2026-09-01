@@ -110,7 +110,13 @@ class Settings:
         s = cls()
         env = os.environ
         if env.get("MMH3_HOST"):
-            s.HOST = env["MMH3_HOST"]
+            _host = env["MMH3_HOST"].strip()
+            # 安全强制：HOST 只允许回环地址，禁止 0.0.0.0 公网暴露
+            # （修复安全评估 M1 的「假控制」根因：该值此前从未被消费，
+            # 且一旦被错误接线会静默绑定 0.0.0.0）。fail-fast 而非静默忽略。
+            if _host not in ("127.0.0.1", "localhost", "::1"):
+                raise ValueError(f"MMH3_HOST 必须为回环地址（127.0.0.1/localhost/::1），得到: {_host}")
+            s.HOST = _host
         if env.get("MMH3_PORT"):
             s.PORT = int(env["MMH3_PORT"])
         if env.get("MMH3_MODEL_PATH"):

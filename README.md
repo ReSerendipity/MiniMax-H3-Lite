@@ -33,6 +33,8 @@ MiniMax-H3-lite/
 │   ├── js/shared.js      # 共享逻辑（API/时间线/参数/素材/生成/持久化，页面经 window.MMH3_PAGE 配置化）
 │   └── favicon.svg / favicon-32.png / apple-touch-icon.png
 ├── workflows/            # 官方三份 ComfyUI 模板（t2v / i2v / r2v，能力真源）
+├── comfy_kernel/         # 复用的 ComfyUI/aki 内核（本地推理底层，随项目自带）
+├── model/                # 模型权重（model/vae/ 等），由 MMH3_MODEL_PATH 指向
 ├── tests/                # 后端 pytest 单测 + tests/frontend/ 前端冒烟（读 render_pages.py 渲染产物）
 ├── scripts/              # clean_launch.py 一键启动 / render_pages.py 渲染模板→_rendered / smoke_real.py / verify_watermark.py / cleanup_garbage.py
 ├── start.bat             # 一键启动（调用 scripts/clean_launch.py）

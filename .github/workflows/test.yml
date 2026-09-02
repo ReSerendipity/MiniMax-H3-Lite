@@ -42,13 +42,7 @@ jobs:
       - name: Run tests with coverage
         env:
           MMH3_INFERENCE_BACKEND: diffusers
-        run: |
-          pytest tests/ \
-            --cov=backend \
-            --cov-report=term-missing \
-            --cov-report=xml:coverage.xml \
-            --cov-fail-under=40 \
-            -v
+        run: pytest tests/ --cov=backend --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=40 -v
 
       - name: Upload coverage to Codecov
         if: always()

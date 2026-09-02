@@ -153,3 +153,6 @@ AGENTS.md
 
 # 本地预检脚本（不入库）
 precheck.ps1
+
+# CI 修复交接日志（本地账本，不入库）
+FIX_LOG.md

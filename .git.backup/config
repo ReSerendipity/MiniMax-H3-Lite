@@ -1,0 +1,17 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	ignorecase = true
+[lfs]
+	repositoryformatversion = 0
+[remote "origin"]
+	url = https://github.com/ReSerendipity/MiniMax-H3-lite.git
+	fetch = +refs/heads/main:refs/remotes/origin/main
+[branch "main"]
+	remote = origin
+	vscode-merge-base = origin/main
+	merge = refs/heads/main
+[lfs "https://github.com/ReSerendipity/MiniMax-H3-lite.git/info/lfs"]
+	access = basic

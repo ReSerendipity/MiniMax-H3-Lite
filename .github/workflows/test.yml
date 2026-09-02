@@ -22,7 +22,6 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -49,7 +48,7 @@ jobs:
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
             --cov-fail-under=40 \
-            -v || true
+            -v
 
       - name: Upload coverage to Codecov
         if: always()
@@ -62,7 +61,6 @@ jobs:
   frontend-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -80,13 +78,12 @@ jobs:
           cd tests && npm ci
 
       - name: Run frontend smoke test
-        run: npm run test:frontend || true
+        run: npm run test:frontend
 
   # ── 代码质量检查 ──────────────────────────────────────
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    continue-on-error: true
     if: always()
 
     steps:
@@ -116,7 +113,6 @@ jobs:
   security-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -140,13 +136,15 @@ jobs:
 
       - name: Python security audit
         run: |
+          set -euo pipefail
           pip install pip-audit
           pip-audit --format json > pip-audit-report.json || true
           cat pip-audit-report.json
 
       - name: NPM security audit
         run: |
-          npm audit --json > npm-audit-report.json || true
+          set -euo pipefail
+          npm audit --json > npm-audit-report.json
           cat npm-audit-report.json
 
       - name: Upload security reports

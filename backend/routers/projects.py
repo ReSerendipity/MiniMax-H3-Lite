@@ -20,7 +20,8 @@ router = APIRouter()
 
 
 class ProjectCreate(BaseModel):
-    name: str = "我的项目"
+    # 默认名须与 database.py schema DEFAULT、前端占位文案保持一致（均为"未命名项目"）。
+    name: str = "未命名项目"
 
 
 class ProjectUpdate(BaseModel):

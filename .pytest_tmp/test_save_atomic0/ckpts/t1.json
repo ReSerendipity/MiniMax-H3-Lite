@@ -1,0 +1,12 @@
+{
+  "task_id": "t1",
+  "engine": "b",
+  "total": 2,
+  "completed": 1,
+  "completed_items": [
+    "x"
+  ],
+  "remaining": [],
+  "config": {},
+  "updated_at": 1788364590.7448442
+}

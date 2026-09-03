@@ -22,7 +22,6 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -43,13 +42,7 @@ jobs:
       - name: Run tests with coverage
         env:
           MMH3_INFERENCE_BACKEND: diffusers
-        run: |
-          pytest tests/ \
-            --cov=backend \
-            --cov-report=term-missing \
-            --cov-report=xml:coverage.xml \
-            --cov-fail-under=40 \
-            -v || true
+        run: pytest tests/ --cov=backend --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=40 -v
 
       - name: Upload coverage to Codecov
         if: always()
@@ -86,7 +79,6 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    continue-on-error: true
     if: always()
 
     steps:
@@ -116,7 +108,6 @@ jobs:
   security-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -140,13 +131,15 @@ jobs:
 
       - name: Python security audit
         run: |
+          set -euo pipefail
           pip install pip-audit
           pip-audit --format json > pip-audit-report.json || true
           cat pip-audit-report.json
 
       - name: NPM security audit
         run: |
-          npm audit --json > npm-audit-report.json || true
+          set -euo pipefail
+          npm audit --json > npm-audit-report.json
           cat npm-audit-report.json
 
       - name: Upload security reports

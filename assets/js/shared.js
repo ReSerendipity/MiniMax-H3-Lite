@@ -320,8 +320,7 @@ function readbackParams(seg){
   if(as)as.value=params.sampler||'';
   var asch=$('advScheduler');
   if(asch)asch.value=params.scheduler_override||'';
-  var ast=$('advSteps');
-  if(ast)ast.value=(params.steps!=null)?String(params.steps):'';
+  /* 注：#advSteps 已废除（Steps 改为 #mainSteps 数字输入+滑块），回填见上方「Steps 回填 (主视图)」 */
   var ad=$('advDenoise');
   if(ad)ad.value=(params.denoise!=null)?String(params.denoise):'';
   /* r2v：ref_image_size 回填 */
@@ -1001,20 +1000,49 @@ function addShot(){
 }
 
 /* ============ 初始化 ============ */
+/* 时长帧数徽标（17k+5 网格 @24fps）
+   说明：时长控件已由分段按钮（.seg[data-value="8s"]）改为滑块+数字输入，
+   原按 seg 遍历的实现已永久失配（死代码），改为跟随 #durationInput 当前值刷新。 */
+function syncDurationFrames(){
+  var di=document.getElementById('durationInput');
+  if(!di)return;
+  var host=(di.closest?di.closest('.ctrl-duration'):null)||(di.closest?di.closest('.p-row'):null);
+  if(!host)return;
+  var badge=host.querySelector('.dur-frames');
+  if(!badge){badge=document.createElement('em');badge.className='dur-frames';host.appendChild(badge);}
+  var v=parseInt(di.value,10);
+  badge.textContent=isNaN(v)?'':'·'+framesForDuration(v)+'帧';
+}
+window.__mmSyncDurationFrames=syncDurationFrames;
+
+/* 分辨率像素读数（#resPx）
+   说明：比例/分辨率控件已由 .p-row 迁入 .fold-group，原按 row.querySelector('.k')
+   判定 '画面比例'/'分辨率' 的 seg 点击分支已永久失配，导致改比例后 resPx 不刷新。
+   改为按 fold 内当前选中项统一刷新。 */
+function currentAspect(){
+  var el=document.querySelector('#aspectFold .fold-body .seg.on');
+  return el&&el.dataset.value?el.dataset.value:'16:9';
+}
+function currentResPreset(){
+  var el=document.querySelector('#resFold .fold-body .seg.on');
+  return el&&el.dataset.value?el.dataset.value:H3_RES_DEFAULT;
+}
+function syncResPx(){
+  var px=$('resPx');
+  if(!px)return;
+  var asp=currentAspect(),pres=currentResPreset();
+  var d=dimsForResolution(pres,asp);
+  px.innerHTML=asp+' → <b>'+d[0]+'×'+d[1]+'</b> <em>'+pres+'MP</em>';
+}
+window.__mmSyncResPx=syncResPx;
+
 function init(){
   applyShell(currentShell,false);
   applyTheme(currentTheme,false);
   renderModeTabs();
   syncAppMenu();
   renderShellModal();
-  /* 时长帧数徽标（17k+5 网格 @24fps） */
-  document.querySelectorAll('.p-row .seg[data-value]').forEach(function(s){
-    if(/^\d+s$/.test(s.dataset.value)){
-      var em=document.createElement('em');
-      em.textContent='·'+framesForDuration(parseInt(s.dataset.value,10))+'帧';
-      s.appendChild(em);
-    }
-  });
+  syncDurationFrames();
   /* 种子随机按钮 */
   var sr=$('seedRand');
   if(sr)sr.addEventListener('click',function(){
@@ -1037,8 +1065,9 @@ init();
   setTimeout(function(){
     var durSlider=document.getElementById('durationSlider'),durInput=document.getElementById('durationInput');
     if(durSlider&&durInput){
-      durSlider.addEventListener('input',function(){durInput.value=durSlider.value;});
-      durInput.addEventListener('change',function(){var v=parseInt(durInput.value,10);if(!isNaN(v)&&v>=4&&v<=15)durSlider.value=v;});
+      durSlider.addEventListener('input',function(){durInput.value=durSlider.value;if(window.__mmSyncDurationFrames)window.__mmSyncDurationFrames();});
+      durInput.addEventListener('change',function(){var v=parseInt(durInput.value,10);if(!isNaN(v)&&v>=4&&v<=15)durSlider.value=v;if(window.__mmSyncDurationFrames)window.__mmSyncDurationFrames();});
+      durInput.addEventListener('input',function(){if(window.__mmSyncDurationFrames)window.__mmSyncDurationFrames();});
     }
     var stepsSlider=document.getElementById('stepsSlider'),stepsInput=document.getElementById('mainSteps');
     if(stepsSlider&&stepsInput){
@@ -1085,6 +1114,8 @@ init();
       currentEl.title = '当前选择：' + active.dataset.value;
     }
     applyShellAspect(active.dataset.value);
+    /* 比例变化须同步刷新分辨率像素读数（原 .p-row 分支已失配） */
+    if(window.__mmSyncResPx)window.__mmSyncResPx();
   }
   
   // 初始化时执行（延时确保 DOM 就绪）
@@ -1099,6 +1130,16 @@ init();
         e.target.classList.add('on');
         syncAspectDisplay();
       }
+    });
+  }
+  /* 分辨率折叠组：迁入 fold 后未绑定任何监听，选中既不切换也不刷新读数 */
+  var resBody = document.querySelector('#resFold .fold-body');
+  if(resBody){
+    resBody.addEventListener('click', function(e){
+      if(!e.target.classList.contains('seg'))return;
+      this.querySelectorAll('.seg').forEach(function(s){s.classList.remove('on');});
+      e.target.classList.add('on');
+      if(window.__mmSyncResPx)window.__mmSyncResPx();
     });
   }
 })();

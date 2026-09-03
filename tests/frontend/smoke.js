@@ -91,14 +91,20 @@ const click = (d, sel) => d.querySelector(sel).dispatchEvent(new d.defaultView.M
     assert(tabs.length === 3 && tabs[0].classList.contains('on'), '3 mode tabs, t2v highlighted');
     assert(tabs[1].getAttribute('href') === '/i2v' && tabs[2].getAttribute('href') === '/r2v', 'tab links correct');
     assert(d.querySelector('#shellModal').classList.contains('open'), 'first-visit shell modal shown');
-    assert(d.querySelectorAll('#shellModal .sm-card').length === 3, '3 shell cards');
+    // 展示壳现为 theater/pj 两档（SHELL_META 已移除第三档），曾为 3
+    assert(d.querySelectorAll('#shellModal .sm-card').length === 2, '2 shell cards (theater/pj)');
     click(d, '#shellModal .sm-card.theater');
     assert(!d.querySelector('#shellModal').classList.contains('open'), 'modal closes after choice');
     assert(dom.window.localStorage.getItem('mmh3_shell') === 'theater', 'shell persisted');
-    const durSegs = [...d.querySelectorAll('.p-row .seg[data-value$="s"]')];
-    assert(durSegs.length === 4 && durSegs[0].textContent.includes('192帧'), 'frame badges (8s→192帧)');
+    // 时长控件已由分段按钮(.seg[data-value="8s"])改版为滑块+数字输入，帧徽标跟随当前值
+    const durSlider = d.querySelector('#durationSlider'), durInput = d.querySelector('#durationInput');
+    assert(!!(durSlider && durInput) && durInput.value === '8', 'duration control defaults to 8s');
+    assert(!!durSlider && durSlider.getAttribute('min') === '4' && durSlider.getAttribute('max') === '15', 'duration range 4-15s');
+    const durBadge = d.querySelector('.dur-frames');
+    assert(!!durBadge && durBadge.textContent.includes('192帧'), 'frame badge (8s → 192帧, 17k+5 @24fps)');
     assert(/1344×768/.test(d.querySelector('#resPx').textContent), 'resPx default 16:9 → 1344×768');
-    click(d, '.p-row .seg[data-value="9:16"]');
+    // 比例控件已迁入 #aspectFold 折叠组（原在 .p-row）
+    click(d, '#aspectFold .fold-body .seg[data-value="9:16"]');
     assert(/9:16 → 768×1344/.test(d.querySelector('#resPx').textContent), 'aspect click → 9:16 768×1344');
     const ta = d.querySelector('#promptInput');
     ta.value = 'x'.repeat(7100);
@@ -131,7 +137,8 @@ const click = (d, sel) => d.querySelector(sel).dispatchEvent(new d.defaultView.M
     click(d, '.seg[data-shot="1"]');
     assert(d.querySelector('.p-row .seg.on[data-value="first_last"]') && d.querySelector('#fs-last').textContent.includes('f2.png'), 'first_last readback + slot mapping');
     assert(d.querySelector('#seedInput').value === '123456', 'seed readback');
-    assert(d.querySelector('#advSampler').value === 'euler' && d.querySelector('#advSteps').value === '25' && d.querySelector('#advDenoise').value === '0.9', 'advanced params readback');
+    // #advSteps 已废除，Steps 现为 #mainSteps（数字输入+滑块）
+    assert(d.querySelector('#advSampler').value === 'euler' && d.querySelector('#mainSteps').value === '25' && d.querySelector('#advDenoise').value === '0.9', 'advanced params readback');
     const sizeRow = [...d.querySelectorAll('.p-row')].find(r => r.querySelector('.k') && r.querySelector('.k').textContent.trim() === '生成尺寸');
     assert(sizeRow && sizeRow.querySelector('.seg.on').dataset.value === 'follow_first', 'size_mode readback');
     click(d, '#seedRand');
@@ -192,7 +199,8 @@ const click = (d, sel) => d.querySelector(sel).dispatchEvent(new d.defaultView.M
     assert(d.querySelector('#projSwitch').getAttribute('role') === 'button', 'project switch role=button');
     const segs = [...d.querySelectorAll('#tlSegments .seg[data-shot]')];
     assert(segs.every(s => s.getAttribute('role') === 'button' && s.getAttribute('tabindex') === '0'), 'timeline segs role=button + tabindex');
-    assert(d.querySelectorAll('#shellModal .sm-card').length === 3 && [...d.querySelectorAll('#shellModal .sm-card')].every(c => c.tagName === 'BUTTON'), 'shell cards are buttons');
+    // 展示壳现为 theater/pj 两档
+    assert(d.querySelectorAll('#shellModal .sm-card').length === 2 && [...d.querySelectorAll('#shellModal .sm-card')].every(c => c.tagName === 'BUTTON'), 'shell cards are buttons');
     click(d, '#shellModal .sm-card.theater');
     assert(d.querySelectorAll('.app-opt').length >= 5 && [...d.querySelectorAll('.app-opt')].every(o => o.type === 'button'), 'appearance options are buttons');
   }

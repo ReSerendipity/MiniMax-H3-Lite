@@ -1,7 +1,9 @@
 """
 MM·H3 工作台 — 推理引擎注册表
-- diffusers：进程内 ModularPipeline 推理
-- comfy：进程内复用 ComfyUI 内核源码加载官方单文件权重（B 方案，默认）
+- diffusers：进程内 ModularPipeline 推理（fallback）
+- comfy：进程内复用 ComfyUI 内核源码加载官方单文件权重（B 方案，当前默认）
+- vllm-omni：外部 vllm-omni 服务（Apache-2.0，OpenAI 兼容 /v1/videos；消费者级 GPU recipe，ADR-0003 推荐默认）
+  注：DEFAULT_BACKEND 暂维持 "comfy"，待 vllm-omni 实际 provisioning + RTX 5070 Ti recipe 验证后翻转为 "vllm-omni"。
 """
 import os
 from settings_store import resolve, update
@@ -19,9 +21,15 @@ ENGINES = {
         "external": False,
         "implemented": True,
     },
+    "vllm-omni": {
+        "display_name": "远程 · vllm-omni",
+        "description": "外部 vllm-omni 服务（Apache-2.0），调用 OpenAI 兼容 /v1/videos；消费者级 GPU recipe（4090/5090 已验证）",
+        "external": True,
+        "implemented": True,
+    },
 }
 
-DEFAULT_BACKEND = "comfy"
+DEFAULT_BACKEND = "comfy"  # ADR-0003：vllm-omni 已注册为推荐默认，待 provisioning + 5070Ti recipe 验证后翻转
 ENV_BACKEND = "MMH3_INFERENCE_BACKEND"
 
 

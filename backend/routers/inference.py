@@ -162,6 +162,10 @@ def run_inference(task_id: str) -> dict:
         # B 方案：进程内复用 ComfyUI 内核（routers/comfy_engine.py）
         from routers.comfy_engine import run as run_comfy
         result = run_comfy(params)
+    elif backend == "vllm-omni":
+        # ADR-0003：外部 vllm-omni 服务（OpenAI 兼容 /v1/videos）
+        from routers.vllm_omni_engine import run as run_vllm
+        result = run_vllm(params)
     else:
         result = _run_diffusers(params)
 

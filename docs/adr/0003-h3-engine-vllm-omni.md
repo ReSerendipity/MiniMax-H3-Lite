@@ -1,6 +1,6 @@
 **ADR-0003: H3 服务引擎切换评估（引入 vllm-omni 作为推荐默认引擎）**
 
-- **状态**: Proposed（PoC 门控，待验证后转 Implemented）
+- **状态**: Accepted（registry 已注册 vllm-omni + 适配器脚手架落地 2026-09-03；runtime 切默认待 vllm-omni provisioning + RTX 5070 Ti recipe 验证）
 - **日期**: 2026-09-03
 - **决策者**: 项目维护者 + AI 指挥（家族规范审计 / §4.5 任务 #3）
 - **关联**: `docs/repo-analysis/MiniMax-H3_技术学习报告.md`、`docs/repo-analysis/vllm-omni_技术学习报告.md`、`docs/repo-analysis/Wan2.2_技术学习报告.md`、`docs/repo-analysis/LTX-Video_技术学习报告.md`

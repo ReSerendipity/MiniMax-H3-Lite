@@ -34,7 +34,7 @@ repos:
     rev: 1.7.7
     hooks:
       - id: bandit
-        args: ['-r', 'backend/']
+        args: []  # 故意不传 -r backend/：pre-commit 会把暂存文件追加到命令尾部，带 -r 时每次提交都全量重扫 backend/，32 处存量低危(ffprobe subprocess / try-except-pass)会无差别拦截一切提交；全量扫描归 CI 的 sast job
         exclude: ^(tests|\.venv)/
 
   # ── 依赖检查 ──────────────────────────────────────────────

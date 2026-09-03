@@ -15,7 +15,6 @@ params 映射为该请求，并把返回视频落盘为临时文件（与 comfy_
 import os
 import uuid
 import logging
-from pathlib import Path
 
 from config import settings
 

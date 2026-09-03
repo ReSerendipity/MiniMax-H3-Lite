@@ -1,0 +1,69 @@
+# MiniMax-H3-lite — 单机 GPU 工作台编排
+#
+# 用法：
+#   docker compose up -d --build
+#   docker compose logs -f mmh3
+#   docker compose down
+#
+# 安全默认：仅绑定本机回环（127.0.0.1:18080）。
+# 如需局域网/公网暴露，改为 `0.0.0.0:18080:18080` 并经反向代理（nginx/caddy）+ 鉴权，
+# 因为本工作台 API 本身无内置认证（见 云原生与容器化评估提示词 P0）。
+
+services:
+  mmh3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # 不可变 tag：避免 :latest 浮动（评估提示词 §2.8 / 反模式 #5 P1）。
+    # 语义 tag 与 torch 版本 + CUDA 版本对齐，可复现；首次 `docker build` 后建议进一步固化 digest：
+    #   docker inspect --format='{{index .RepoDigests 0}}' minimax-h3-lite:2.9.1-cu130
+    # 然后把下面这一行改为  minimax-h3-lite@sha256:<实际 digest>
+    image: minimax-h3-lite:2.9.1-cu130
+    container_name: mmh3-workbench
+    restart: unless-stopped
+    # 本地镜像优先：build 完成后用本地；不主动 pull 远端
+    # （若需用 registry 拉取镜像，把 build 段删掉即可）
+    pull_policy: never
+    # 日志轮转：单文件 10MB × 3 个，防止长跑撑爆磁盘
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      # 默认仅本机；对外暴露请改 0.0.0.0:18080 并经反代 + 鉴权
+      - "127.0.0.1:18080:18080"
+    environment:
+      # MMH3_PORT 在 Dockerfile ENV 已声明（18080），compose 不再重复；如需覆盖按
+      # `environment: - MMH3_PORT=19090` 重新加回即可
+      - HF_HUB_OFFLINE=1
+      - TRANSFORMERS_OFFLINE=1
+      - MODELSCOPE_OFFLINE=1
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      - COMFYUI_DISABLE_UPDATE_CHECK=1
+    volumes:
+      # 注：Windows 主机下 model/ 子目录通常是 NTFS Junction 指 ComfyUI 安装位置。
+      # Docker Desktop -> WSL2 -> Linux 容器默认会跟随同盘 Junction 成功挂载；
+      # 跨盘 / 跟随失败 / 迁移到非 Windows 主机时，跑 scripts/convert_model_junctions.ps1
+      # （默认 dry-run，加 -Apply 才真转换；114GB 级别，磁盘需留出 ~peak+5GB 余量）。
+      - ./model:/app/model:ro            # 权重目录（需事先放置；镜像不含权重）
+      - ./data:/app/data                 # SQLite 等运行时数据（持久化）
+      - ./uploads:/app/uploads           # 用户上传（持久化）
+      - ./outputs:/app/outputs           # 生成产物（持久化）
+      - ./comfy_kernel:/app/comfy_kernel:ro
+    # ⚠ 卷属主：容器内以 uid 1000(appuser) 运行，宿主机挂载目录若属主不匹配会导致写入失败。
+    # 首次运行前可 `sudo chown -R 1000:1000 data uploads outputs`，或在部署侧显式指定 user。
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18080/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      # H3 模型首次加载常超 2 分钟；冷启动机器建议 300s（与 Dockerfile HEALTHCHECK 一致）
+      start_period: 300s

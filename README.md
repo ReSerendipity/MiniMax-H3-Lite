@@ -63,6 +63,29 @@ python -m uvicorn backend.main:app --port 18080
 
 页面地址：`http://127.0.0.1:18080/`（T2V）、`/i2v`（I2V）、`/r2v`（R2V）。
 
+### 🐳 Docker 部署（可选）
+
+适合 Linux 部署目标 / GPU 服务器 / 希望隔离依赖的环境。完整 SOP 见 [`docs/agents/SOPS.md` SOP-7](docs/agents/SOPS.md)。
+
+```bash
+# 1. 预检 compose bind-mount 源
+python scripts/check_compose_mounts.py
+
+# 2. 把权重放到 ./model/（必含 diffusion_models/loras/text_encoders/vae 4 个子目录；
+#    Windows 主机可放 NTFS Junction 共享 ComfyUI 权重目录）
+
+# 3. 构建 + 启动
+docker compose up -d --build
+# → http://127.0.0.1:18080
+
+# 4. 验证
+curl http://127.0.0.1:18080/api/health
+```
+
+**Linux 主机首次部署**需先 `sudo scripts/preflight.sh`（自动 chown 1000:1000 + 校验 model/ 子目录）。
+**Windows 主机若容器读不到权重**，跑 `pwsh scripts/convert_model_junctions.ps1`（默认 dry-run；需 ~213GB 磁盘峰值，本机 C 盘 76GB 不够则**放弃转换**，参见 GOTCHAS #22）。
+**日常维护**：`python scripts/cleanup_garbage.py --container` 一键清空测试项目 + 停掉并删除 `mmh3-workbench` 容器。
+
 ### 测试
 
 ```bat

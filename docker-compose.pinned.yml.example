@@ -1,0 +1,27 @@
+# docker-compose.pinned.yml.example — digest 固化覆盖层示例
+#
+# 本文件**不会**被 git 跟踪（.gitignore 会忽略 docker-compose.pinned.yml），
+# 仅作为"scripts/build_and_pin.ps1 输出长这样"的参考文档。
+#
+# === build_and_pin.ps1 实际生成的 docker-compose.pinned.yml 类似下方 ===
+#
+# services:
+#   mmh3:
+#     image: minimax-h3-lite:2.9.1-cu130@sha256:abc123...  ← 64 位 hex
+#
+# === 用法 ===
+#   docker compose -f docker-compose.yml -f docker-compose.pinned.yml up -d
+#
+# === 效果 ===
+# services.mmh3.image 被覆盖为 <tag>@<sha256:...>。
+# 之后即使有人把同名 :2.9.1-cu130 tag 推到远端（或本地被覆盖），
+# 容器仍按本地 image ID 启动，免疫 tag 漂移。
+#
+# === 失效条件 ===
+# 本地 image 被 `docker rmi` 或被 `docker pull :2.9.1-cu130` 覆盖时，
+# pinned 链断裂；rerun build_and_pin.ps1 重新生成即可。
+#
+# === 与 registry 级别不可变 pin 的区别 ===
+# 本地 image ID 只能保护**本地消费链**。要做 release/CI 级别的不可变
+# pin，需先 `docker push` 到 registry（Docker Hub / GHCR），再改用
+# RepoDigests（`docker inspect --format='{{index .RepoDigests 0}}'`）。

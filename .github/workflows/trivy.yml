@@ -1,0 +1,71 @@
+# .github/workflows/trivy.yml
+# 容器镜像漏洞扫描（CI 阻断 HIGH/CRITICAL）
+#
+# 触发：每次 push main / PR / 手动 dispatch
+# 流程：本地 build 镜像（不 push） → trivy 扫描 → SARIF 上传 Security tab
+# 失败条件：发现 HIGH/CRITICAL 级别 CVE 且有可用 fix（`--ignore-unfixed: true`）
+#
+# 复用 `Dockerfile` + 仓库的 LABEL 元数据（org.opencontainers.image.*）；
+# 不依赖任何外部 registry 凭据。
+
+name: Trivy Container Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write  # SARIF upload to Security tab
+
+jobs:
+  build-and-scan:
+    name: Build & scan image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (local only; not pushed)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: minimax-h3-lite:scan-${{ github.sha }}
+          build-args: |
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VERSION=0.1.0
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: minimax-h3-lite:scan-${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          exit-code: '1'        # 有 HIGH/CRITICAL 漏洞就 fail
+          vuln-type: 'os,library'
+          scanners: 'vuln'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: trivy-image-scan
+
+      - name: Cleanup local scan image
+        if: always()
+        run: docker rmi minimax-h3-lite:scan-${{ github.sha }} || true

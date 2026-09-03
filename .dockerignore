@@ -1,0 +1,17 @@
+# 构建上下文排除项（减小镜像体积、避免把大权重/运行时数据打进镜像）
+.git
+.venv
+node_modules
+web-prototypes
+model
+data
+uploads
+outputs
+.pytest_cache
+htmlcov
+__pycache__
+*.pyc
+*.db
+_archive
+_dl
+scripts/*.ps1

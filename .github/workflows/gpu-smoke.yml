@@ -1,0 +1,150 @@
+# .github/workflows/gpu-smoke.yml
+# Weekly + manual REAL-INFERENCE smoke on a self-hosted GPU runner (label: gpu).
+#
+# 补齐 MiniMax-H3-lite 在「GPU 真机推理 CI」维度的历史缺口：
+# 此前 .github/workflows/ 仅有 docs-consistency / release-please / sast / stale / test，
+# runs-on 全为 GitHub 托管 runner（ubuntu / windows），无任何 GPU 真机推理验证——
+# diffusers 升级、torch/CUDA 变体变更、权重加载路径改动后没有任何防线。
+#
+# 设计借鉴 SeedVR2-lite 的 gpu-smoke.yml（runner-precheck + gpu-smoke 双 job），
+# 与 Image_MultiModel / TTS_MultiModel 家族一致。与三者不同：本项目已自带
+# 真实权重推理冒烟脚本 scripts/smoke_real.py（校验 torch/diffusers → CUDA → 权重
+# 路径 → 跑 diffusers ModularPipeline → 落盘非空 mp4），故本 workflow 直接复用它，
+# 无需另造冒烟脚本。
+#
+# 运行前提（一次性，在 GPU 机器上）：
+#   1. 注册 self-hosted runner，额外打 `gpu` label
+#      (Settings -> Actions -> Runners -> New self-hosted runner -> --labels gpu)
+#   2. 预置 Python 虚拟环境（含 torch CUDA + 本项目依赖 + diffusers==0.39.0 + transformers）；
+#      路径通过仓库变量 GPU_SMOKE_VENV 指定（如 /opt/venv-mmh3/bin）。未配置时回退到默认
+#      python 并尝试 pip install -r requirements.txt（不推荐，权重环境应预置）。
+#   3. 模型权重就位：通过仓库变量 GPU_SMOKE_MODEL_PATH 指向本地权重目录
+#      （H3-Base-FL2VA / H3-Base-Ref2VA），或已置于本机 HF 缓存
+#      （MiniMaxAI/MiniMax-H3）。未配置且本地无权重时，smoke_real.py 以退出码 2 优雅跳过。
+#   4. NVIDIA 驱动可用；约数 GB 空闲显存（默认 5 帧 768×768，开启 cpu offload）。
+#   5. 仓库 Secrets 配置 REPO_ADMIN_TOKEN（具备 actions:read / admin 权限），
+#      供 runner-precheck 查询 runner 在线状态。
+# 无 gpu runner 在线时，周更作业经 runner-precheck 优雅跳过（available=false），不会长期飘红。
+
+name: GPU Smoke (real inference, self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch/tag/sha to smoke (empty = default branch)"
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 3 * * 1" # every Monday 03:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  runner-precheck:
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - name: Check for an online self-hosted GPU runner
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::REPO_ADMIN_TOKEN secret not configured - cannot query runner status, skipping smoke"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # runners 列表 API 需要管理员级 token（GITHUB_TOKEN 即使 actions:read 也 403）
+          COUNT=$(gh api "repos/${{ github.repository }}/actions/runners" \
+            --jq '[.runners[] | select(.status == "online") | select(any(.labels[]; .name == "gpu"))] | length')
+          echo "online gpu-labelled runners: ${COUNT}"
+          if [ "${COUNT}" -gt 0 ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::no online self-hosted runner with label 'gpu'; weekly smoke skipped"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  gpu-smoke:
+    needs: runner-precheck
+    if: needs.runner-precheck.outputs.available == 'true'
+    runs-on: [self-hosted, gpu]
+    timeout-minutes: 150
+    env:
+      CUDA_VISIBLE_DEVICES: "0"
+      MMH3_MODEL_PATH: ${{ vars.GPU_SMOKE_MODEL_PATH }}
+      PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
+    steps:
+      - name: Fetch source via codeload (avoid git smart-HTTP stall on GPU runner)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          $ref = "${{ github.event.inputs.ref || github.ref_name }}"
+          if (-not $ref) { $ref = '${{ github.ref_name }}' }
+          Invoke-WebRequest "https://codeload.github.com/${{ github.repository }}/tar.gz/refs/heads/$ref" -OutFile src.tgz -UseBasicParsing
+          New-Item -ItemType Directory -Path repo -Force | Out-Null
+          tar -xzf src.tgz -C repo --strip-components=1
+          Remove-Item src.tgz -Force
+          Get-ChildItem repo | Select-Object Name
+
+      - name: Resolve Python interpreter
+        id: py
+        shell: pwsh
+        run: |
+          $venv = "${{ vars.GPU_SMOKE_VENV }}"
+          if ($venv -and (Test-Path $venv)) {
+            "python=$venv/bin/python" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding ascii -Append
+          } else {
+            "python=python" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding ascii -Append
+          }
+
+      - name: Install deps (fallback if no prebuilt venv configured)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not "${{ vars.GPU_SMOKE_VENV }}") {
+            & ${{ steps.py.outputs.python }} -m pip install -r requirements.txt
+          } else {
+            Write-Host "using prebuilt venv; skipping pip install"
+          }
+
+      - name: CUDA / torch sanity gate
+        shell: pwsh
+        run: |
+          & ${{ steps.py.outputs.python }} -c "import torch; assert torch.cuda.is_available(), 'CUDA not available'; print('CUDA', torch.cuda.get_device_name(0))"
+
+      - name: Real-weight inference smoke (scripts/smoke_real.py)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          cd repo
+          # 复用项目自带真实权重推理冒烟：
+          # 退出码 0 = 通过 / 1 = 失败（依赖缺失或推理报错）/ 2 = 环境跳过（无 CUDA 或无权重）
+          & ${{ steps.py.outputs.python }} scripts/smoke_real.py --prompt "A cat walking on a beach, cinematic." --allow-download
+          $rc = $LASTEXITCODE
+          if ($rc -eq 2) {
+            Write-Host "::notice::smoke_real.py returned 2 (env skip: no CUDA or no local weights) - not a failure"
+            exit 0
+          }
+          if ($rc -ne 0) { throw "GPU real-inference smoke failed (rc=$rc)" }
+
+      - name: Report GPU status
+        if: always()
+        shell: pwsh
+        run: |
+          nvidia-smi || true
+
+      - name: Upload smoke report + generated mp4
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mmh3-gpu-smoke-${{ github.run_number }}
+          path: |
+            repo/outputs/smoke_real.mp4
+          if-no-files-found: ignore
+          retention-days: 7

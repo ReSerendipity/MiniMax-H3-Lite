@@ -161,3 +161,6 @@ precheck.ps1
 FIX_LOG.md
 
 .git.backup/
+
+# 自进化协议细化文档（仅本地保留，不并入仓库）
+docs/agents/

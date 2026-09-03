@@ -19,7 +19,7 @@
 ## 3. `comfy_kernel/custom_nodes/` 第三方节点包（19 个，除 `__pycache__` 外）
 
 > §3.4 四项未决收口记录（2026-09-03，LICENSE 文件实测复核）：
-> ① `ComfyUI_Dynamic-RAMCache` 原记 **NOT FOUND** 实为「**目录存在但无 LICENSE 文件**」（默认保留所有权利，无明确授权）→ 须核实上游许可或移除；
+> ① `ComfyUI_Dynamic-RAMCache` 原记 **NOT FOUND** 实为「**目录存在但无 LICENSE 文件**」→ **已核实上游 `Windecay/ComfyUI_Dynamic-RAMCache` 为 MIT（README 声明，82★，pushed 2026-06-13）**，vendor 副本缺失的 LICENSE 已补回 `comfy_kernel/custom_nodes/ComfyUI_Dynamic-RAMCache/LICENSE`（2026-09-03 收口，见下表该行）；
 > ② 9 个 GPL-3.0 节点 LICENSE 首行均实测为 `GNU GENERAL PUBLIC LICENSE`，**传染风险成立**；
 > ③ `ComfyUI-EsesImageCompare` 许可实测为 `"My ComfyUI Nodes License" (1.0)`，**明确禁止 Bundling / Code Reuse / 再分发**，**当前 vendor 进仓即违反许可**；
 > ④ Image vs MiniMax 不对称：Image `comfy_kernel/custom_nodes/` 仅 2 个示例节点（业务节点在 `app/integrated_app/native/`），MiniMax vendor 19 个 → 为架构差异非缺陷，MiniMax 侧须按本台账逐包复核。
@@ -27,7 +27,7 @@
 | 组件 | 许可证 | 商用合规 | 合规要求 |
 |---|---|---|---|
 | comfyui_controlnet_aux | Apache-2.0（LICENSE 首行） | ✅ 已核实 2026-09-03 | 保留版权声明 |
-| ComfyUI_Dynamic-RAMCache | **无 LICENSE 文件**（默认保留所有权利） | ⚠️ 需人工确认上游许可 | **当前 vendor 进仓无明确授权；须核实上游许可或移除**（原 §3.4 误记 NOT FOUND，实为 LICENSE 缺失） |
+| ComfyUI_Dynamic-RAMCache | **MIT**（上游 `Windecay/ComfyUI_Dynamic-RAMCache` README 声明，82★，pushed 2026-06-13；gh-api `license=null` 因上游亦无 LICENSE 文件） | ✅ 已核实 2026-09-03（MIT 宽松） | **已处置（2026-09-03）**：vendor 副本缺失的 LICENSE 已补回 `comfy_kernel/custom_nodes/ComfyUI_Dynamic-RAMCache/LICENSE`（MIT 文本 + Windecay 版权声明），保留版权声明即合规 |
 | ComfyUI_IPAdapter_plus | GPL-3.0（LICENSE 实测） | ⚠️ 已核实 GPL-3.0（2026-09-03），传染风险 | 隔离进程边界/改用 Apache 等价实现；保留上游版权 |
 | ComfyUI_toyxyz_test_nodes | GPL-3.0（实测） | ⚠️ 已核实 GPL-3.0（2026-09-03），传染风险 | 同上 |
 | ComfyUI_UltimateSDUpscale | GPL-3.0（实测） | ⚠️ 已核实 GPL-3.0（2026-09-03），传染风险 | 同上 |

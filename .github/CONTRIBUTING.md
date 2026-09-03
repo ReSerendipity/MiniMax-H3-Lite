@@ -85,11 +85,11 @@ Use the provided issue templates (bug_report / feature_request).
 
 ## License
 
-By contributing, you agree your contributions are licensed under the Apache License 2.0 (see [LICENSE](LICENSE)).
+By contributing, you agree your contributions are licensed under the Apache License 2.0 (see [LICENSE](../LICENSE)).
 
 ## 模型许可注意
 
-本仓库不包含模型权重；使用 MiniMax H3 模型须遵守其 Community License Agreement（见 [NOTICE](NOTICE)，含地域/商用门槛限制）。
+本仓库不包含模型权重；使用 MiniMax H3 模型须遵守其 Community License Agreement（见 [NOTICE](../NOTICE)，含地域/商用门槛限制）。
 
 ---
 

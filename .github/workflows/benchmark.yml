@@ -1,8 +1,18 @@
 # MM·H3 工作台 - 性能基准周任务
 # 测试体系评估报告（2026-09-05）P2-⑥ 落地：benchmark 每次执行但不留档 →
-# 每周独立跑 test_performance.py 并留档 artifact；首次基线冻结后可在
-# benchmark 步骤追加 --benchmark-compare-fail=mean:10% 启用质量回归门禁
-# （基线须人工确认后入库，.benchmarks/ 目录整体 gitignore，仅 artifact 留档）。
+# 每周独立跑 test_performance.py 并留档 artifact。
+#
+# 回归门禁（P2-⑥ 收尾，2026-09-05）：--benchmark-compare-fail 启用。
+# 基线方案 = actions/cache 滚动基线（而非提交基线 JSON 入库）：
+#   * 基线必须由「与比较相同的环境」产出才可比——本地 Windows 基线对 ubuntu
+#     runner 无意义（跨机计时不可比），故基线由 runner 自机生成；
+#   * 每周运行：恢复上周基线（actions/cache restore-keys 前缀匹配最新）→
+#     有基线则 --benchmark-compare=baseline --benchmark-compare-fail=mean:30%
+#     （阈值取 30%：GitHub 共享 runner 计时方差大，10% 会常态飘红；可按需收紧）；
+#   * 本周通过 → 最新 autosave 复制为 baseline.json 回写缓存（棘轮滚动）；
+#     本周回归失败 → 不回写，基线保持"最近一次绿色"，下周继续对照。
+#   * 首次运行（缓存为空）仅 autosave 留档，从第二周起启用比较。
+# .benchmarks/ 整体 gitignore，基线不入库；artifact 每周全量留档可追溯。
 name: Benchmarks
 
 on:
@@ -28,22 +38,53 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
+      - name: Restore baseline from cache
+        uses: actions/cache@v4
+        with:
+          path: .benchmarks
+          key: bench-baseline-${{ github.run_id }}
+          restore-keys: |
+            bench-baseline-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-lock.txt
           pip install pytest pytest-benchmark
 
-      - name: Run benchmarks with autosave
+      - name: Run benchmarks (autosave, full suite)
         env:
           MMH3_INFERENCE_BACKEND: diffusers
-        run: pytest tests/test_performance.py --benchmark-autosave --benchmark-json=benchmark_report.json
+        run: |
+          pytest tests/test_performance.py --benchmark-autosave \
+            --benchmark-json=benchmark_report.json
+
+      - name: Ratchet compare on API latency subset (if baseline exists)
+        if: hashFiles('.benchmarks/**/baseline.json') != ''
+        env:
+          MMH3_INFERENCE_BACKEND: diffusers
+        # 只对毫秒级 API 延迟做百分比门禁：纳秒级纯函数（new_id/row_to_dict 等）
+        # 的 run-to-run 噪声即 >30%，百分比回归检查会常态误报（本地实测已证）。
+        # 基线由上周同 runner 类的全量 run 滚动而来，周对周同环境比较。
+        run: |
+          pytest tests/test_performance.py --benchmark-only -k latency -q \
+            --benchmark-compare=baseline --benchmark-compare-fail=mean:30%
+
+      - name: Roll baseline forward (last green becomes new baseline)
+        if: success()
+        run: |
+          latest=$(find .benchmarks -name "0*.json" | sort | tail -1)
+          if [ -n "$latest" ]; then
+            dir=$(dirname "$latest")
+            cp "$latest" "$dir/baseline.json"
+            echo "baseline rolled forward: $dir/baseline.json"
+          fi
 
       - name: Upload benchmark report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-report
+          name: benchmark-report-${{ github.run_number }}
           path: |
             benchmark_report.json
             .benchmarks/

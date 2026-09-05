@@ -226,3 +226,20 @@ jobs:
         # 应用，否则判失败（声明即生效的假安全感）。纯标准库，无需安装依赖。
         run: |
           python scripts/check_config_refs.py
+      - name: comfy_kernel 暴露面棘轮 + 调用面断言
+        # 安全合规评估报告（2026-09-05）P1：vendored cli_args.py 裸 --listen 回退
+        # 0.0.0.0,:: 的写法（const=）不被上方 0.0.0.0 断言的 grep 模式匹配，
+        # 且 comfy_kernel/ 不在其扫描目录内 → 门禁盲区。两道断言堵死：
+        # ① 棘轮：该回退行一旦变更（含上游升级）即 fail，须人工确认暴露面后更新本模式；
+        # ② 调用面：项目代码（backend/scripts/start.*）禁止 --listen 传参——
+        #    当前 in-process 引擎不启动 HTTP server，未来自动拉起必须显式 loopback。
+        run: |
+          RATCHET=$(grep -c 'const="0.0.0.0,::"' comfy_kernel/comfy/cli_args.py 2>/dev/null || true)
+          if [ "$RATCHET" != "1" ]; then
+            echo "FAIL: comfy_kernel --listen 回退行丢失或被变更（匹配数: ${RATCHET:-0}）"
+            echo "      上游升级后须人工确认 --listen 暴露面，再同步更新本断言的棘轮模式"
+            exit 1
+          fi
+          HITS=$(grep -rn -- '--listen' backend scripts start.bat start.sh 2>/dev/null | grep -v tests | grep -vE ':[0-9]+:\s*#' || true)
+          if [ -n "$HITS" ]; then echo "FAIL: 项目代码出现 --listen 传参（禁止裸 --listen，暴露面风险）"; echo "$HITS"; exit 1; fi
+          echo "PASS: comfy_kernel 回退行棘轮锁定 + 项目调用面无 --listen"

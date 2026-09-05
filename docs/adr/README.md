@@ -12,6 +12,7 @@
 | [0001](0001-single-port-fastapi.md) | 单端口 FastAPI（Jinja2 + API + 静态统一提供） | Implemented | 2026-08-27 |
 | [0002](0002-embedded-comfy-kernel.md) | 内嵌 comfy_kernel 进程内复用（B 方案） | Implemented | 2026-08-27 |
 | [0003](0003-h3-engine-vllm-omni.md) | H3 服务引擎切换评估（引入 vllm-omni 作为推荐默认） | Proposed | 2026-09-03 |
+| [0004](0004-release-version-governance.md) | 发布版本治理（manifest 单一版本源 + 门禁恢复阻断 + 保留 2.3.1 基线） | Implemented | 2026-09-05 |
 
 ## 何时必须写 ADR（满足任一即写）
 

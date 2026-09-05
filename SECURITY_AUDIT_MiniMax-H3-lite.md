@@ -3,6 +3,25 @@
 > 只读审计 · 适配版（非 Image_MultiModel pydantic+config.yaml 架构）
 > 审计日期：2026-09-01 · 审计对象：FastAPI + Jinja2 视频生成工作台（含 vendored `comfy_kernel/`）
 
+## ⚡ 状态更新（2026-09-05，安全合规评估复核；下文原文保留不动）
+
+按「代码/配置 > SECURITY_AUDIT」单一事实来源优先级，两条发现的状态已与 2026-09-01 审计时点不同：
+
+- **M1 → 已修复（非"缓解"）**：commit `f97fd73`。`backend/config.py:112-118` 的 `MMH3_HOST`
+  覆盖带 loopback fail-fast；`scripts/clean_launch.py:122-134` `_require_loopback` +
+  `:198` 消费 `MMH3_HOST` + `:209` 接线 uvicorn（双层防御）。原文"实际启动硬编码
+  `--host 127.0.0.1`"的描述已过时。根因门禁 `scripts/check_config_refs.py` 已接入 CI
+  （`test.yml` security-assertions），实跑 exit 0。
+- **M2 → 休眠风险（严重度低于原文描述）**：风险链前提「`COMFY_ENABLE` 自动拉起」在代码中
+  **不存在**——`COMFY_ENABLE`/`COMFY_PYTHON`/`COMFY_MAIN_PY`/`COMFY_LAUNCH_TIMEOUT`
+  全仓零消费点（config.py:48-51 声明后无读取）；实际 in-process 引擎
+  （`backend/routers/comfy_engine.py:346`）仅改 `cli_args.args.lowvram` 等显存参数，
+  **从不启动 HTTP 监听**。`comfy_kernel/comfy/cli_args.py:63` 的 `const="0.0.0.0,::"`
+  回退确实仍在（vendored 未改），已由 `security-assertions` 棘轮断言锁定：该行变更即
+  fail，项目调用面禁止 `--listen` 传参；若未来实现自动拉起，启动参数须显式 loopback。
+- 其余发现（凭据/供应链/路径注入）复核无变化；`scripts/security_gate.py` 棘轮门禁已接入
+  `security-scan`（commit `c3b92ff`），pip-audit `|| true` 的假绿问题已闭环。
+
 ## 执行摘要（总体评级：中 / Medium）
 
 本地优先（localhost）设计总体 sound：无硬编码密钥、锁文件齐全、`127.0.0.1` 绑定、上传与 SQL 均安全。主要问题集中在**配置-实现一致性**（`MMH3_HOST` 死配置）与** vendored 组件暴露面**（comfy_kernel）。未发现凭据泄露或命令注入。共 5 项发现（1 中 / 1 中 / 1 低 / 2 信息级良性）。

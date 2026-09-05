@@ -68,7 +68,9 @@ def count_by_severity(report: dict[str, Any]) -> dict[str, int]:
         if sev not in counts:
             continue
         counts[sev] += 1
-        check_id = extra.get("check_id", "?")
+        # semgrep JSON 的 check_id 在结果顶层（extra 里没有该字段，取不到会
+        # 永远打印 "?"，无法据此写 nosemgrep 注释——2026-09-05 实证修复）
+        check_id = result.get("check_id") or extra.get("check_id") or "?"
         path = (result.get("path") or "?")
         start = (result.get("start") or {}).get("line", "?")
         findings[sev].append(f"{check_id} @ {path}:{start}")

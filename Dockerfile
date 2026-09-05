@@ -74,7 +74,7 @@ EXPOSE 18080
 # 健康检查：backend/main.py:76 定义 GET /api/health
 # H3 模型首次加载常超 2 分钟（comfy_kernel 初始化 + 模型分页加载 + tokenizer warmup），
 # 冷启动机器建议 300s；预热后下次只需 ~10s。SOPS-7 §7 注明。
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start_period=300s \
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=300s \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18080/api/health')" || exit 1
 
 # 容器内直接用 uvicorn 绑定 0.0.0.0；外部暴露面由 compose `ports` 控制（默认 127.0.0.1）。

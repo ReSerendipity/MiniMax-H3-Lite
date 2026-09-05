@@ -19,11 +19,17 @@ from config import settings
 from engine_registry import active_backend, list_engines
 from routers import projects, shots, generations, uploads, history, system
 
+# 版本单一事实来源：仓库根 .release-please-manifest.json（release-please 维护）
+try:  # 扁平导入（backend 目录已加入 sys.path）
+    from version import __version__ as APP_VERSION
+except ImportError:  # pragma: no cover - 包形态兜底
+    from backend.version import __version__ as APP_VERSION  # type: ignore[no-redef]
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="MM·H3 工作台 API",
-    version="0.1.0",
+    version=APP_VERSION,
     description="MiniMax H3 视频生成时间线工作台后端",
 )
 

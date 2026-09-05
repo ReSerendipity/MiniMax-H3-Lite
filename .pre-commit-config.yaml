@@ -19,7 +19,10 @@ repos:
     rev: 7.0.0
     hooks:
       - id: flake8
-        args: ['--ignore=E501,W503', '--max-line-length=120']
+        # 与 CI lint（.github/workflows/test.yml）口径一致：E402 是本仓
+        # 「backend 目录先入 sys.path 再扁平导入」的既定模式（backend/main.py、
+        # routers/* 均如此），钩子与 CI 不一致会造成本地提交被存量模式卡死
+        args: ['--ignore=E501,W503,E402', '--max-line-length=120']
         exclude: ^(tests/node_modules|\.venv)/
 
   # ── Python 格式化 (可选，如需自动格式化) ───────────────────

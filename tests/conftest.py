@@ -220,9 +220,15 @@ def mock_inference(monkeypatch):
     """
     桩化推理函数，模拟成功完成的任务。
     用于测试任务状态流转而不依赖真实模型。
+
+    ⚠️ 必须覆盖 queue_manager 的重绑定（GOTCHAS #25）：自 f9196b3 起
+    推理由 queue_manager._run_with_timeout 以自身模块全局 `run_inference`
+    调用，仅 patch inference 模块对 worker 无效 → 会触发真实 Comfy 推理。
     """
     import backend.routers.inference as inf
     import routers.inference as inf2
+    import backend.routers.queue_manager as bqm
+    import routers.queue_manager as tqm
 
     def fake_run_inference(task_id):
         from backend.database import get_db, new_id
@@ -236,9 +242,35 @@ def mock_inference(monkeypatch):
         conn.close()
         return {"asset_id": aid, "path": f"assets/{aid}.mp4"}
 
-    monkeypatch.setattr(inf, "run_inference", fake_run_inference)
-    monkeypatch.setattr(inf2, "run_inference", fake_run_inference)
-    return fake_run_inference
+    in_flight = {"n": 0}
+
+    def guarded_run_inference(task_id):
+        in_flight["n"] += 1
+        try:
+            return fake_run_inference(task_id)
+        finally:
+            in_flight["n"] -= 1
+
+    for mod in (inf, inf2, bqm, tqm):
+        monkeypatch.setattr(mod, "run_inference", guarded_run_inference)
+
+    yield guarded_run_inference
+
+    # 排空守卫（GOTCHAS #25）：worker 以 0.3s 轮询异步消费任务，而本 fixture
+    # 是 function 级 —— 若测试只断言 pending 就结束，遗留任务可能在 mock 被
+    # monkeypatch 撤销后才被 worker 执行 → 触发真实推理（分钟级 + 单槽占死 +
+    # 线程非 daemon 令 pytest 退出挂起）。故 teardown 前必须等队列清空且无
+    # 在途执行；两轮校验间隔 > worker 轮询间隔，防"刚弹出未执行"窗口漏检。
+    import time as _time
+    for _ in range(100):
+        queues_empty = not list(tqm._queue) and not list(bqm._queue)
+        if queues_empty and in_flight["n"] == 0:
+            _time.sleep(0.5)
+            if (not list(tqm._queue) and not list(bqm._queue)
+                    and in_flight["n"] == 0):
+                break
+        _time.sleep(0.1)
+    return guarded_run_inference
 
 
 @pytest.fixture(scope="function")

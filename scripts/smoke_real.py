@@ -22,6 +22,7 @@ diffusers ModularPipeline 的「加载 → 采样 → 落盘」全链路，验�
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -84,6 +85,51 @@ def resolve_model_source(allow_download: bool) -> tuple[str, bool]:
         raise SystemExit(2)
 
 
+def env_only_snapshot(allow_download: bool) -> int:
+    """仅做环境 / CUDA / 权重 / 端口快照，不执行推理；沿用 check_environment 退出码语义。
+
+    退出码：0=环境就绪快照完成；2=无 CUDA / 本地无权重且未授权下载（环境跳过）；
+    1=依赖缺失或权重路径无效（失败）。用于「秒级自诊断」而无需拉起真实推理。
+    """
+    env = check_environment()
+    if env != 0:
+        return env  # 1=依赖缺失/失败；2=无 CUDA（环境跳过）
+
+    try:
+        import socket
+        import torch
+
+        props = torch.cuda.get_device_properties(0)
+        print(f"[OK] GPU: {props.name} ({props.total_memory / 1024**3:.1f} GB)")
+        print(f"[OK] torch {torch.__version__} · CUDA {torch.version.cuda}")
+    except Exception as e:
+        print(f"[WARN] 读取 GPU/CUDA 属性失败: {e}")
+
+    try:
+        model_id, is_local = resolve_model_source(allow_download)
+        if is_local:
+            print(f"[OK] 权重（本地路径）: {model_id}")
+        else:
+            print(f"[OK] 权重（HF 缓存 / 在线 id）: {model_id}")
+    except SystemExit as e:
+        if getattr(e, "code", 0) == 2:
+            print("[WARN] 本地未找到权重且未授权下载 —— 权重快照跳过（不影响环境诊断）")
+        else:
+            raise
+
+    port = int(os.environ.get("MMH3_PORT", "18080"))
+    print(f"[INFO] 默认端口 MMH3_PORT={port}（被占用时启动链路自动顺延）")
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("127.0.0.1", port))
+        print(f"[OK] 端口 {port} 可用")
+    except OSError:
+        print(f"[WARN] 端口 {port} 已被占用（启动将自动顺延）")
+
+    print("[DONE] 环境快照完成（未执行推理），退出码 0")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MiniMax-H3 真实权重推理冒烟")
     parser.add_argument("--width", type=int, default=None, help="输出宽（默认按 1:1 768P 短边）")
@@ -91,7 +137,15 @@ def main() -> int:
     parser.add_argument("--frames", type=int, default=None, help="帧数（默认最短 5 帧）")
     parser.add_argument("--prompt", default="A cat walking on a beach, cinematic.", help="测试提示词")
     parser.add_argument("--allow-download", action="store_true", help="权重缺失时允许在线拉取")
+    parser.add_argument(
+        "--env-only",
+        action="store_true",
+        help="仅做环境/CUDA/权重/端口快照，不执行推理（用于秒级自诊断）",
+    )
     args = parser.parse_args()
+
+    if args.env_only:
+        return env_only_snapshot(args.allow_download)
 
     env = check_environment()
     if env != 0:

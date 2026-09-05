@@ -186,6 +186,16 @@ def launch():
     check_python_version()
     check_dependencies()
 
+    # ── 模型许可合规提示（安全合规评估报告 2026-09-05 P0）──────────
+    # MiniMax H3 模型权重受 Community License 约束（区别于本仓库代码的 Apache-2.0），
+    # 此前约束仅存在于 NOTICE 文本、运行时零提示。本地开发保持无感提示（不阻断）；
+    # 容器化部署入口的强制确认见 scripts/preflight.sh（MMH3_ACK_LICENSE）。
+    print("-" * 60)
+    print("  模型许可: MiniMax H3 Community License（详见 NOTICE）")
+    print("  地域排除: 欧盟/英国/韩国/美国（上述地区部署需另行向 MiniMax 授权）")
+    print("  商业门槛: 商用年收入超过 2000 万美元需事先获得 MiniMax 书面授权")
+    print("-" * 60)
+
     # 确保数据目录存在（config.py 已兜底，这里再次确认）
     for d in ["data", "uploads", "assets"]:
         (PROJECT_ROOT / d).mkdir(parents=True, exist_ok=True)

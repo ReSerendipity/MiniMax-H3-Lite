@@ -81,7 +81,23 @@ if [ ${#empty[@]} -gt 0 ]; then
     echo "        容器内启动后会读不到权重；先把 .safetensors 放进对应目录" >&2
 fi
 
-# === 4. compose 文件 bind-mount 源存在性快速校验（可选） ===
+# === 4. 模型许可确认（安全合规评估报告 2026-09-05 P0）===
+# MiniMax H3 模型权重受 Community License 约束：地域排除欧盟/英国/韩国/美国，
+# 商用年收入 > 2000 万美元需事先书面授权（详见 NOTICE）。此前约束仅存在于
+# NOTICE 文本、部署层零拦截——容器化部署面向他人/服务器，必须显式确认一次。
+# 本机开发不经过本脚本，保持无感（运行时提示见 scripts/clean_launch.py 启动横幅）。
+if [ "${MMH3_ACK_LICENSE:-0}" != "1" ]; then
+    echo "[preflight] 未确认模型许可范围（MMH3_ACK_LICENSE 未设置）" >&2
+    echo "  MiniMax H3 Community License 关键条款：" >&2
+    echo "  - 地域排除欧盟/英国/韩国/美国，上述地区部署需另行向 MiniMax 授权（api@minimax.io）" >&2
+    echo "  - 商用产品年收入超过 2000 万美元需事先获得 MiniMax 书面授权" >&2
+    echo "  完整条款见仓库 NOTICE。确认许可范围后以 MMH3_ACK_LICENSE=1 重新运行：" >&2
+    echo "      sudo MMH3_ACK_LICENSE=1 ./scripts/preflight.sh" >&2
+    exit 1
+fi
+echo "[preflight] 模型许可范围已确认（MMH3_ACK_LICENSE=1）✓"
+
+# === 5. compose 文件 bind-mount 源存在性快速校验（可选） ===
 if command -v python3 >/dev/null 2>&1; then
     if [ -f "$REPO_ROOT/scripts/check_compose_mounts.py" ]; then
         echo "[preflight] 跑 compose bind-mount 源存在性门禁..."

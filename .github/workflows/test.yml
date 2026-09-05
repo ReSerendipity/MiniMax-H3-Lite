@@ -233,13 +233,21 @@ jobs:
         # ① 棘轮：该回退行一旦变更（含上游升级）即 fail，须人工确认暴露面后更新本模式；
         # ② 调用面：项目代码（backend/scripts/start.*）禁止 --listen 传参——
         #    当前 in-process 引擎不启动 HTTP server，未来自动拉起必须显式 loopback。
+        # ⚠ 执行域说明：comfy_kernel/ 为 vendored 目录、不入版本控制（.gitignore:128），
+        #   GitHub 托管 runner 的 checkout 里没有该文件 → 棘轮在此只能优雅跳过，
+        #   实际强制执行在本地 precheck.ps1（push 前钩子必经，本机存在内核）。
         run: |
-          RATCHET=$(grep -c 'const="0.0.0.0,::"' comfy_kernel/comfy/cli_args.py 2>/dev/null || true)
-          if [ "$RATCHET" != "1" ]; then
-            echo "FAIL: comfy_kernel --listen 回退行丢失或被变更（匹配数: ${RATCHET:-0}）"
-            echo "      上游升级后须人工确认 --listen 暴露面，再同步更新本断言的棘轮模式"
-            exit 1
+          if [ -f comfy_kernel/comfy/cli_args.py ]; then
+            RATCHET=$(grep -c 'const="0.0.0.0,::"' comfy_kernel/comfy/cli_args.py 2>/dev/null || true)
+            if [ "$RATCHET" != "1" ]; then
+              echo "FAIL: comfy_kernel --listen 回退行丢失或被变更（匹配数: ${RATCHET:-0}）"
+              echo "      上游升级后须人工确认 --listen 暴露面，再同步更新本断言的棘轮模式"
+              exit 1
+            fi
+            echo "PASS: comfy_kernel 回退行棘轮锁定（匹配数 1）"
+          else
+            echo "SKIP: comfy_kernel/ 不入版本控制，CI checkout 无此文件——棘轮由本地 precheck.ps1 强制执行"
           fi
           HITS=$(grep -rn -- '--listen' backend scripts start.bat start.sh 2>/dev/null | grep -v tests | grep -vE ':[0-9]+:\s*#' || true)
           if [ -n "$HITS" ]; then echo "FAIL: 项目代码出现 --listen 传参（禁止裸 --listen，暴露面风险）"; echo "$HITS"; exit 1; fi
-          echo "PASS: comfy_kernel 回退行棘轮锁定 + 项目调用面无 --listen"
+          echo "PASS: 项目调用面无 --listen"

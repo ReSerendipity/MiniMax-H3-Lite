@@ -165,3 +165,6 @@ FIX_LOG.md
 
 # 自进化协议细化文档（仅本地保留，不并入仓库）
 docs/agents/
+
+# WorkBuddy 本地会话数据（评估报告/记忆/临时脚本，不入库）
+.workbuddy/

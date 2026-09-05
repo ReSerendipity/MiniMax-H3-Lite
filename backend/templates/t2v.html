@@ -32,7 +32,7 @@
       <style>
       .ctrl-group{display:flex;align-items:center;gap:6px}.ctrl-duration input[type=range],.ctrl-steps input[type=range]{width:90px;height:4px;-webkit-appearance:none;background:var(--line);border-radius:3px;outline:none}.ctrl-duration input[type=range]::-webkit-slider-thumb,.ctrl-steps input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--seed-accent);cursor:pointer;border:2px solid var(--seed-surface)}.ctrl-group input[type=number]{width:56px;font-family:var(--mono);font-size:11px;color:var(--seed-fg);border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:var(--seed-bg);text-align:center}.ctrl-unit{font-size:10.5px;color:var(--dim);min-width:18px;text-align:left}
       </style>
-    
+
       <div class="side-head">
         <button class="coll-btn" id="collBtnR2" type="button" data-collapse="sideR" aria-label="折叠参数侧栏" title="折叠" aria-expanded="false">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
@@ -41,41 +41,9 @@
         <span class="stag">T2VA · CAMERA</span>
       </div>
       <div class="mode-engine" id="modeEngine"><span class="me-tag">T2VA</span><span class="me-model">minimax_h3_fl2va_pruned_int8_convrot.safetensors · t2va</span></div>
-      <div class="fold-group" id="aspectFold">
-        <div class="fold-header" data-folded="true">
-          <span class="fold-label">画面比例</span>
-          <span class="fold-current" id="aspectCurrent">16:9</span>
-          <span class="fold-toggle"></span>
-        </div>
-        <div class="fold-body">
-          <span class="seg on" data-value="16:9">16:9</span><span class="seg" data-value="21:9">21:9</span><span class="seg" data-value="4:3">4:3</span><span class="seg" data-value="1:1">1:1</span><span class="seg" data-value="3:4">3:4</span><span class="seg" data-value="9:16">9:16</span>
-        </div>
-      </div>
-      <div class="fold-group" id="resFold">
-        <div class="fold-header" data-folded="true">
-          <span class="fold-label">分辨率</span>
-          <span class="fold-res-px" id="resPx" title="按所选比例 × 百万像素换算，multiple=32 · H3-Base 原生上限 0.98">16:9 → <b>1344×768</b></span>
-          <span class="fold-toggle"></span>
-        </div>
-        <div class="fold-body">
-          <span class="seg on" data-value="0.98" title="H3 原生画布 · 16:9→1344×768（最高）">0.98M 原生</span><span class="seg" data-value="0.4" title="16:9→864×480">0.4M</span><span class="seg" data-value="0.5" title="16:9→960×544">0.5M</span><span class="seg" data-value="0.6" title="16:9→1056×608">0.6M</span><span class="seg" data-value="0.7" title="16:9→1152×640">0.7M</span><span class="seg" data-value="0.8" title="16:9→1216×672">0.8M</span><span class="seg" data-value="0.9" title="16:9→1280×736">0.9M</span>
-        </div>
-      </div>
-      <div class="p-row"><span class="k">时长</span><span class="v">
-        <div class="ctrl-group ctrl-duration">
-          <input type="range" id="durationSlider" min="4" max="15" value="8" step="1" title="拖动调整时长"/>
-          <input type="number" id="durationInput" min="4" max="15" value="8" step="1" title="输入整数秒，4–15s"/>
-          <span class="ctrl-unit">秒</span>
-        </div>
-      </span></div>
-      <div class="p-row"><span class="k">种子</span><span class="v"><input type="text" id="seedInput" class="seed-in" inputmode="numeric" placeholder="留空=随机" title="固定噪声种子，留空则每次随机"><button class="seg" id="seedRand" type="button" title="生成随机种子">随机</button></span></div>
-      <div class="p-row"><span class="k">Steps</span><span class="v">
-        <div class="ctrl-group ctrl-steps">
-          <input type="range" id="stepsSlider" min="1" max="50" value="20" step="1" title="拖动调整采样步数"/>
-          <input type="number" id="mainSteps" min="1" max="50" value="20" step="1" title="采样步数，常调"/>
-          <span class="ctrl-unit">步</span>
-        </div>
-      </span></div>
+{% include "partials/aspect_fold.html" %}
+{% include "partials/res_fold.html" %}
+{% include "partials/params_ctrl_rows.html" %}
       <div class="spec-block">
         <div class="sp-title">官方模板规格 <span class="sp-sub">MiniMax H3</span></div>
         <div class="spec-line"><span>Sampler</span><b>res_multistep</b></div>
@@ -107,60 +75,7 @@
       </details>
       </div>
       <div class="bridge-note">
-<div class="fold-group" id="loraFold">
-        <div class="fold-header" data-folded="true">
-          <span class="fold-label">LoRA</span>
-          <span class="fold-count" id="loraCount">0/6</span>
-          <span class="fold-toggle"></span>
-        </div>
-        <div class="fold-body lora-body">
-          <div class="lora-slots">
-            <div class="lora-slot" data-index="0">
-              <div class="lora-slot-head">
-                <span class="lora-slot-num">1</span>
-                <span class="lora-slot-name">未选择</span>
-              </div>
-              <button type="button" class="lora-slot-btn" data-slot="0">＋ 添加</button>
-            </div>
-            <div class="lora-slot" data-index="1">
-              <div class="lora-slot-head">
-                <span class="lora-slot-num">2</span>
-                <span class="lora-slot-name">未选择</span>
-              </div>
-              <button type="button" class="lora-slot-btn" data-slot="1">＋ 添加</button>
-            </div>
-            <div class="lora-slot" data-index="2">
-              <div class="lora-slot-head">
-                <span class="lora-slot-num">3</span>
-                <span class="lora-slot-name">未选择</span>
-              </div>
-              <button type="button" class="lora-slot-btn" data-slot="2">＋ 添加</button>
-            </div>
-            <div class="lora-slot" data-index="3">
-              <div class="lora-slot-head">
-                <span class="lora-slot-num">4</span>
-                <span class="lora-slot-name">未选择</span>
-              </div>
-              <button type="button" class="lora-slot-btn" data-slot="3">＋ 添加</button>
-            </div>
-            <div class="lora-slot" data-index="4">
-              <div class="lora-slot-head">
-                <span class="lora-slot-num">5</span>
-                <span class="lora-slot-name">未选择</span>
-              </div>
-              <button type="button" class="lora-slot-btn" data-slot="4">＋ 添加</button>
-            </div>
-            <div class="lora-slot" data-index="5">
-              <div class="lora-slot-head">
-                <span class="lora-slot-num">6</span>
-                <span class="lora-slot-name">未选择</span>
-              </div>
-              <button type="button" class="lora-slot-btn" data-slot="5">＋ 添加</button>
-            </div>
-          </div>
-          <input type="file" id="loraInput" accept=".safetensors,.pt,.bin" multiple style="display:none">
-        </div>
-      </div>
+{% include "partials/lora_fold.html" %}
 H3-Base 原生输出上限 = 0.98M（16:9 → 1344×768，短边 768）；更高分辨率（≥1080p/2K）需 H3-Regenerate-2K 模块（未随开源 Base 提供）。时长 4–15s 与分辨率档位均对应官方工作流 ResolutionSelector 与 17k+5 帧长公式。</div>
 {% endblock %}
 

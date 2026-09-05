@@ -1,0 +1,15 @@
+      <div class="p-row"><span class="k">时长</span><span class="v">
+        <div class="ctrl-group ctrl-duration">
+          <input type="range" id="durationSlider" min="4" max="15" value="8" step="1" title="拖动调整时长"/>
+          <input type="number" id="durationInput" min="4" max="15" value="8" step="1" title="输入整数秒，4–15s"/>
+          <span class="ctrl-unit">秒</span>
+        </div>
+      </span></div>
+      <div class="p-row"><span class="k">种子</span><span class="v"><input type="text" id="seedInput" class="seed-in" inputmode="numeric" placeholder="留空=随机" title="固定噪声种子，留空则每次随机"><button class="seg" id="seedRand" type="button" title="生成随机种子">随机</button></span></div>
+      <div class="p-row"><span class="k">Steps</span><span class="v">
+        <div class="ctrl-group ctrl-steps">
+          <input type="range" id="stepsSlider" min="1" max="50" value="20" step="1" title="拖动调整采样步数"/>
+          <input type="number" id="mainSteps" min="1" max="50" value="20" step="1" title="采样步数，常调"/>
+          <span class="ctrl-unit">步</span>
+        </div>
+      </span></div>

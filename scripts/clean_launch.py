@@ -11,7 +11,7 @@ clean_launch.py — 启动加固（对齐兄弟项目 Image_MultiModel / TTS_Mul
 
 import os
 import socket
-import subprocess
+import subprocess  # nosec B404: 仅用于 venv torch 探测 / pip 安装 / uvicorn 拉起（固定参数，无 shell）
 import sys
 import time
 import webbrowser
@@ -35,13 +35,13 @@ def find_winpython():
     venv_py = PROJECT_ROOT / ".venv" / "Scripts" / "python.exe"
     if venv_py.exists():
         try:
-            code = subprocess.run(
+            code = subprocess.run(  # nosec B603: 固定 venv 解释器 + 固定探针参数，无不可信输入
                 [str(venv_py), "-c", "import torch; assert torch.cuda.is_available()"],
                 capture_output=True, timeout=30,
             )
             if code.returncode == 0:
                 return str(venv_py)
-        except Exception:
+        except Exception:  # nosec B110: 探测尽力而为，失败继续下一层回退
             pass
     # 1. 项目内 WinPython
     for wpy_dir in PROJECT_ROOT.glob("WPy64-*"):
@@ -63,13 +63,13 @@ def find_winpython():
     ):
         if sys_py.exists():
             try:
-                code = subprocess.run(
+                code = subprocess.run(  # nosec B603: 固定解释器 + 固定探针参数，无不可信输入
                     [str(sys_py), "-c", "import torch; assert torch.cuda.is_available()"],
                     capture_output=True, timeout=30,
                 )
                 if code.returncode == 0:
                     return str(sys_py)
-            except Exception:
+            except Exception:  # nosec B110: 探测尽力而为，失败继续下一层回退
                 pass
     # 4. 回退到当前 Python
     return sys.executable
@@ -111,7 +111,7 @@ def check_dependencies():
     if missing:
         print(f"[WARN] Missing packages: {', '.join(missing)}")
         print("Installing from requirements.txt ...")
-        subprocess.check_call(
+        subprocess.check_call(  # nosec B603: 当前解释器 + 锁定清单安装，无不可信输入
             [sys.executable, "-m", "pip", "install", "-r", str(PROJECT_ROOT / "requirements.txt")]
         )
         print("[OK] Dependencies installed")
@@ -197,14 +197,16 @@ def launch():
     # 导致 MMH3_HOST 是「声明了但没人读」的假控制。现改为读取并强制回环校验。
     host = _require_loopback(os.environ.get("MMH3_HOST", "127.0.0.1"))
 
-    # 端口（环境变量可覆盖起始端口；被占用时自动向上顺延）
+    # 端口（环境变量 MMH3_PORT 可覆盖起始端口；被占用时自动向上顺延）。
+    # 默认值 18080 与 backend/config.py 的 Settings.PORT 同源同值（单端口工作台），
+    # 改动端口须两处同步，避免启动链路与 Settings 口径分裂。
     backend_start = int(os.environ.get("MMH3_PORT", "18080"))
     backend_port = find_available_port(backend_start, host=host)
     if backend_port != backend_start:
         print(f"[INFO] 后端端口 {backend_start} 已被占用，自动切换到 {backend_port}")
 
     # ── 启动后端 FastAPI（单端口：页面模板 + /assets + /api） ──────────
-    backend_proc = subprocess.Popen(
+    backend_proc = subprocess.Popen(  # nosec B603: 当前解释器 + 固定 uvicorn 参数，无不可信输入
         [sys.executable, "-m", "uvicorn", "backend.main:app",
          "--host", host, "--port", str(backend_port)],
         cwd=str(PROJECT_ROOT),
@@ -229,7 +231,7 @@ def launch():
         if backend_proc:
             try:
                 backend_proc.terminate()
-            except Exception:
+            except Exception:  # nosec B110: 退出清理尽力而为，失败不影响主流程
                 pass
 
 
@@ -238,6 +240,6 @@ if __name__ == "__main__":
     wpy = find_winpython()
     if os.path.abspath(wpy) != os.path.abspath(sys.executable):
         print(f"[INFO] Relaunching with CUDA Python: {wpy}")
-        os.execv(wpy, [wpy, __file__])
+        os.execv(wpy, [wpy, __file__])  # nosec B606: 重启到探测到的 CUDA 解释器，路径来自本地探测而非用户输入
     else:
         launch()

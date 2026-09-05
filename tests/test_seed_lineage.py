@@ -101,7 +101,24 @@ def _seed_task(shot_id="shot_seed", task_id="task_seed", params=None):
 
 
 def _make_fake_diffusers(monkeypatch, captured, *, reject_generator=False):
-    """伪造 diffusers.ModularPipeline：记录入参、产出可 save 的假输出。"""
+    """伪造 diffusers.ModularPipeline 与 torch：记录入参、产出可 save 的假输出。
+
+    torch 必须一并注入假模块：CI（requirements-lock 轻量口径）不装 torch，
+    而 _run_diffusers 入口会 `import torch`——只桩 diffusers 会在 CI 上以
+    "依赖缺失" RuntimeError 假失败（本地有 torch 故掩蔽）。FakeGenerator
+    记录 manual_seed，使 seed→Generator 接线断言在无 torch 环境同样成立。
+    """
+
+    class FakeGenerator:
+        def __init__(self, device=None):
+            self._seed = 0
+
+        def manual_seed(self, s):
+            self._seed = int(s)
+            return self
+
+        def initial_seed(self):
+            return self._seed
 
     class FakePipe:
         def enable_model_cpu_offload(self):
@@ -116,7 +133,12 @@ def _make_fake_diffusers(monkeypatch, captured, *, reject_generator=False):
     fake_mod = SimpleNamespace(
         ModularPipeline=SimpleNamespace(from_pretrained=lambda *a, **k: FakePipe())
     )
+    fake_torch = SimpleNamespace(
+        bfloat16="fake-bfloat16",
+        Generator=FakeGenerator,
+    )
     monkeypatch.setitem(sys.modules, "diffusers", fake_mod)
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
     monkeypatch.setattr(top_inf, "_model_available_locally", lambda source: True)
     monkeypatch.setattr(top_inf, "active_backend", lambda: "diffusers")
 
@@ -148,8 +170,12 @@ def test_run_inference_writes_seed_back(inference_env, monkeypatch):
 
 
 def test_diffusers_consumes_seed_generator(inference_env, monkeypatch):
-    """diffusers 路径：params.seed=42 → generator.manual_seed 为 42 并传入 pipeline。"""
-    import torch
+    """diffusers 路径：params.seed=42 → Generator.manual_seed 为 42 并传入 pipeline。
+
+    断言对象是注入的 fake torch.Generator（CI 无真实 torch，见
+    _make_fake_diffusers docstring）；验证的是 inference.py 的
+    「seed → torch.Generator().manual_seed → kwargs["generator"]」接线。
+    """
     _seed_task(params={"seed": 42})
     src = inference_env / "out_gen.mp4"
     src.write_bytes(b"fake-video")
@@ -158,9 +184,10 @@ def test_diffusers_consumes_seed_generator(inference_env, monkeypatch):
 
     top_inf.run_inference("task_seed")
 
+    fake_torch = sys.modules["torch"]
     gen = captured["kwargs"].get("generator")
     assert gen is not None, "pipeline 入参应包含 generator"
-    assert isinstance(gen, torch.Generator)
+    assert isinstance(gen, fake_torch.Generator)
     assert gen.initial_seed() == 42
 
 

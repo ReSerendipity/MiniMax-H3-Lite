@@ -40,6 +40,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# 升级 pip：基础镜像自带的 pip 25.0.1 有 HIGH CVE-2026-8643（wheel 安装路径
+# 穿越，Trivy gate 2026-09-05 首拦）；跟随最新 pip 修复线。
+RUN pip install --no-cache-dir --upgrade pip
+
 # torch 由 CUDA Python 环境（WinPython）提供，requirements.txt 不含 torch；
 # 仅 cu130 索引提供 +cu130 本地版本，pip 据此从 PyTorch 源拉取对应轮子。
 # 若 cu130 索引不可用，请将下方版本/索引改为实际可用组合（如 cu128）。

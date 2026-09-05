@@ -6,15 +6,17 @@
 #       → SARIF 上传 Security tab
 # 失败条件：发现 HIGH/CRITICAL 级别 CVE 且有可用 fix（`--ignore-unfixed: true`）
 #
-# ⚠ 为何扫 rootfs 而非 image（2026-09-05 Trivy gate 实证）：
-#   基础镜像 python:3.12-slim-bookworm 的 site-packages 种子自带旧版
-#   setuptools(70.x)/msgpack(1.1.x)（官方镜像 CVE 清单可直接印证）。
-#   后续 Dockerfile 层 pip 升级后，合并视图只剩新版（docker run pip list
-#   实证 84.0.0/1.2.2），但 Trivy image 模式逐层分析仍会把幽灵层
-#   （层 368659c，含 msgpack 1.1.2 + setuptools 70.3.0）中的旧 dist-info
-#   计入结果——层内 rm 生成 whiteout 也无法抑制（run 33981673472 实证），
-#   门禁将永远红。改用 docker export 扁平化合并视图后扫描：所见即容器
-#   实际运行态，旧层残留天然不可见。
+# ⚠ 为何扫 rootfs 而非 image + 为何 skip pip 的 vendor SBOM（2026-09-05/06 取证闭环）：
+#   1) 基础镜像 python:3.12-slim-bookworm 的 site-packages 种子自带旧版
+#      setuptools(70.x)/msgpack(1.1.x)，后续 pip 层升级后合并视图只剩新版，
+#      但 Trivy image 模式逐层分析仍报告幽灵层中的旧 dist-info（whiteout
+#      无法抑制）→ 改用 docker export 扁平化合并视图后扫描。
+#   2) rootfs 模式仍复报旧版（run 33982381304）：真凶是
+#      `pip/_vendor/bom.cdx.json` —— pip 26 自带的 CycloneDX SBOM（vendor
+#      依赖树快照，内含 msgpack 1.1.2 / setuptools 70.3.0 声明）。Trivy 按
+#      扩展名探测到后将其误当作整个扫描目标的组件清单（"Third-party SBOM"
+#      WARN），与实际安装无关 → `skip-files` 跳过（run 33984216147 诊断步
+#      实锤该文件即唯一声明 msgpack/setuptools 组件的 json）。
 #
 # 复用 `Dockerfile` + 仓库的 LABEL 元数据（org.opencontainers.image.*）；
 # 不依赖任何外部 registry 凭据。
@@ -79,24 +81,15 @@ jobs:
           tar -xf rootfs.tar -C merged-rootfs
           rm -f rootfs.tar
 
-      - name: Find SBOM-ish files in merged rootfs (diagnostic)
-        # rootfs 模式仍报 msgpack 1.1.2/setuptools 70.3.0（run 33982381304），
-        # 本地对照实验已排除 requirements 文件与已知 8 个 dist-info SBOM——
-        # 直接在合并视图里搜 SBOM 命名文件与旧版本组件声明，定位真凶。
-        if: always()
-        run: |
-          echo '=== SBOM-named files in merged rootfs ==='
-          find merged-rootfs -type f \( -iname "*.cdx.json" -o -iname "*.cdx" \
-            -o -iname "*.spdx.json" -o -iname "*.spdx" -o -iname "*bom*.json" \) 2>/dev/null | head -20
-          echo '=== json files declaring msgpack/setuptools components ==='
-          grep -rlE '"name"[^,}]*"(msgpack|setuptools)"' merged-rootfs --include="*.json" 2>/dev/null | head -10 || true
-
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: 'rootfs'
           scan-ref: 'merged-rootfs'
-          cache: false            # 关闭跨 run 分析缓存——rootfs 扫描 7 秒复现旧结果，缓存是头号嫌疑
+          cache: false            # 关闭跨 run 分析缓存（rootfs 扫描曾 7 秒复现旧结果）
+          skip-files: 'usr/local/lib/python3.12/site-packages/pip/_vendor/bom.cdx.json'
+          # ↑ pip 26 自带 vendor SBOM，组件清单含 msgpack 1.1.2/setuptools 70.3.0，
+          #   被 Trivy 误当作扫描目标组件清单（2026-09-06 run 33984216147 诊断步实锤）
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'HIGH,CRITICAL'

@@ -59,12 +59,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # ⚠ 必须位于 requirements 安装之后：requirements.txt 未 pin 这两包，传递依赖
 # 解析可能把早期升级压回旧版——2026-09-05 Trivy gate 实测复拦即此因。
 #
-# ⚠ 另注（2026-09-05 Trivy gate 取证结论）：基础镜像 python:3.12-slim-bookworm
-# 的 site-packages 种子自带旧版 setuptools(70.x)/msgpack(1.1.x)，本层 pip 升级
-# 后合并视图只剩新版，但 Trivy image 模式逐层扫描仍会报告幽灵层中的旧 dist-info
-# （层内 rm 生成 whiteout 也无法抑制，实证 run 33981673472）。故 CI 门禁改用
-# docker export 合并视图 + `trivy rootfs` 扫描（.github/workflows/trivy.yml），
-# 本层保持纯净升级即可，无需任何 whiteout 处理。
+# ⚠ 另注（2026-09-05/06 Trivy gate 取证结论）：CI 门禁最终采用
+# docker export 合并视图 + `trivy rootfs` 扫描并 skip pip 的 vendor SBOM
+# （pip/_vendor/bom.cdx.json 内含 msgpack 1.1.2/setuptools 70.3.0 声明，
+# 曾被 Trivy 误当作扫描目标组件清单）。本层保持纯净升级即可。
 RUN pip install --no-cache-dir --upgrade setuptools msgpack
 
 # 复制项目代码（model/ 等大权重经 .dockerignore 排除，运行时挂载）

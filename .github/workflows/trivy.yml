@@ -64,6 +64,9 @@ jobs:
           exit-code: '1'        # 有 HIGH/CRITICAL 漏洞就 fail
           vuln-type: 'os,library'
           scanners: 'vuln'
+          # torch cu130 + 全量 Python 依赖的 CVE 面很大，默认 5 分钟扫描窗
+          # 会 context deadline exceeded（2026-09-05 CI 实证）→ 放宽到 20 分钟
+          timeout: '20m'
 
       - name: Upload Trivy scan results to GitHub Security tab
         if: always()

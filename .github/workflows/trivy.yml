@@ -79,11 +79,24 @@ jobs:
           tar -xf rootfs.tar -C merged-rootfs
           rm -f rootfs.tar
 
+      - name: Find SBOM-ish files in merged rootfs (diagnostic)
+        # rootfs 模式仍报 msgpack 1.1.2/setuptools 70.3.0（run 33982381304），
+        # 本地对照实验已排除 requirements 文件与已知 8 个 dist-info SBOM——
+        # 直接在合并视图里搜 SBOM 命名文件与旧版本组件声明，定位真凶。
+        if: always()
+        run: |
+          echo '=== SBOM-named files in merged rootfs ==='
+          find merged-rootfs -type f \( -iname "*.cdx.json" -o -iname "*.cdx" \
+            -o -iname "*.spdx.json" -o -iname "*.spdx" -o -iname "*bom*.json" \) 2>/dev/null | head -20
+          echo '=== json files declaring msgpack/setuptools components ==='
+          grep -rlE '"name"[^,}]*"(msgpack|setuptools)"' merged-rootfs --include="*.json" 2>/dev/null | head -10 || true
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: 'rootfs'
           scan-ref: 'merged-rootfs'
+          cache: false            # 关闭跨 run 分析缓存——rootfs 扫描 7 秒复现旧结果，缓存是头号嫌疑
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'HIGH,CRITICAL'

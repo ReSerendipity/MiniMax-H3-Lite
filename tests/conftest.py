@@ -39,6 +39,20 @@ def temp_db_path():
     # 测试/包内代码读 backend.config，必须两处都 patch 才能真正隔离真实 DB）
     original_db_path = None
     original_top_db_path = None
+    # 目录型配置同步隔离：UPLOADS_DIR / ASSETS_DIR 若不隔离，上传类测试会在
+    # 真实 uploads/ 上做「前后文件数」断言——任何并发进程（如另一个会话的
+    # pytest）在同目录增删文件都会打穿断言（2026-09-05 实锤的间歇性失败根因），
+    # 且测试产物会污染真实 uploads/。与 DB 同模式双 patch + teardown 恢复。
+    # BASE_DIR 一并重定向：assets 相对路径经 `BASE_DIR / asset["path"]` 重建
+    # （inference.py:71），只改 UPLOADS_DIR 会让 follow_first 尺寸探测找不到
+    # 文件而静默回退默认分辨率——tmp 目录必须镜像 BASE_DIR 相对布局。
+    tmp_media_dir = Path(tempfile.mkdtemp(prefix="mmh3_test_media_"))
+    original_dirs = {}
+    original_top_dirs = {}
+    tmp_uploads = tmp_media_dir / "uploads"
+    tmp_assets = tmp_media_dir / "assets"
+    tmp_uploads.mkdir(parents=True, exist_ok=True)
+    tmp_assets.mkdir(parents=True, exist_ok=True)
     try:
         from backend import config
         import config as top_config  # 顶层形态（backend/ 在 sys.path 上）
@@ -46,6 +60,13 @@ def temp_db_path():
         original_top_db_path = top_config.settings.DB_PATH
         config.settings.DB_PATH = db_path
         top_config.settings.DB_PATH = db_path
+        for mod_settings, store in ((config.settings, original_dirs), (top_config.settings, original_top_dirs)):
+            store["BASE_DIR"] = mod_settings.BASE_DIR
+            store["UPLOADS_DIR"] = mod_settings.UPLOADS_DIR
+            store["ASSETS_DIR"] = mod_settings.ASSETS_DIR
+            mod_settings.BASE_DIR = tmp_media_dir
+            mod_settings.UPLOADS_DIR = tmp_uploads
+            mod_settings.ASSETS_DIR = tmp_assets
         init_db()
         yield db_path
     finally:
@@ -66,6 +87,11 @@ def temp_db_path():
         if original_top_db_path:
             import config as top_config
             top_config.settings.DB_PATH = original_top_db_path
+        for mod_settings, store in ((config.settings, original_dirs), (top_config.settings, original_top_dirs)):
+            for attr, val in store.items():
+                setattr(mod_settings, attr, val)
+        import shutil as _shutil
+        _shutil.rmtree(tmp_media_dir, ignore_errors=True)
 
 
 @pytest.fixture(scope="function")

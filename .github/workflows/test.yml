@@ -76,7 +76,9 @@ jobs:
           cache: 'npm'
 
       - name: Install Python deps (template render + uvicorn web server)
-        run: pip install jinja2 fastapi "uvicorn[standard]" pydantic
+        # python-multipart：/api/upload 的 File/Form 路由注册硬依赖（缺失时
+        # uvicorn 直接退出，E2E webServer 起不来——CI 首跑 2026-09-05 实证）。
+        run: pip install jinja2 fastapi "uvicorn[standard]" pydantic python-multipart
 
       - name: Install dependencies
         run: |

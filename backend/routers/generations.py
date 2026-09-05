@@ -5,6 +5,7 @@ GET    /api/generations/{task_id} 查询任务状态
 """
 import sys
 import json
+import secrets
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -58,6 +59,23 @@ def submit_generation(body: GenRequest):
     if mode == "ref" and not body.ref_ids:
         db.close()
         raise HTTPException(422, "多模态参考模式需要提供参考素材")
+
+    # seed 血缘（可复现性，MLOps 评估 P1）：提交时确定 seed 并写入 payload 落库。
+    # 未指定 → 服务端生成随机 seed；显式指定 → 校验范围（uint32）后原样采用。
+    # 重试 / 断点续跑 / 同参数重放均复用同一 seed，「同参数 + 同 seed」⇒ 结果可复现。
+    seed = body.params.get("seed")
+    if seed is not None:
+        try:
+            seed = int(seed)
+        except (TypeError, ValueError):
+            db.close()
+            raise HTTPException(422, "seed 必须是整数")
+        if not (0 <= seed < 2**32):
+            db.close()
+            raise HTTPException(422, f"seed 超出有效范围（0 ~ {2**32 - 1}）")
+    else:
+        seed = secrets.randbits(32)
+    body.params["seed"] = seed
 
     # 创建任务
     tid = new_id("task_")

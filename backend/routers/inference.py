@@ -7,7 +7,7 @@ import os
 import sys
 import json
 import time
-import subprocess
+import subprocess  # nosec B404: 仅用于 ffmpeg 缩略图提取（固定参数，无 shell）
 import uuid
 from pathlib import Path
 
@@ -109,7 +109,7 @@ def _build_params(task_row: dict) -> dict:
             nh = min(((int(nh) + m - 1) // m) * m, cap)
             if nw > 0 and nh > 0:
                 width, height = nw, nh
-        except Exception:
+        except Exception:  # nosec B110: 尺寸探测尽力而为，失败回退默认分辨率
             pass
 
     return {
@@ -136,7 +136,7 @@ def _build_params(task_row: dict) -> dict:
 def _extract_thumbnail(video_path: str, output_path: str, time_offset: float = 0.5):
     """使用 ffmpeg 提取首帧作为缩略图"""
     try:
-        subprocess.run(
+        subprocess.run(  # nosec B603 B607: ffmpeg 为固定可执行名 + 内部路径参数，无不可信输入
             ["ffmpeg", "-y", "-ss", str(time_offset), "-i", video_path,
              "-frames:v", "1", "-f", "image2", output_path],
             capture_output=True, timeout=30,
@@ -185,6 +185,18 @@ def run_inference(task_id: str) -> dict:
 
     size = dest.stat().st_size if dest.exists() else 0
 
+    # seed 血缘回写：把最终生效 seed 写回任务 payload，任务记录与产物可追溯、可重放
+    try:
+        pl = json.loads(row["payload"]) if isinstance(row["payload"], str) else dict(row["payload"] or {})
+        pl.setdefault("params", {})
+        pl["params"]["seed"] = params["seed"]
+        db.execute(
+            "UPDATE generation_tasks SET payload=? WHERE id=?",
+            (json.dumps(pl, ensure_ascii=False), task_id),
+        )
+    except Exception:  # nosec B110: seed 血缘回写尽力而为，失败不影响推理产物
+        pass
+
     thumb_name = f"{aid}_thumb.jpg"
     thumb_path = settings.ASSETS_DIR / thumb_name
     if dest.exists() and size > 0:
@@ -196,6 +208,7 @@ def run_inference(task_id: str) -> dict:
         "height": params["height"],
         "duration": params["duration"],
         "fps": params["fps"],
+        "seed": params["seed"],
     }, ensure_ascii=False)
     db.execute(
         "INSERT INTO assets (id, kind, path, mime, size, meta) VALUES (?, ?, ?, ?, ?, ?)",
@@ -278,6 +291,17 @@ def _run_diffusers(params: dict) -> str:
             "audio_sample_rate": params["audio_sample_rate"],
         }
 
+        # seed 血缘（MLOps 评估 P1）：消费 payload 中的 seed 构造确定性 Generator，
+        # 使「同参数 + 同 seed」结果可复现。generator 不被 pipeline 接受时，
+        # 由下方 TypeError 回退路径剔除，不阻断推理（兼容旧版 diffusers）。
+        try:
+            generator = torch.Generator(device="cpu")
+            generator.manual_seed(int(params.get("seed") or 0))
+        except Exception:
+            generator = None
+        if generator is not None:
+            base_kwargs["generator"] = generator
+
         if task_type == h3.FL2VA:
             base_kwargs["first_image"] = params.get("first_image")
             if params.get("last_image"):
@@ -303,8 +327,9 @@ def _run_diffusers(params: dict) -> str:
         try:
             output = pipe(**kwargs)
         except TypeError as e:
-            # 典型：ModularPipeline 不接受 first_image（要 image）/ ref_images（要 list[str]）等。
-            # 重命名为最常见等价物后重试；最终仍失败则把"原参数名 + 期望参数"如实上报。
+            # 典型：ModularPipeline 不接受 generator / first_image（要 image）/ ref_images（要 list[str]）等。
+            # 先剔除 generator，再重命名为最常见等价物后重试；最终仍失败则把"原参数名 + 期望参数"如实上报。
+            retry = {k: v for k, v in kwargs.items() if k != "generator"}
             alias_map = {
                 "first_image": "image",
                 "last_image": "image",
@@ -313,7 +338,6 @@ def _run_diffusers(params: dict) -> str:
                 "ref_audios": "audio",
                 "ref_video_audios": "audio",
             }
-            retry = dict(kwargs)
             for k, alias in alias_map.items():
                 if k in retry:
                     val = retry.pop(k)
@@ -325,7 +349,7 @@ def _run_diffusers(params: dict) -> str:
                 sig = ""
                 try:
                     sig = str(_safe_signature(pipe))
-                except Exception:
+                except Exception:  # nosec B110: 签名仅用于排错信息增强，获取失败可忽略
                     pass
                 raise RuntimeError(
                     f"ModularPipeline 拒绝入参：原错误={e!r}；"

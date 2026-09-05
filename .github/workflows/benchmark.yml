@@ -1,0 +1,49 @@
+# MM·H3 工作台 - 性能基准周任务
+# 测试体系评估报告（2026-09-05）P2-⑥ 落地：benchmark 每次执行但不留档 →
+# 每周独立跑 test_performance.py 并留档 artifact；首次基线冻结后可在
+# benchmark 步骤追加 --benchmark-compare-fail=mean:10% 启用质量回归门禁
+# （基线须人工确认后入库，.benchmarks/ 目录整体 gitignore，仅 artifact 留档）。
+name: Benchmarks
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # 每周一 UTC 06:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-lock.txt
+          pip install pytest pytest-benchmark
+
+      - name: Run benchmarks with autosave
+        env:
+          MMH3_INFERENCE_BACKEND: diffusers
+        run: pytest tests/test_performance.py --benchmark-autosave --benchmark-json=benchmark_report.json
+
+      - name: Upload benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: |
+            benchmark_report.json
+            .benchmarks/

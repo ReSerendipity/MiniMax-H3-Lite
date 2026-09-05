@@ -10,11 +10,15 @@
 #   --build-arg BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) .
 # 运行：docker compose up -d --build   （见 docker-compose.yml）
 
-# === OCI 镜像元数据（Trivy/GHCR 可读）===
+# === 全局构建参数（FROM 前仅允许 ARG；LABEL 须在 FROM 之后的 stage 内，
+#     否则 classic/buildx 解析报 "no build stage in current context"）===
 ARG VCS_REF=unknown
 ARG BUILD_DATE=unknown
 ARG VERSION=0.1.0
 
+FROM python:3.12-slim-bookworm
+
+# === OCI 镜像元数据（Trivy/GHCR 可读；引用上方全局 ARG）===
 LABEL org.opencontainers.image.title="minimax-h3-lite" \
       org.opencontainers.image.description="MiniMax H3 video generation timeline workbench" \
       org.opencontainers.image.source="https://github.com/ReSerendipity/MiniMax-H3-lite" \
@@ -24,8 +28,6 @@ LABEL org.opencontainers.image.title="minimax-h3-lite" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.vendor="ReSerendipity"
-
-FROM python:3.12-slim-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \

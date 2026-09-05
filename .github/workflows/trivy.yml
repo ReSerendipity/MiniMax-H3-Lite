@@ -35,7 +35,9 @@ jobs:
 
       - name: Read app version from release-please manifest
         id: appver
-        run: echo "version=$(python -c 'import json;print(json.load(open(\".release-please-manifest.json\"))[\".\"])' )" >> "$GITHUB_OUTPUT"
+        # 用 python3：ubuntu-24.04 runner 无 `python` 命令（PEP 668），此前静默
+        # 失败导致 VERSION build-arg 为空（2026-09-05 Trivy CI 首跑实证）。
+        run: echo "version=$(python3 -c 'import json;print(json.load(open(\".release-please-manifest.json\"))[\".\"])' )" >> "$GITHUB_OUTPUT"
 
       - name: Build image (local only; not pushed)
         uses: docker/build-push-action@v6

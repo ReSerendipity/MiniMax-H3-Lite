@@ -16,14 +16,20 @@ jobs:
     name: Semgrep SAST
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    continue-on-error: true
+    # 定位声明（测试体系评估报告 P3-⑦ 落地）：本 job 不再是纯 report-only ——
+    # 扫描产出 semgrep.json 报告（扫描工具自身非零退出不在此处阻断），
+    # 阻断判定由 scripts/sast_gate.py 按 .ci/semgrep_baseline.json 棘轮执行：
+    # ERROR 数高于基线（当前基线=1，即 shots.py 白名单校验的已确认可接受项）→ CI 变红。
     steps:
       - uses: actions/checkout@v4
 
-      - name: Semgrep Scan (report-only, no gate)
+      - name: Semgrep Scan (JSON report)
         run: |
           python -m pip install semgrep==1.173.0
-          semgrep scan --config auto --severity ERROR || true
+          semgrep scan --config auto --severity ERROR --json --output semgrep.json || true
+
+      - name: SAST ratchet gate（SAST 基线门禁）
+        run: python scripts/sast_gate.py
 
       - name: Semgrep SARIF (all severities)
         if: always()

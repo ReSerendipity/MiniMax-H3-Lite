@@ -52,14 +52,22 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: false
 
-  # ── 前端冒烟测试 ──────────────────────────────────────
+  # ── 前端冒烟测试 + Playwright E2E ──────────────────────
   frontend-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        # render_pages.py 需要 jinja2；E2E webServer 需要 fastapi/uvicorn/pydantic。
+        # 全部为轻量纯 Python 依赖（torch/diffusers 仅推理执行时函数内延迟导入，
+        # 浏览器冒烟不触发）—— 不能装全量 requirements-lock（含 torch，数 GB）。
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -67,13 +75,22 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Install Python deps (template render + uvicorn web server)
+        run: pip install jinja2 fastapi "uvicorn[standard]" pydantic
+
       - name: Install dependencies
         run: |
           npm ci
           cd tests && npm ci
 
+      - name: Install Playwright Chromium
+        run: cd tests && npx playwright install --with-deps chromium
+
       - name: Run frontend smoke test
         run: npm run test:frontend
+
+      - name: Run Playwright E2E
+        run: cd tests && npx playwright test --config frontend/playwright.config.js
 
   # ── 代码质量检查 ──────────────────────────────────────
   lint:
@@ -102,7 +119,8 @@ jobs:
         run: npm ci
 
       - name: Lint JavaScript
-        run: npx eslint tests/frontend/*.js tests/*.js --no-error-on-unmatched-pattern
+        # 业务前端脚本（assets/**/*.js）与测试脚本一并纳入静态检查。
+        run: npx eslint tests/frontend/*.js tests/*.js assets/**/*.js --no-error-on-unmatched-pattern
 
   # ── 类型门禁（mypy ratchet，家族底线；2026-09-03 试点接入组织模板）──
   # 门禁逻辑统一维护在 ReSerendipity/.github 的 python-quality-baseline.yml，
@@ -148,6 +166,8 @@ jobs:
           npm ci
 
       - name: Python security audit
+        # 报告生成与门禁判定分离：pip-audit 自身非零退出不在此处阻断（报告损坏时
+        # 由 security_gate.py 判失败），告警判定统一交给棘轮门禁。
         run: |
           set -euo pipefail
           pip install pip-audit
@@ -155,12 +175,20 @@ jobs:
           cat pip-audit-report.json
 
       - name: NPM security audit
+        # 恢复报告职责：阻断判定统一由 security_gate.py 按 .ci/security_baseline.json
+        # 棘轮执行（critical/high 参与门禁，moderate/low 仅打印），消除双轨口径。
         run: |
           set -euo pipefail
-          npm audit --json > npm-audit-report.json
+          npm audit --json > npm-audit-report.json || true
           cat npm-audit-report.json
 
+      - name: Security ratchet gate（依赖安全基线门禁）
+        # 测试体系评估报告 P1-③：scripts/security_gate.py + 全零基线已就绪，
+        # 在此接入 —— pip-audit 漏洞数 / npm critical/high 任一高于基线即阻断。
+        run: python scripts/security_gate.py
+
       - name: Upload security reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: security-reports

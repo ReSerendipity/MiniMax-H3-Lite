@@ -8,6 +8,53 @@ import json
 from datetime import datetime, timezone
 from config import settings
 
+# ── Schema 版本管理（2026-09-05 · 发布版本管理评估 P2 落地）──────────────
+# 版本号存在 SQLite 头部 `PRAGMA user_version`：
+#   - 旧库（从未设置过）为 0，启动时补齐到基线 1；
+#   - 库版本高于代码支持的版本 → 直接报错，避免旧代码读写新结构导致静默损坏
+#     （回滚场景：见 docs/rollback_sop.md §4）。
+# 新增结构变更时：SCHEMA_VERSION +1，并在 _MIGRATIONS 中登记该版本的 SQL 列表。
+SCHEMA_VERSION = 1
+
+_MIGRATIONS: dict[int, list[str]] = {
+    # 0 → 1：历史库补齐（SQLite 无 ADD COLUMN IF NOT EXISTS，重复执行会报错，需幂等容错）
+    1: [
+        "ALTER TABLE shot_refs ADD COLUMN pair_asset_id TEXT",
+    ],
+}
+
+
+def get_schema_version(conn: sqlite3.Connection) -> int:
+    """读取当前连接的 schema 版本（PRAGMA user_version）。"""
+    row = conn.execute("PRAGMA user_version").fetchone()
+    return int(row[0]) if row else 0
+
+
+def _set_schema_version(conn: sqlite3.Connection, version: int) -> None:
+    # PRAGMA 不支持参数绑定，version 由本模块内部控制（int），无注入面
+    conn.execute(f"PRAGMA user_version = {int(version)}")
+
+
+def _apply_migrations(conn: sqlite3.Connection) -> int:
+    """把数据库迁移到 SCHEMA_VERSION；高于代码版本时抛错（防止旧代码读新库）。"""
+    current = get_schema_version(conn)
+    if current > SCHEMA_VERSION:
+        raise RuntimeError(
+            f"数据库 schema 版本 {current} 高于当前代码支持的 {SCHEMA_VERSION}："
+            "请升级代码后再启动；若需回滚，先备份 data/mmh3.db 并按 docs/rollback_sop.md §4 处理"
+        )
+    for target in range(current + 1, SCHEMA_VERSION + 1):
+        for stmt in _MIGRATIONS.get(target, []):
+            try:
+                conn.execute(stmt)
+            except sqlite3.OperationalError as exc:
+                # 幂等：列/索引已存在时忽略，其余错误照常抛出
+                message = str(exc).lower()
+                if "duplicate column" not in message and "already exists" not in message:
+                    raise
+        _set_schema_version(conn, target)
+    return get_schema_version(conn)
+
 
 def get_db() -> sqlite3.Connection:
     conn = sqlite3.connect(str(settings.DB_PATH))
@@ -80,11 +127,8 @@ def init_db():
     );
     """)
     conn.commit()
-    # 幂等迁移：旧库追加 pair_asset_id 列（SQLite 不支持 ADD COLUMN IF NOT EXISTS）
-    try:
-        conn.execute("ALTER TABLE shot_refs ADD COLUMN pair_asset_id TEXT")
-    except Exception:
-        pass  # 列已存在
+    # 幂等迁移：按 PRAGMA user_version 逐级升级（含历史库 0 → 1 补列）
+    _apply_migrations(conn)
     conn.commit()
     conn.close()
 

@@ -21,18 +21,22 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "backend"))
 
 from backend.database import get_db, init_db, new_id, now_iso, row_to_dict, rows_to_dicts
-from backend.config import Settings
 
 
 @pytest.fixture()
 def isolated_db(monkeypatch, tmp_path):
-    """完全隔离的临时 DB，双形态 patch。"""
+    """完全隔离的临时 DB。
+
+    必须**改属性**而非重绑模块变量：`backend.database` 在 import 时已把
+    `config.settings` 对象绑进自身命名空间，重绑 `config.settings` 对它无效，
+    会让测试静默打到真实 data/mmh3.db。双形态各持一个 Settings 实例，两处都改。
+    """
     db_path = tmp_path / "test.db"
-    s = Settings(DB_PATH=db_path)
     import backend.config as bcfg
     import config as tcfg
-    monkeypatch.setattr(bcfg, "settings", s)
-    monkeypatch.setattr(tcfg, "settings", s)
+
+    monkeypatch.setattr(bcfg.settings, "DB_PATH", db_path)
+    monkeypatch.setattr(tcfg.settings, "DB_PATH", db_path)
     init_db()
     return db_path
 

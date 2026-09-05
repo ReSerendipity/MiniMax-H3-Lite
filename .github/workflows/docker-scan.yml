@@ -51,10 +51,11 @@ jobs:
           docker build -t minimax-h3-lite:ci .
 
       - name: Install Trivy
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sh -s -- -b /usr/local/bin
-          trivy --version
+        # 消灭 curl|sh 供应链反模式（SAST ERROR，2026-09-05 gate 首拦）：
+        # 改用 setup-trivy 官方 action 并 hash pin——上游标签有消失先例
+        # （v0.2.1 被删曾致 trivy-action@v0.28.0 内部引用 404）。
+        # v0.3.1 = 81e514348e19b6112ce2a7e3ecbafe19c1e1f567
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
 
       - name: Trivy image scan (observe mode)
         run: |

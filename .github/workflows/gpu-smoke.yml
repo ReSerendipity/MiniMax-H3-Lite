@@ -80,12 +80,16 @@ jobs:
     steps:
       - name: Fetch source via codeload (avoid git smart-HTTP stall on GPU runner)
         shell: pwsh
+        # env 中转消灭 script-injection（SAST ERROR，2026-09-05 gate 首拦）：
+        # workflow_dispatch 的 inputs.ref 属不可信输入，禁止内插进 run 脚本体。
+        env:
+          SRC_REF: ${{ github.event.inputs.ref || github.ref_name }}
+          SRC_REPO: ${{ github.repository }}
         run: |
           $ErrorActionPreference = 'Stop'
           $ProgressPreference = 'SilentlyContinue'
-          $ref = "${{ github.event.inputs.ref || github.ref_name }}"
-          if (-not $ref) { $ref = '${{ github.ref_name }}' }
-          Invoke-WebRequest "https://codeload.github.com/${{ github.repository }}/tar.gz/refs/heads/$ref" -OutFile src.tgz -UseBasicParsing
+          $ref = $env:SRC_REF
+          Invoke-WebRequest "https://codeload.github.com/$($env:SRC_REPO)/tar.gz/refs/heads/$ref" -OutFile src.tgz -UseBasicParsing
           New-Item -ItemType Directory -Path repo -Force | Out-Null
           tar -xzf src.tgz -C repo --strip-components=1
           Remove-Item src.tgz -Force

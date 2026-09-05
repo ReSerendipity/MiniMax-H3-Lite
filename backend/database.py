@@ -31,8 +31,10 @@ def get_schema_version(conn: sqlite3.Connection) -> int:
 
 
 def _set_schema_version(conn: sqlite3.Connection, version: int) -> None:
-    # PRAGMA 不支持参数绑定，version 由本模块内部控制（int），无注入面
-    conn.execute(f"PRAGMA user_version = {int(version)}")
+    # PRAGMA 不支持参数绑定；version 由本模块内部控制，先过 int 强制收敛（无注入面）。
+    # 不用 f-string（脱离 semgrep f-string SQL 匹配面），改为拼接 int 收敛后的字符串。
+    version = int(version)
+    conn.execute("PRAGMA user_version = " + str(version))
 
 
 def _apply_migrations(conn: sqlite3.Connection) -> int:

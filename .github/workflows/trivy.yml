@@ -37,7 +37,10 @@ jobs:
         id: appver
         # 用 python3：ubuntu-24.04 runner 无 `python` 命令（PEP 668），此前静默
         # 失败导致 VERSION build-arg 为空（2026-09-05 Trivy CI 首跑实证）。
-        run: echo "version=$(python3 -c 'import json;print(json.load(open(\".release-please-manifest.json\"))[\".\"])' )" >> "$GITHUB_OUTPUT"
+        # 注意引号层次：YAML 单引号外壳 + python 代码内全部双引号，
+        # 不得出现反斜杠续行（曾报 SyntaxError: unexpected character after
+        # line continuation character，VERSION 再次为空）。
+        run: echo "version=$(python3 -c 'import json;print(json.load(open(".release-please-manifest.json"))["."])')" >> "$GITHUB_OUTPUT"
 
       - name: Build image (local only; not pushed)
         uses: docker/build-push-action@v6
@@ -52,6 +55,18 @@ jobs:
             VERSION=${{ steps.appver.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Inventory python package locations (scan diagnostics)
+        # Trivy 报 setuptools 70.3.0 / msgpack 1.1.2，但构建层证明
+        # /usr/local/lib/python3.12/site-packages 已是 84.0.0 / 1.2.2
+        # （2026-09-05 run 日志实证）——版本必然来自镜像内另一处包目录。
+        # 此步列出全镜像 dist-info 分布，定位第二包树的物理路径。
+        run: |
+          docker run --rm --user root --entrypoint sh \
+            minimax-h3-lite:scan-${{ github.sha }} -c \
+            "find / -xdev -maxdepth 8 \( -iname 'setuptools-*.dist-info' -o -iname 'msgpack-*.dist-info' \) 2>/dev/null; \
+             echo '--- pip view (system python) ---'; \
+             pip list 2>/dev/null | grep -iE 'msgpack|setuptools' || true"
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0

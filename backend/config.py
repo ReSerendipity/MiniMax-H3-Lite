@@ -93,7 +93,8 @@ class Settings:
 
     # ── 队列 ──────────────────────────────────────────────
     TASK_RETRY_MAX: int = 1
-    TASK_TIMEOUT: int = 600
+    # 注意：推理超时由 INFERENCE_TIMEOUT 统一承载（queue_manager._run_with_timeout 消费）。
+    # 历史上曾存在未消费的 TASK_TIMEOUT 死配置，已在运维稳定性评估后删除。
 
     # ── 断点续跑 (checkpoint #7) ───────────────────────────
     CHECKPOINT_DIR: Path = _BASE_DIR / "data" / "checkpoints"

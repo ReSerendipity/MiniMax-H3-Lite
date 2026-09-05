@@ -21,6 +21,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from database import get_db, now_iso
 from config import settings
 from checkpoint import TaskCheckpoint
+from routers.inference import run_inference
+import runtime_state
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +36,13 @@ STATUS_FAILED = "failed"
 _queue: list[str] = []
 _lock = threading.Lock()
 _worker_started = False
+
+
+def queue_depth() -> int:
+    """当前内存队列中待处理任务数量（供 /api/health 暴露真实就绪信号）。"""
+    with _lock:
+        return len(_queue)
+
 
 # ── 断点续跑（checkpoint #7）─────────────────────
 _checkpoint: TaskCheckpoint | None = None
@@ -165,6 +174,35 @@ def _worker_loop():
         pool.submit(_run_task, tid)
 
 
+class _InferenceTimeout(Exception):
+    """推理超过 INFERENCE_TIMEOUT：任务标记失败，但不强杀线程（残留线程随重启回收）。"""
+    pass
+
+
+def _run_with_timeout(task_id: str):
+    """在独立线程跑推理并施加 ``INFERENCE_TIMEOUT`` 上限。
+
+    运维稳定性评估发现：原 ``TASK_TIMEOUT``（config.py）是死配置、全仓零消费，
+    默认推理路径（diffusers / vllm-omni）无任何超时强制 → 推理线程挂死会永久占用
+    单槽（MAX_CONCURRENCY=1），后续任务全部排队、无自愈。
+
+    超时后**不等待**挂死线程（否则会阻塞调用方），直接抛 ``_InferenceTimeout``；
+    挂死线程作为孤儿残留占用 GPU 槽，需重启服务由其 startup resume 兜底。
+    """
+    import concurrent.futures
+
+    ex = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="infer")
+    fut = ex.submit(run_inference, task_id)
+    try:
+        return fut.result(timeout=settings.INFERENCE_TIMEOUT)
+    except concurrent.futures.TimeoutError:
+        ex.shutdown(wait=False)
+        raise _InferenceTimeout() from None
+    finally:
+        if fut.done():
+            ex.shutdown(wait=False)
+
+
 def _run_task(task_id: str):
     """执行单个任务：状态流转 + 超时 + 重试 + checkpoint"""
     db = get_db()
@@ -202,27 +240,26 @@ def _run_task(task_id: str):
         )
 
         try:
-            # 调用推理
-            from routers.inference import run_inference
-            result = run_inference(task_id)
-
-            # 成功 → 更新状态
+            # 调用推理（带 INFERENCE_TIMEOUT 超时强制）
+            result = _run_with_timeout(task_id)
+        except _InferenceTimeout:
             db.execute(
-                "UPDATE generation_tasks SET status=?, progress=100, result_asset_id=?, finished_at=? WHERE id=?",
-                (STATUS_COMPLETED, result["asset_id"], now_iso(), task_id),
+                "UPDATE generation_tasks SET status=?, error=?, finished_at=? WHERE id=?",
+                (
+                    STATUS_FAILED,
+                    f"推理超时（超过 INFERENCE_TIMEOUT={settings.INFERENCE_TIMEOUT}s）"
+                    "，任务已标记失败；若 GPU 线程仍占用，请重启服务，"
+                    "启动会自动 resume 未完成任务",
+                    now_iso(),
+                    task_id,
+                ),
             )
-            db.execute(
-                "UPDATE shots SET status='completed', result_asset_id=? WHERE id=?",
-                (result["asset_id"], row["shot_id"]),
-            )
+            db.execute("UPDATE shots SET status='failed' WHERE id=?", (row["shot_id"],))
             db.commit()
             db.close()
-
-            # 断点续跑：任务完成 → 删除 checkpoint，并按 CHECKPOINT_EVERY 快照未完成任务
+            # 断点续跑：终态失败 → 删除 checkpoint（不会恢复重跑）
             _get_checkpoint().remove(task_id)
-            _on_task_completed()
             return
-
         except Exception as e:
             err_msg = f"{type(e).__name__}: {e}"
             traceback.print_exc()
@@ -246,3 +283,25 @@ def _run_task(task_id: str):
                 # 断点续跑：终态失败 → 删除 checkpoint（不会恢复重跑）
                 _get_checkpoint().remove(task_id)
                 return
+
+        # 成功 → 更新状态
+        db.execute(
+            "UPDATE generation_tasks SET status=?, progress=100, result_asset_id=?, finished_at=? WHERE id=?",
+            (STATUS_COMPLETED, result["asset_id"], now_iso(), task_id),
+        )
+        db.execute(
+            "UPDATE shots SET status='completed', result_asset_id=? WHERE id=?",
+            (result["asset_id"], row["shot_id"]),
+        )
+        db.commit()
+        db.close()
+
+        # 断点续跑：任务完成 → 删除 checkpoint，并按 CHECKPOINT_EVERY 快照未完成任务
+        _get_checkpoint().remove(task_id)
+        _on_task_completed()
+        # 标记模型已就绪（首次成功后），供 /api/health 暴露真实就绪度
+        try:
+            runtime_state.mark_model_loaded()
+        except Exception:
+            pass
+        return

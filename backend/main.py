@@ -18,6 +18,11 @@ from database import init_db
 from config import settings
 from engine_registry import active_backend, list_engines
 from routers import projects, shots, generations, uploads, history, system
+from logging_config import configure_logging
+from runtime_state import is_model_loaded
+from routers.queue_manager import queue_depth
+
+configure_logging()  # 日志落盘到 logs/backend.log（滚动），崩溃后可回放
 
 # 版本单一事实来源：仓库根 .release-please-manifest.json（release-please 维护）
 try:  # 扁平导入（backend 目录已加入 sys.path）
@@ -91,4 +96,7 @@ def health():
         "backend_requires_external": bool(meta.get("external")),
         "quantization": settings.QUANTIZATION,
         "max_concurrency": settings.MAX_CONCURRENCY,
+        # 运维稳定性评估补强：原仅静态配置回显 → 增加真实就绪信号
+        "model_loaded": is_model_loaded(),
+        "queue_depth": queue_depth(),
     }

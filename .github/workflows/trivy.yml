@@ -83,6 +83,23 @@ jobs:
           # 会 context deadline exceeded（2026-09-05 CI 实证）→ 放宽到 20 分钟
           timeout: '20m'
 
+      - name: Dump trivy pkg paths for msgpack/setuptools (diagnostic)
+        if: always()
+        run: |
+          trivy image --format json --scanners vuln --pkg-types library \
+            --timeout 15m minimax-h3-lite:scan-${{ github.sha }} > trivy_pkgs.json || true
+          python3 - <<'PYEOF'
+          import json
+          d = json.load(open("trivy_pkgs.json"))
+          for res in d.get("Results", []):
+              tgt = res.get("Target")
+              for pkg in res.get("Packages") or []:
+                  if pkg.get("Name") in ("msgpack", "setuptools"):
+                      print("Target:", tgt, "|", pkg.get("Name"), pkg.get("Version"),
+                            "| Path:", pkg.get("PkgPath"),
+                            "| Layer:", (pkg.get("Layer") or {}).get("DiffID", "-")[:20])
+          PYEOF
+
       - name: Upload Trivy scan results to GitHub Security tab
         if: always()
         uses: github/codeql-action/upload-sarif@v3

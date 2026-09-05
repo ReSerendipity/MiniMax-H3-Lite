@@ -56,13 +56,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 安全升级：修依赖链 HIGH 漏洞（CVE-2025-47273 setuptools 路径穿越、
 # GHSA-6v7p-g79w-8964 msgpack 越界读、CVE-2026-59890 setuptools MANIFEST 绕过）。
-# ⚠ 必须文件系统级清除后重装：gha 缓存下层可能残留旧版 dist-info（2026-09-05
-# Trivy 层诊断实证——同一镜像内 msgpack 1.1.2/1.2.2、setuptools 70.3.0/84.0.0
-# 分属不同层共存，pip 视角"已满足"不会清理幽灵），逐层扫描的 Trivy 会同时
-# 看到两代包并以旧版报 HIGH。rm 生成 whiteout 抹除下层残留，再装修复版。
-RUN rm -rf /usr/local/lib/python3.12/site-packages/msgpack* \
-           /usr/local/lib/python3.12/site-packages/setuptools* \
- && pip install --no-cache-dir --upgrade setuptools msgpack
+# ⚠ 必须位于 requirements 安装之后：requirements.txt 未 pin 这两包，传递依赖
+# 解析可能把早期升级压回旧版——2026-09-05 Trivy gate 实测复拦即此因。
+#
+# ⚠ 另注（2026-09-05 Trivy gate 取证结论）：基础镜像 python:3.12-slim-bookworm
+# 的 site-packages 种子自带旧版 setuptools(70.x)/msgpack(1.1.x)，本层 pip 升级
+# 后合并视图只剩新版，但 Trivy image 模式逐层扫描仍会报告幽灵层中的旧 dist-info
+# （层内 rm 生成 whiteout 也无法抑制，实证 run 33981673472）。故 CI 门禁改用
+# docker export 合并视图 + `trivy rootfs` 扫描（.github/workflows/trivy.yml），
+# 本层保持纯净升级即可，无需任何 whiteout 处理。
+RUN pip install --no-cache-dir --upgrade setuptools msgpack
 
 # 复制项目代码（model/ 等大权重经 .dockerignore 排除，运行时挂载）
 COPY . .

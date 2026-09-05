@@ -42,7 +42,8 @@ jobs:
       - name: Run tests with coverage
         env:
           MMH3_INFERENCE_BACKEND: diffusers
-        run: pytest tests/ --cov=backend --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=40 -v
+        # 覆盖率门禁与 pytest.ini 保持一致（60%）；禁止 || true / continue-on-error 吞错
+        run: pytest tests/ --cov=backend --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=60 -v
 
       - name: Upload coverage to Codecov
         if: always()
@@ -55,7 +56,6 @@ jobs:
   frontend-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -73,7 +73,7 @@ jobs:
           cd tests && npm ci
 
       - name: Run frontend smoke test
-        run: npm run test:frontend || true
+        run: npm run test:frontend
 
   # ── 代码质量检查 ──────────────────────────────────────
   lint:

@@ -15,3 +15,5 @@ __pycache__
 _archive
 _dl
 scripts/*.ps1
+logs/
+backup/

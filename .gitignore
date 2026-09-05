@@ -97,6 +97,7 @@ data/*.db-wal
 data/uploads/*
 outputs/*
 logs/*
+backup/
 *.log
 .env.*
 secrets/

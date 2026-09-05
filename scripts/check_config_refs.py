@@ -51,6 +51,33 @@ _ALLOWLIST: set[str] = {
     "MODEL_VAE_AUDIO",
 }
 
+# 非环境变量保留字段：Settings 中声明、不经 from_env() 覆盖、当前全仓无消费点的字段。
+# 背景（安全合规评估报告 2026-09-05 P2-⑤）：本门禁此前只校验「可由环境变量覆盖的
+# 字段」，COMFY_* 这类纯 dataclass 声明字段处于视野之外，「声明了但没人读」的死配置
+# 可在此静默堆积（审计 M2 的 COMFY_ENABLE 即属此类——自动拉起链路尚未实现）。
+# 在此显式登记即「知情保留」；若日后字段变为安全相关或开始实现，必须移出本表、
+# 补消费点并接受门禁校验。实现 ComfyUI 自动拉起时启动参数须显式 loopback
+# （禁止裸 --listen，见 test.yml security-assertions 的 comfy_kernel 棘轮断言）。
+_RESERVED_NON_ENV: set[str] = {
+    "COMFY_ENABLE",         # 自动拉起开关（规划中，未实现；当前 in-process 引擎不消费）
+    "COMFY_PYTHON",         # 自动拉起用 Python 解释器（规划中，未实现）
+    "COMFY_MAIN_PY",        # 自动拉起入口 main.py（规划中，未实现）
+    "COMFY_LAUNCH_TIMEOUT",  # 自动拉起就绪等待秒数（规划中，未实现）
+    # ── spec 派生快照（2026-09-05 扩面新发现）────────────────────────
+    # 这些字段从 h3.spec 拷入 Settings，但消费点全部直读 h3.spec（如
+    # backend/routers/inference.py:52 用 h3.RESOLUTION_DEFAULT），settings 副本
+    # 无人读取 → 属「死镜像」，存在与 spec 漂移的潜在风险（非安全控制）。
+    # 按「不删只登记」原则先显式保留；后续清理方向：删除副本或让消费点改读
+    # settings.*（二选一，见 SECURITY_REMEDIATION_TRACKER 整改状态表）。
+    "SAVE_PREFIX",          # 生成文件名前缀（消费点未接线）
+    "SCHEDULER",            # 采样器调度器（消费点走 h3.spec.SCHEDULER）
+    "RESOLUTION_DEFAULT",   # 默认分辨率（消费点走 h3.spec.RESOLUTION_DEFAULT）
+    "RESOLUTION_PRESETS",   # 分辨率预设表（消费点走 h3.spec.RESOLUTION_PRESETS）
+    "SUPPORTED_RATIOS",     # 支持的比例列表（消费点走 h3.spec.RATIOS）
+    "OUTPUT_BIT_DEPTH",     # 输出位深（固定值，消费点未接线）
+    "OUTPUT_FORMAT",        # 输出格式（消费点走 h3.spec.OUTPUT_FORMAT）
+}
+
 errors: list[str] = []
 
 
@@ -98,7 +125,17 @@ def collect_env_map() -> dict[str, str]:
     tree = ast.parse(CONFIG_PY.read_text(encoding="utf-8"))
     env_map: dict[str, str] = {}
 
-    # 1) 直接赋值：s.ATTR = env[...] / int(env[...])
+    # 0) 中间变量预扫：``_host = env["MMH3_HOST"]`` → var_map["_host"] = "MMH3_HOST"。
+    #    盲区修复（2026-09-05）：``s.HOST = _host`` 的 RHS 是 Name，此前 HOST 因此
+    #    漏判——它明明经 ``os.environ.get("MMH3_HOST", ...)`` 在启动层真实消费。
+    var_map: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            key = _env_key_from(node.value)
+            if key:
+                var_map[node.targets[0].id] = key
+
+    # 1) 直接赋值：s.ATTR = env[...] / int(env[...]) / 中间变量
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign):
             # 目标形如 s.HOST（Attribute + Store）
@@ -109,9 +146,10 @@ def collect_env_map() -> dict[str, str]:
                 and tgt.value.id == "s"
             ):
                 attr = tgt.attr
-                # 右值来自 env.get("MMH3_X") 或 env["MMH3_X"]
-                rhs = node.value
-                key = _env_key_from(rhs)
+                # 右值来自 env.get("MMH3_X") / env["MMH3_X"] / 其包装调用 / 中间变量
+                key = _env_key_from(node.value)
+                if not key and isinstance(node.value, ast.Name):
+                    key = var_map.get(node.value.id)
                 if key:
                     env_map[key] = attr
 
@@ -135,19 +173,31 @@ def collect_env_map() -> dict[str, str]:
 
 
 def _env_key_from(node: ast.AST) -> str | None:
-    """从 env.get("MMH3_X") / env["MMH3_X"] 提取环境变量名。"""
-    if isinstance(node, ast.Call):
-        f = node.func
-        if isinstance(f, ast.Attribute) and f.attr == "get" and len(node.args) >= 1:
-            a0 = node.args[0]
-            if isinstance(a0, ast.Constant) and isinstance(a0.value, str):
-                return a0.value
-    if isinstance(node, ast.Subscript):
-        sl = node.slice
-        if isinstance(sl, ast.Index):
-            sl = sl.value
-        if isinstance(sl, ast.Constant) and isinstance(sl.value, str):
-            return sl.value
+    """从 RHS 中提取环境变量名。
+
+    覆盖三种形态（盲区修复，2026-09-05）：
+      1. 直接：``env.get("MMH3_X")`` / ``env["MMH3_X"]``
+      2. 包装调用：``int(env["MMH3_X"])`` / ``max(1, int(env["MMH3_X"]))`` ——
+         此前 ``s.PORT = int(env["MMH3_PORT"])`` 与
+         ``s.MAX_CONCURRENCY = max(1, int(env["MMH3_MAX_CONCURRENCY"]))``
+         因 RHS 是 Call 而漏判，PORT/MAX_CONCURRENCY 一直游离在门禁外；
+      3. 方法链：``env["MMH3_X"].strip()``
+    """
+    for sub in ast.walk(node):
+        # env.get("MMH3_X")
+        if isinstance(sub, ast.Call):
+            f = sub.func
+            if isinstance(f, ast.Attribute) and f.attr == "get" and len(sub.args) >= 1:
+                a0 = sub.args[0]
+                if isinstance(a0, ast.Constant) and isinstance(a0.value, str):
+                    return a0.value
+        # env["MMH3_X"]（含作为 int(...) / .strip() 的内层操作数）
+        if isinstance(sub, ast.Subscript):
+            sl = sub.slice
+            if isinstance(sl, ast.Index):
+                sl = sl.value
+            if isinstance(sl, ast.Constant) and isinstance(sl.value, str):
+                return sl.value
     return None
 
 
@@ -243,6 +293,24 @@ def main() -> int:
         errors.append(
             f"环境变量 {item} 声明了覆盖，但 settings.{item.split(' -> ')[1]} "
             f"从未在 backend/ 被读取、也未在 scripts/ 启动层落地（幽灵控制 / 假安全感）"
+        )
+
+    # ── 非 env 覆盖字段的死配置检测（扩面：覆盖全部 Settings 字段）──────
+    # 不经 from_env() 的字段若既无 settings.<attr> 消费点、又不在显式保留表
+    # _RESERVED_NON_ENV 中，同样视为幽灵控制（评估报告 P2-⑤）。
+    env_covered = set(env_map.values())
+    non_env_unconsumed: list[str] = []
+    for field in sorted(fields - env_covered):
+        if is_read_as_settings_attr(field, backend_files) or is_read_as_settings_attr(field, script_files):
+            continue
+        if field in _RESERVED_NON_ENV:
+            print(f"[WARN] settings.{field} 当前无消费点，属显式保留字段（non-env allowlist），跳过")
+            continue
+        non_env_unconsumed.append(field)
+    for field in non_env_unconsumed:
+        errors.append(
+            f"settings.{field} 声明后全仓无消费点、也无环境变量覆盖（非 env 幽灵字段）；"
+            f"若为预留请在 _RESERVED_NON_ENV 显式登记，否则补消费点或删除声明"
         )
 
     if errors:

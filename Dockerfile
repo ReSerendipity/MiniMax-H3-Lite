@@ -33,10 +33,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-# 系统依赖：backend/watermark.py 以子进程调用 ffmpeg / ffprobe
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# 系统依赖：backend/watermark.py 以子进程调用 ffmpeg / ffprobe。
+# apt-get upgrade：基础镜像的 OS 包（如 libpcre2-8-0 10.42-1 未含 2026 安全
+# 补丁）会以 HIGH 级被 Trivy gate 拦截（2026-09-05 实证 5 项 pcre2 CVE），
+# 升级到 bookworm 最新补丁线一次清偿并防后续同类拦截。
+RUN apt-get update \
+ && apt-get upgrade -y \
+ && apt-get install -y --no-install-recommends \
         ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

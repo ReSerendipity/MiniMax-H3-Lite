@@ -251,3 +251,51 @@ jobs:
           HITS=$(grep -rn -- '--listen' backend scripts start.bat start.sh 2>/dev/null | grep -v tests | grep -vE ':[0-9]+:\s*#' || true)
           if [ -n "$HITS" ]; then echo "FAIL: 项目代码出现 --listen 传参（禁止裸 --listen，暴露面风险）"; echo "$HITS"; exit 1; fi
           echo "PASS: 项目调用面无 --listen"
+
+  # ── comfy B 方案（vendored 内核）守卫 ──────────────────────────
+  # MLOps 评估（2026-09-05）P1：comfy_kernel/ 不入库（.gitignore:128），此前 B 方案
+  # 推理路径在 CI 零覆盖。ADR-0005 取舍结论 = 条件式守卫（方案 C）：
+  #   * 内核随 checkout 在场（自托管 runner / 本地）→ 跑内核只读评估 + 棘轮复检 + 适配器测试
+  #   * GitHub 托管 runner（无内核）→ 步骤级 SKIP，日志可见，不算通过也不算失败
+  #   * 真机 GPU 全链路仍归 gpu-smoke.yml（复用 scripts/smoke_comfy.py）
+  comfy-kernel-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 内核在场判定
+        id: kernel
+        run: |
+          if [ -f comfy_kernel/comfy/cli_args.py ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "SKIP: comfy_kernel/ 未随 checkout 提供（vendored、不入库）——B 方案内核守卫本跑跳过"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.kernel.outputs.present == 'true'
+        with:
+          python-version: '3.12'
+
+      - name: 内核只读评估（结构 / 版本 / 许可 / 自定义节点 vendor）
+        if: steps.kernel.outputs.present == 'true'
+        run: python scripts/check_comfy_kernel.py .
+
+      - name: --listen 回退行棘轮复检
+        if: steps.kernel.outputs.present == 'true'
+        run: |
+          RATCHET=$(grep -c 'const="0.0.0.0,::"' comfy_kernel/comfy/cli_args.py 2>/dev/null || true)
+          if [ "$RATCHET" != "1" ]; then
+            echo "FAIL: comfy_kernel --listen 回退行丢失或被变更（匹配数: ${RATCHET:-0}）"
+            exit 1
+          fi
+          echo "PASS: --listen 回退行棘轮锁定"
+
+      - name: comfy 适配器单测（纯标准库 + pytest，不拉 torch）
+        if: steps.kernel.outputs.present == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          pytest tests/test_comfy_engine.py tests/test_comfy_engine_integration.py -q

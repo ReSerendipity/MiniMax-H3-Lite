@@ -13,6 +13,7 @@
 | [0002](0002-embedded-comfy-kernel.md) | 内嵌 comfy_kernel 进程内复用（B 方案） | Implemented | 2026-08-27 |
 | [0003](0003-h3-engine-vllm-omni.md) | H3 服务引擎切换评估（引入 vllm-omni 作为推荐默认） | Proposed | 2026-09-03 |
 | [0004](0004-release-version-governance.md) | 发布版本治理（manifest 单一版本源 + 门禁恢复阻断 + 保留 2.3.1 基线） | Implemented | 2026-09-05 |
+| [0005](0005-comfy-b-ci-coverage.md) | comfy B 方案 CI 覆盖（条件式内核守卫，否决子模块化 / slim 拉取） | Implemented | 2026-09-06 |
 
 ## 何时必须写 ADR（满足任一即写）
 

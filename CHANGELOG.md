@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.4.0...v2.4.1) (2026-09-08)
+
+
+### CI/CD
+
+* **trivy:** 移除 GHA 层缓存，安全门禁改冷构建 ([#4](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/4)) ([8607c10](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/8607c104de2d5394bc37214aaf802c9beaa465bc))
+
 ## [2.4.0](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.3.1...v2.4.0) (2026-09-06)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "mmh3-workbench",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "private": true,
   "description": "MM·H3 工作台（MiniMax H3 视频生成时间线工作台）— 前端冒烟测试入口",
   "scripts": {

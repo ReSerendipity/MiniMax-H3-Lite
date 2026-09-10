@@ -68,19 +68,37 @@ python -m uvicorn backend.main:app --port 18080
 适合 Linux 部署目标 / GPU 服务器 / 希望隔离依赖的环境。完整 SOP 见 [`docs/agents/SOPS.md` SOP-7](docs/agents/SOPS.md)。
 
 ```bash
-# 1. 预检 compose bind-mount 源
+# ── 部署前三步（顺序不可颠倒；对应评估 v1.0.0 Q2 / SOP-7）────────
+# ① Linux 首次部署：chown 1000:1000 + 校验 model/ 子目录 + 模型许可确认
+sudo scripts/preflight.sh
+#   预先阅读 Community License 后，设 MMH3_ACK_LICENSE=1 可跳过交互确认：
+#   MMH3_ACK_LICENSE=1 sudo -E scripts/preflight.sh
+
+# ② Windows 宿主：Junction 跟随失败 / 跨盘时转真实目录
+#   （默认 dry-run；需 ~213GB 磁盘峰值，C 盘 76GB 不够则放弃，见 GOTCHAS #22）
+pwsh scripts/convert_model_junctions.ps1 -Apply
+
+# ③ 预检 compose bind-mount 源（5 个挂载：权重/数据/上传/输出/comfy_kernel）
 python scripts/check_compose_mounts.py
 
-# 2. 把权重放到 ./model/（必含 diffusion_models/loras/text_encoders/vae 4 个子目录；
-#    Windows 主机可放 NTFS Junction 共享 ComfyUI 权重目录）
-
-# 3. 构建 + 启动
+# ── 构建 + 启动 ─────────────────────────────────────────────
+# 把权重放到 ./model/（必含 diffusion_models/loras/text_encoders/vae 4 子目录；
+# Windows 可放 NTFS Junction 共享 ComfyUI 权重目录）
 docker compose up -d --build
 # → http://127.0.0.1:18080
 
-# 4. 验证
-curl http://127.0.0.1:18080/api/health
+# ── 验证（health 含 model_loaded；冷启动未推理前 unhealthy 为预期）──
+curl -s http://127.0.0.1:18080/api/health | python -m json.tool
 ```
+
+> ⚠️ 镜像**不含** `comfy_kernel/`（vendored ComfyUI 内核，GPL-3.0，且不入库）。
+> 因此 `docker run minimax-h3-lite` 单独启动时 native 引擎不可用，必须经
+> `docker compose up`（或手工 `-v ./comfy_kernel:/app/comfy_kernel:ro`）提供内核。
+> 这是有意的许可边界取舍，不是缺陷；详见 `docs/GPL_COMPLIANCE.md`。
+
+> ⚠️ **暴露面告警（评估 v1.0.0 P3-c）**：compose 默认仅绑定本机 `127.0.0.1:18080`。
+> 切勿将 compose `ports` 改为 `0.0.0.0:18080:18080` 后**未加反向代理（nginx/caddy）+ 鉴权**即对外——本工作台 API 无内置认证，会直接裸奔。
+> 容器进程固定绑定 `0.0.0.0` 是「部署形态下的等价安全替代」，暴露面完全由 compose `ports` 收口，裸机回环强制保持不变。
 
 **Linux 主机首次部署**需先 `sudo scripts/preflight.sh`（自动 chown 1000:1000 + 校验 model/ 子目录）。
 **Windows 主机若容器读不到权重**，跑 `pwsh scripts/convert_model_junctions.ps1`（默认 dry-run；需 ~213GB 磁盘峰值，本机 C 盘 76GB 不够则**放弃转换**，参见 GOTCHAS #22）。

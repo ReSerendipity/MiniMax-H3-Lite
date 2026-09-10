@@ -1,7 +1,7 @@
 name: Docs Consistency
 on:
   pull_request:
-    paths: ['**/*.md', '.pre-commit-config.yaml', 'package.json', '.github/workflows/**']
+    paths: ['**/*.md', 'NOTICE', 'LICENSE', '.pre-commit-config.yaml', 'package.json', '.github/workflows/**']
   push:
     branches: [main]
 permissions:
@@ -16,3 +16,16 @@ jobs:
           python-version: '3.12'
       - name: Audit spec references
         run: python scripts/check_spec_refs.py
+      - name: license-notice-check
+        # 防退化：NOTICE 若被删掉内核 GPL 声明，本步骤拦下。
+        # 只断言入库文件 —— docs/ 被 .gitignore 排除，在 CI 里用
+        # `test -f docs/GPL_COMPLIANCE.md` 做判据必然假红（Image 侧靠 force-add
+        # 该文件才没踩到；此处显式不依赖它）。
+        # 注：paths 过滤器原先只有 '**/*.md'，匹配不到无扩展名的 NOTICE，故补上。
+        run: |
+          grep -q 'comfy_kernel' NOTICE                  || { echo "FAIL: NOTICE 未提及 comfy_kernel"; exit 1; }
+          grep -Eq 'GPL-?3\.0'      NOTICE                || { echo "FAIL: NOTICE 未声明内核为 GPL-3.0"; exit 1; }
+          grep -Eq 'comfy-?aimdo'   NOTICE                || { echo "FAIL: NOTICE 未声明 comfy-aimdo（同为 GPL-3.0）"; exit 1; }
+          grep -q  'comfy_kernel'   THIRD_PARTY_NOTICES.md|| { echo "FAIL: THIRD_PARTY_NOTICES 缺 comfy_kernel 条目"; exit 1; }
+          ! grep -Eq 'comfy.*未核验' THIRD_PARTY_NOTICES.md || { echo "FAIL: 许可核验状态仍为「未核验」"; exit 1; }
+          echo "PASS: 许可声明齐备"

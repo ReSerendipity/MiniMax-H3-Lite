@@ -52,4 +52,17 @@ repos:
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
-        exclude: ^(tests|\.secrets\.baseline|requirements\.txt)
+        # .ci/comfy_kernel_baseline.json 是脚本生成的内核摘要工件：里面的 16 位
+        # 十六进制串是 sha256 前缀，不是密钥；且每次内核升级全量重算，若逐个登记进
+        # secrets 审计基线会永久制造 churn。完整性由守卫自身 + 其单测负责。
+        exclude: ^(tests|\.secrets\.baseline|requirements\.txt|\.ci/comfy_kernel_baseline\.json)$
+
+  - repo: local
+    hooks:
+      - id: structure-guard
+        name: Structure Guard (root layout)
+        entry: python .github/scripts/check_layout.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit, pre-push]

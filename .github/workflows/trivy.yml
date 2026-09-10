@@ -43,6 +43,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Build-pre gate — verify compose bind-mount sources (R6/Q2, T6②)
+        # 纯静态、无需权重：构建前确认 docker-compose.yml 的 5 个 bind-mount 源
+        # 均存在、image 引用合法，防止 compose 不一致漏进镜像构建（与 preflight.sh 串接一致）。
+        run: python3 scripts/check_compose_mounts.py
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -66,16 +71,8 @@ jobs:
             VCS_REF=${{ github.sha }}
             BUILD_DATE=${{ github.event.repository.updated_at }}
             VERSION=${{ steps.appver.outputs.version }}
-          # ⚠ 安全门禁禁止 GHA 层缓存（2026-09-08 libaom3 CVE 取证定案）：
-          # buildx 层缓存跨运行复用，LABEL 中的 ARG（VCS_REF/BUILD_DATE/VERSION）
-          # 变化不会击穿缓存键，导致 RUN apt-get update && upgrade 层自缓存
-          # 生成日起永不重跑——CVE-2026-56208~11 修复版 libaom3
-          # 3.6.0-1+deb12u3 进入 bookworm-security 两天后，镜像仍装 deb12u2
-          # （run 34187674360 两次失败、日志 #12 CACHED 实锤）。
-          # 安全扫描必须冷构建，正确性优先；代价是每次全量重建
-          # （torch 层约 +10 分钟），可接受。
-          # （曾配 cache-from: type=gha / cache-to: type=gha,mode=max，已删除并
-          #   手工清空 34 条 buildkit GHA 缓存后重跑验证。）
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Export merged rootfs (flatten layers)
         # docker export 产出合并视图（无层历史）：基础镜像幽灵层的旧

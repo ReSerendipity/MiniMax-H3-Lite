@@ -255,7 +255,7 @@ jobs:
   # ── comfy B 方案（vendored 内核）守卫 ──────────────────────────
   # MLOps 评估（2026-09-05）P1：comfy_kernel/ 不入库（.gitignore:128），此前 B 方案
   # 推理路径在 CI 零覆盖。ADR-0005 取舍结论 = 条件式守卫（方案 C）：
-  #   * 内核随 checkout 在场（自托管 runner / 本地）→ 跑内核只读评估 + 棘轮复检 + 适配器测试
+  #   * 内核随 checkout 在场（自托管 runner / 本地）→ 跑内核漂移基线校验 + 棘轮复检 + 适配器测试
   #   * GitHub 托管 runner（无内核）→ 步骤级 SKIP，日志可见，不算通过也不算失败
   #   * 真机 GPU 全链路仍归 gpu-smoke.yml（复用 scripts/smoke_comfy.py）
   comfy-kernel-guard:
@@ -279,9 +279,14 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: 内核只读评估（结构 / 版本 / 许可 / 自定义节点 vendor）
+      # 原步骤跑 scripts/check_comfy_kernel.py（移植期 PoC 报告），其 main() 除目录
+      # 缺失外恒 return 0 → 在 CI 里永不可能变红，属装饰性门禁。换成有判定能力的
+      # 基线守卫：内核在场（自托管/本地）时比对摘要，缺失时沿用上方 present 条件 SKIP。
+      # 守卫自身"能否抓到篡改"由 tests/test_comfy_kernel_baseline.py 在每个 runner 上
+      # 验证（用 tmp_path 合成内核，绝不写真实 comfy_kernel/）。
+      - name: 内核漂移基线校验
         if: steps.kernel.outputs.present == 'true'
-        run: python scripts/check_comfy_kernel.py .
+        run: python scripts/comfy_kernel_baseline.py --check
 
       - name: --listen 回退行棘轮复检
         if: steps.kernel.outputs.present == 'true'

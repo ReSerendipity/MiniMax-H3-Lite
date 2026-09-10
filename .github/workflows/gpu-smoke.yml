@@ -137,6 +137,33 @@ jobs:
           }
           if ($rc -ne 0) { throw "GPU real-inference smoke failed (rc=$rc)" }
 
+      - name: Container-image inference smoke (build + run in-image)
+        shell: pwsh
+        env:
+          MODEL_PATH: ${{ vars.GPU_SMOKE_MODEL_PATH }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          # T5 / P2-c（评估 v1.0.0）：验证「本次构建的镜像本身」能推理，
+          # 覆盖 cu130 轮子 / ffmpeg / appuser 权限等镜像层回归（host venv 冒烟测不到）。
+          # 复用同一 scripts/smoke_real.py；权重经 -v 挂载（与 compose 一致），
+          # 未配置 GPU_SMOKE_MODEL_PATH 时回退 --allow-download。
+          if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+            Write-Host "::notice::docker not available on runner - skipping in-image smoke"
+            exit 0
+          }
+          cd repo
+          docker build -t mmh3:ci -f Dockerfile .
+          $mount = ""
+          if ($env:MODEL_PATH) { $mount = "-v `"$($env:MODEL_PATH):/app/model:ro`"" }
+          docker run --rm --gpus all $mount -e MMH3_MODEL_PATH=/app/model mmh3:ci python scripts/smoke_real.py --prompt "A cat walking on a beach, cinematic." --allow-download
+          $rc = $LASTEXITCODE
+          if ($rc -eq 2) {
+            Write-Host "::notice::in-image smoke returned 2 (env skip: no CUDA or no local weights) - not a failure"
+            exit 0
+          }
+          if ($rc -ne 0) { throw "in-image inference smoke failed (rc=$rc)" }
+
       - name: Report GPU status
         if: always()
         shell: pwsh

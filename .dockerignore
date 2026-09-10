@@ -17,3 +17,6 @@ _dl
 scripts/*.ps1
 logs/
 backup/
+# vendored ComfyUI 内核（GPL-3.0）：不随镜像分发，由 docker-compose 只读挂载提供。
+# 取舍理由与后果见 docs/GPL_COMPLIANCE.md §2；改这里必须同步该文档。
+comfy_kernel

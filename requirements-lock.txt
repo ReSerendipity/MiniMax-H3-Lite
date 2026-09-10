@@ -4,6 +4,9 @@
 #
 #    pip-compile --no-annotate --output-file=requirements-lock.txt requirements.txt
 #
+cffi==2.1.1
+cryptography==50.0.1
+pycparser==3.0
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.14.2

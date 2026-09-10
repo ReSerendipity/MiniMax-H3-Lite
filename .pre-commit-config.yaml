@@ -55,7 +55,9 @@ repos:
         # .ci/comfy_kernel_baseline.json 是脚本生成的内核摘要工件：里面的 16 位
         # 十六进制串是 sha256 前缀，不是密钥；且每次内核升级全量重算，若逐个登记进
         # secrets 审计基线会永久制造 churn。完整性由守卫自身 + 其单测负责。
-        exclude: ^(tests|\.secrets\.baseline|requirements\.txt|\.ci/comfy_kernel_baseline\.json)$
+        # backend/security/integrity_manifest.json(+.sig.ed25519) 同性质：R10 核心模块
+        # 全量 SHA256 清单与 Ed25519 签名（公钥随仓库公开），非密钥；由启动自检验签负责完整性。
+        exclude: ^(tests|\.secrets\.baseline|requirements\.txt|\.ci/comfy_kernel_baseline\.json|backend/security/integrity_manifest\.json(\.sig\.ed25519)?)$
 
   - repo: local
     hooks:

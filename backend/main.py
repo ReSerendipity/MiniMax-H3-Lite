@@ -72,6 +72,12 @@ def page_r2v(request: Request):
 
 @app.on_event("startup")
 def startup():
+    # R10 代码完整性自检：enforce（默认 true）失败即拒绝启动（fail-closed）。
+    # 必须在一切初始化之前执行——被篡改/清单缺失的代码不得运行。
+    # （依赖 cryptography，Docker/venv 均经 requirements-lock 显式钉装）
+    from security.integrity_selfcheck import run_startup_selfcheck
+
+    run_startup_selfcheck(enforce=settings.INTEGRITY_ENFORCE)
     init_db()
     # 断点续跑（checkpoint #7）：扫描未完成任务并恢复续跑
     # 失败不阻塞启动（仅 warning）

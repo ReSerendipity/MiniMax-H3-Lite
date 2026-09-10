@@ -21,16 +21,25 @@ from settings_store import resolve as resolve_setting
 
 
 def _attach_provenance(dest: Path, task_id: str) -> None:
-    """在产出视频落盘后附加内容来源标识（失败静默，绝不影响输出）。"""
+    """在产出视频落盘后附加内容来源标识（任务书阶段二失败策略）。
+
+    无签名密钥（R9 默认取舍）：失败仅 debug 日志，绝不影响输出。
+    签名密钥启用：三档失败策略（重试 1 次 → .provenance.json 侧车（默认）
+    → block 档阻断产出）由 embed_video_with_policy 执行，禁止 fail-open。
+    """
     import logging
     _log = logging.getLogger(__name__)
     try:
-        from watermark import embed_video
+        from watermark import embed_video_with_policy
         payload = f"task-{task_id}"
-        if embed_video(str(dest), str(dest), payload=payload):
-            _log.debug("来源标识已附加: %s", dest.name)
-        else:
-            _log.debug("来源标识附加未完成（无 ffmpeg 或文件不支持）: %s", dest.name)
+        result = embed_video_with_policy(
+            str(dest), str(dest), payload=payload,
+            block_on_fail=settings.WATERMARK_FAIL_BLOCK,
+        )
+        _log.debug("来源标识附加: %s (%s)", dest.name, result)
+    except RuntimeError as e:
+        # block 档：异常向上传播，任务如实 failed（阻断产出）——不静默吞掉
+        raise RuntimeError(f"来源标识嵌入失败（block 档），产出已阻断: {dest.name}") from e
     except Exception as e:  # pragma: no cover
         _log.debug("来源标识附加异常（已忽略）: %s", e)
 

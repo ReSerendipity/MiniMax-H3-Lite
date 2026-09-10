@@ -1,5 +1,21 @@
 """check_comfy_kernel.py — ComfyUI 内核进程内复用 PoC 只读检查脚本（路线图 #10）。
 
+现状（2026-09-10）：本脚本是**移植期的一次性 PoC 分析工具，自 38e0177 起不再被任何 CI
+步骤调用** —— 该提交把 test.yml 里"除目录缺失外恒 return 0"的装饰性 PoC 步骤换成了有判定
+能力的守卫；今日 workflows 里出现的 `check_comfy_kernel` 只剩 test.yml:282 的一句注释。
+内核的 CI 门禁现由两支脚本承担：`scripts/comfy_kernel_baseline.py`（一级目录摘要漂移基线，
+test.yml 的 comfy-kernel-guard job）与 `scripts/check_compose_mounts.py`（bind-mount 三态
+判定，trivy.yml 调用）。它仍可手工运行 —— `--try-import` 会在子进程实际执行 `import comfy`
+做 import 探测；这是 `scripts/` 下唯一的**不依赖 GPU/权重**的内核可 import 性探测
+（`smoke_comfy.py` 虽也触达 comfy，但走的是真机全链路）。
+
+适用形态：下文检查项通篇描述的是 **Image_MultiModel 仓**的形态（`UPGRADE_STRATEGY.md`、
+`COMFYUI_VERSION_PIN` 标记等约定本仓并不存在），拿它扫本仓得到的"缺失"不代表本仓有问题。
+性能地雷：`_search_pin()` 对传入的仓库根做**无排除白名单的 `rglob` 全文读取**，只跳过
+`__pycache__` 与 `node_modules`；本仓工作树的 `.venv/` 有 17364 个命中扩展名的文件会被逐个
+read_text（2026-09-10 实测），`model/` 的 4 个子项是 junction（实测指向
+`APP/ComfyUI-aki-v3/ComfyUI/models/*`）同样会被递归穿透，整仓跑一次是分钟级开销。
+
 只读检查 Image_MultiModel 仓的 comfy_kernel 目录，输出评估报告文本，用于
 MiniMax-H3-lite 移植 ComfyUI 内核进程内复用的可行性判断。
 

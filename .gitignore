@@ -161,6 +161,10 @@ precheck.ps1
 # CI 修复交接日志（本地账本，不入库）
 FIX_LOG.md
 
+# 本地镜像 digest 固化覆盖层（machine-local pin，默认不共享；
+# 需团队共享时解除下行忽略并 git add，详见 SOP-8 / scripts/build_and_pin.ps1）
+/docker-compose.pinned.yml
+
 .git.backup/
 
 # 自进化协议细化文档（仅本地保留，不并入仓库）
@@ -168,3 +172,10 @@ docs/agents/
 
 # WorkBuddy 本地会话数据（评估报告/记忆/临时脚本，不入库）
 .workbuddy/
+
+# --- 2026-09-06 目录整理补齐（方案 A：路径不动，仅排除）---
+pytest_tmp/
+
+# --- auto-tidy: 运行时产物自动补齐 (auto) ---
+.workbuddy-ai/
+outputs/

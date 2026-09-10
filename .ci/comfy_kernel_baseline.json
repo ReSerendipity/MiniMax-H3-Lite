@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "kernel_version": "0.33.0",
+  "file_count": 2582,
+  "root_digest": "ae711691b124cf751fae6183fae38577d26a465d20db3aaebb058ee163f2acbc",
+  "dirs": {
+    ".": "e618f9bcf88a5643",
+    ".ci": "009d997bb8eb8712",
+    ".github": "13c7b5cd22d6715f",
+    ".vscode": "f0da2efd24762fef",
+    "_removed_nodes": "7b7f685a3ffd7fd7",
+    "alembic_db": "95d32892f4fd653d",
+    "api_server": "f6d00464f7f5a100",
+    "app": "c5f4d711f2f4121a",
+    "blueprints": "b60d247aa64532ec",
+    "comfy": "e4d4a4ef5e0a797c",
+    "comfy_api": "c5cea59c3fed8ccb",
+    "comfy_api_nodes": "9fb6ada880085a00",
+    "comfy_config": "d7ae903f8f50cf4a",
+    "comfy_execution": "bfa3f78f41c936db",
+    "comfy_extras": "e1cde7fb0e900728",
+    "custom_nodes": "4bc6eeac64ef9b1f",
+    "middleware": "556ae2ad4b679a8d",
+    "script_examples": "3ac284d5f6bb80c7",
+    "tests-unit": "f362ee3850c7da92",
+    "utils": "4dff462171eac93a"
+  }
+}

@@ -1,0 +1,9 @@
+# Pin .gitignore to LF in the working tree.
+#
+# Git for Windows ships core.autocrlf=true system-wide, so every checkout/clone
+# materializes the LF .gitignore blob as a CRLF working copy. git's ignore parser
+# does not strip the lone CR left on the blank line (.gitignore:178); that line
+# becomes a catch-all pattern matching any missing path with a trailing slash
+# (verified: `git check-ignore -v -- nosuchdir/` attributes it to .gitignore:178).
+# eol=lf stops the re-normalization and keeps every ignore rule byte-exact.
+/.gitignore text eol=lf

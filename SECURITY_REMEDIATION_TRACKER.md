@@ -28,7 +28,7 @@
 | S-02 | comfy_kernel 暴露面无 CI 断言（评估 P1） | `security-assertions` 新增：`cli_args.py` 回退行棘轮（变更即 fail 须人工确认）+ 项目调用面禁 `--listen` 传参 | ✅ 已落地（2026-09-05） | `test.yml` security-assertions |
 | S-03 | 许可合规零代码层提示/拦截（评估 P0） | 本地开发：`clean_launch.py` 启动横幅打印许可范围（不阻断）；容器化部署：`preflight.sh` 强制 `MMH3_ACK_LICENSE=1` 确认 | ✅ 已落地（2026-09-05） | `scripts/clean_launch.py`、`scripts/preflight.sh` |
 | S-04 | 幽灵门禁盲区：非 env 字段无检测（评估 P2） | `check_config_refs.py` 扩面至全部 Settings 字段：新增 `_RESERVED_NON_ENV` 显式保留表；同步修 env 提取器盲区（`int()`/`max()` 包装、`.strip()` 链、中间变量——HOST/PORT/MAX_CONCURRENCY 收回视野）；新发现 7 个 spec 死镜像字段显式登记（清理方向：删副本或改消费点） | ✅ 已落地（2026-09-05） | `scripts/check_config_refs.py` |
-| S-05 | 审计文档双向失真（评估 P1） | `SECURITY_AUDIT` 头部追加 2026-09-05 状态更新节（M1 已修复 / M2 休眠降级），原文保留；安全需求统一收敛至 `SECURITY.md` 矩阵 | ✅ 已落地（2026-09-05） | `SECURITY_AUDIT_MiniMax-H3-lite.md`、`SECURITY.md` |
+| S-05 | 审计文档双向失真（评估 P1） | `SECURITY_AUDIT` 头部追加 2026-09-05 状态更新节（M1 已修复 / M2 休眠降级），原文保留；安全需求统一收敛至 `SECURITY.md` 矩阵 | ✅ 已落地（2026-09-05） | `docs/SECURITY_AUDIT_MiniMax-H3-lite.md`、`SECURITY.md` |
 | S-06 | 取证策略张力无决策（评估 P2） | 决策落档：维持缺省不签名 + debug 日志（`LOCAL_RULES` 第 5 条用户无感铁律优先，单机场景任务级记录足够）；需密码学取证时配置 `MMH3_SIGN_KEY` 即启用 | ✅ 已决策（2026-09-05） | `SECURITY.md` §3 |
 
 > 注：`MODEL_FL2VA/REF2VA/CLIP/VAE_*` 与 `COMFY_SOURCE_DIR` 经审计确认当前为**保留字段**

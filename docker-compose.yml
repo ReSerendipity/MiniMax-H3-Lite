@@ -15,12 +15,22 @@ services:
       context: .
       dockerfile: Dockerfile
     # 不可变 tag：避免 :latest 浮动（评估提示词 §2.8 / 反模式 #5 P1）。
-    # 语义 tag 与 torch 版本 + CUDA 版本对齐，可复现；首次 `docker build` 后建议进一步固化 digest：
-    #   docker inspect --format='{{index .RepoDigests 0}}' minimax-h3-lite:2.9.1-cu130
-    # 然后把下面这一行改为  minimax-h3-lite@sha256:<实际 digest>
+    # 语义 tag 与 torch 版本 + CUDA 版本对齐，可复现，是 compose 主文件应保持的形态。
+    # ⚠ digest 固化【请勿手改下面这一行】：不同机器 image ID 不同，写死 @sha256 会让他人
+    #   build 出的镜像无法匹配（SOP-8 明确禁止在主 compose 写 @sha256）。正确做法：
+    #   ① 单机/团队内不可变 pin → 跑 `pwsh scripts/build_and_pin.ps1`
+    #      （自动 build → tag → 取 image ID → 生成 `docker-compose.pinned.yml` 覆盖层）；
+    #      启动用 `docker compose -f docker-compose.yml -f docker-compose.pinned.yml up -d`
+    #   ② release/CI 级可移植 pin → 先 push 到 registry，取 RepoDigests 后按 SOP-8-B 处理。
     image: minimax-h3-lite:2.9.1-cu130
     container_name: mmh3-workbench
     restart: unless-stopped
+    # P2-b（评估 v1.0.0 R2）：优雅关闭宽限期 15m，覆盖分钟级视频生成
+    # （INFERENCE_TIMEOUT=600s），避免默认 10s SIGTERM 中断在跑任务。
+    stop_grace_period: 15m
+    # P3-b（评估 v1.0.0 R7）：显式属主，消除对宿主 preflight/Windows UID 映射的耦合
+    # （preflight.sh 的 chown 兜底仍保留）。容器内 appuser uid=1000。
+    user: "1000:1000"
     # 本地镜像优先：build 完成后用本地；不主动 pull 远端
     # （若需用 registry 拉取镜像，把 build 段删掉即可）
     pull_policy: never
@@ -61,7 +71,10 @@ services:
               count: 1
               capabilities: [gpu]
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18080/api/health')"]
+      # P2-a（评估 v1.0.0 R1 / D1-a）：解析 JSON 的 model_loaded，仅模型就绪才 healthy。
+      # 与 Dockerfile HEALTHCHECK 对齐；模型惰性加载，冷启动未推理前持续 unhealthy
+      # （restart: unless-stopped 不依 health 重启，仅影响监控直觉）。
+      test: ["CMD", "python", "-c", "import sys,json,urllib.request; d=json.load(urllib.request.urlopen('http://127.0.0.1:18080/api/health')); sys.exit(0 if d.get('model_loaded') else 1)"]
       interval: 30s
       timeout: 10s
       retries: 3

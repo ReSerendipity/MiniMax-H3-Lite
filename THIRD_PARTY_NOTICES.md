@@ -25,6 +25,8 @@ MiniMax-H3-lite 项目代码采用 [Apache License 2.0](LICENSE)。
 | opencv-python-headless | Apache-2.0 | 视觉处理 |
 | httpx | BSD-3-Clause | HTTP 客户端 |
 | python-multipart | Apache-2.0 | 上传解析 |
+| comfy-aimdo | GPL-3.0 | 进程内依赖；`LICENSE` 首行明示。**义务范围同内核**，见 `docs/GPL_COMPLIANCE.md` §1b |
+| comfy-kitchen | Apache-2.0 | 与 GPL 无冲突；钉版 `==0.2.31` |
 
 ## vendored 组件
 

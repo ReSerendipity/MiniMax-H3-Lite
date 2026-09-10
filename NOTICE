@@ -27,3 +27,17 @@ Copyright © 2026 MiniMax. All Rights Reserved.**
   （https://github.com/QwenLM/Qwen3-VL/blob/main/LICENSE）。
 
 官方许可证全文：https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE
+
+## 依赖与 vendored 组件许可（分发义务相关）
+
+本项目的 **native 引擎以进程内方式复用 vendored ComfyUI 内核**
+（`comfy_kernel/`，ComfyUI 0.33.0），该内核按
+[GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html) 授权。
+`comfy-aimdo`（钉版 `==0.4.13`）同为 **GPL-3.0** 的进程内依赖。
+
+分发本项目（便携包 / 镜像 / 源码归档）须遵守 GPL-3.0 义务：随附许可文本、
+提供对应源码、保留版权声明。**义务范围、履行方式与分发前自查清单见
+`docs/GPL_COMPLIANCE.md`**；主项目自身代码仍为 Apache-2.0，
+与上述内核的代码边界为「仅 import、不拷贝源码」。
+
+`comfy-kitchen`（`==0.2.31`）按 Apache-2.0 授权，与上述无冲突。

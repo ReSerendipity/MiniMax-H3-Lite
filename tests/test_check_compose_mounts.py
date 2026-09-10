@@ -100,6 +100,11 @@ def test_skip_does_not_short_circuit_image_subcheck(tmp_path):
         cwd=str(repo),
         capture_output=True,
         text=True,
+        # 子进程内脚本执行 sys.stdout.reconfigure(encoding="utf-8")，输出为 UTF-8 字节；
+        # text=True 的默认解码按父进程 locale（Windows CI runner 为 cp1252），
+        # 解码中文会抛 UnicodeDecodeError → stdout=None。必须显式指定同构解码。
+        encoding="utf-8",
+        errors="replace",
         env=env,
         timeout=60,
     )

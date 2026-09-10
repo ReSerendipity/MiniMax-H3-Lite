@@ -22,7 +22,8 @@
 | R6 | 路径/注入 | 上传落盘用生成 `aid`+扩展名（无遍历）；SQL 全参数化；subprocess list 形参无 `shell=True` | `backend/routers/uploads.py:130-133,164,190` | Semgrep（`sast.yml`）+ `sast_gate.py` 棘轮 |
 | R7 | 许可合规 | 模型许可（区别于仓库代码 Apache-2.0）：本地开发运行时横幅提示（不阻断）；容器化部署入口强制确认（`MMH3_ACK_LICENSE=1`） | `NOTICE`、`scripts/clean_launch.py` 启动横幅、`scripts/preflight.sh` §4 | 部署流程约定（preflight 为人工执行入口） |
 | R8 | 权限模型 | 无认证/授权——单机回环单用户**设计如此**（非缺失）；风险由 R1 三层兜底承担（config fail-fast → `_require_loopback` → CI 断言）。不引入本地 token | `LOCAL_RULES.md:11`、SECURITY_AUDIT §网络暴露 | R1 断言间接覆盖 |
-| R9 | 取证策略 | 见 §3 | `backend/watermark.py` | — |
+| R9 | 取证策略 | 见 §3；签名密钥启用时水印失败走三档策略（重试→侧车→block，无 fail-open） | `backend/watermark.py`、`backend/routers/inference.py:170-190` | `python-test`（`tests/test_watermark_policy.py`） |
+| R10 | 代码完整性 | 核心模块 SHA256 清单（行尾归一化）+ Ed25519 签名（签发机私钥 / 内置公钥）+ 启动自检 enforce（fail-closed） | `backend/security/integrity_selfcheck.py`、`backend/security/integrity_keys.py`、`scripts/sign_integrity_manifest.py` | 见 §5（`security-assertions` 存在性+公钥闸门；`security-scan` Ed25519 验签；`frontend-smoke` 启动自检） |
 
 ## 3. 取证策略决策（2026-09-05）
 
@@ -45,3 +46,33 @@
   `RESOLUTION_PRESETS`/`SUPPORTED_RATIOS`/`OUTPUT_BIT_DEPTH`/`OUTPUT_FORMAT`）：
   消费点直读 `h3.spec`，settings 副本暂为死镜像（漂移风险已在门禁注释标注），
   清理方向二选一：删副本或改消费点。
+
+## 5. 代码完整性防线（R10，2026-09-10 落地）
+
+**防线构成**：`backend/` 核心模块 + `comfy_kernel/` 关键入口的 SHA256 清单
+（`backend/security/integrity_manifest.json`）→ Ed25519 签名（签发机私钥，发布链）
+/HMAC-SHA256 回退（开发机自验）→ 后端启动事件自检，`INTEGRITY_ENFORCE=true`
+（默认）时清单缺失、签名无效或任一受护文件哈希失配即**拒绝启动**（fail-closed）。
+
+**密钥分发（任务书 §4 避坑 #1，先定分发再开 enforce）**：
+- 私钥：签发机 `data/.manifest_signing_key`（gitignore）+ GitHub Secret
+  `MMH3_MANIFEST_SIGNING_KEY_B64`（**待人工设置**：`gh secret set ...`，见
+  `scripts/generate_manifest_signing_key.py` 头注释）+ 离线备份（SOP-17）；
+- 公钥：`backend/security/manifest_signing_public_key.pem` 随代码入库（公开无害，
+  仅可验签）；签名脚本内置「公钥一致性闸门」——清单声明公钥 SHA256 与仓库公钥
+  不一致即 fail（GOTCHAS #97）。
+
+**行尾归一化（GOTCHAS #97 家族）**：受护文件哈希与签名输入统一删除 `\r`，
+Windows CRLF 工作区与 Linux LF CI 得到同一哈希/签名，杜绝「本地绿 CI 红」。
+
+**执行域（comfy_kernel）**：vendored 内核不入版本控制（`.gitignore:128`），CI
+checkout 无此目录 → 其清单条目在「内核目录整体缺失」时跳过（SKIP，与既有
+comfy-kernel-guard 三态一致），backend 条目必须全部通过；本地（有内核）逐条
+校验，篡改即失败。
+
+**维护 SOP**：修改任何 `backend/**/*.py` 或 `comfy_kernel/` 关键入口后，必须
+重算清单并重签（否则本地启动自检拒绝启动——这是设计意图，不是故障）：
+    python scripts/generate_integrity_manifest.py
+    python scripts/sign_integrity_manifest.py        # 签发机（Ed25519）
+    python scripts/sign_integrity_manifest.py --verify
+发布前门禁五步见 `scripts/verify_release_integrity.py`；诊断见 `scripts/diag_integrity.py`。

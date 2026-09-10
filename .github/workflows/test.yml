@@ -78,7 +78,9 @@ jobs:
       - name: Install Python deps (template render + uvicorn web server)
         # python-multipart：/api/upload 的 File/Form 路由注册硬依赖（缺失时
         # uvicorn 直接退出，E2E webServer 起不来——CI 首跑 2026-09-05 实证）。
-        run: pip install jinja2 fastapi "uvicorn[standard]" pydantic python-multipart
+        # R10 完整性自检（backend/main.py startup）需要 cryptography 验签——
+        # 缺了它 uvicorn 启动即失败，E2E webServer 起不来（frontend-smoke 依赖集更新）。
+        run: pip install jinja2 fastapi "uvicorn[standard]" pydantic python-multipart cryptography
 
       - name: Install dependencies
         run: |
@@ -189,6 +191,12 @@ jobs:
         # 在此接入 —— pip-audit 漏洞数 / npm critical/high 任一高于基线即阻断。
         run: python scripts/security_gate.py
 
+      - name: 完整性清单 Ed25519 验签（R10）
+        # 任务书阶段一验收：CI 用内置公钥验证清单签名——证明清单确由持有私钥的
+        # 签发机签发（防「同步篡改代码+清单」投毒，报告2 §二防线2）。
+        # 清单/签名/公钥随提交入库，本步在装好 requirements-lock（含 cryptography）后执行。
+        run: python scripts/sign_integrity_manifest.py --verify
+
       - name: Upload security reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -251,6 +259,26 @@ jobs:
           HITS=$(grep -rn -- '--listen' backend scripts start.bat start.sh 2>/dev/null | grep -v tests | grep -vE ':[0-9]+:\s*#' || true)
           if [ -n "$HITS" ]; then echo "FAIL: 项目代码出现 --listen 传参（禁止裸 --listen，暴露面风险）"; echo "$HITS"; exit 1; fi
           echo "PASS: 项目调用面无 --listen"
+      - name: 完整性清单与公钥配套断言（R10）
+        # 任务书阶段一验收：清单、Ed25519 签名、内置公钥必须随代码入库；
+        # 公钥一致性闸门（清单声明 public_key_sha256 == 仓库公钥文件哈希，
+        # 行尾归一化口径）纯标准库即可判，验签在 security-scan job（有 cryptography）。
+        run: |
+          set -euo pipefail
+          test -f backend/security/integrity_manifest.json || (echo "FAIL: 缺少完整性清单" && exit 1)
+          test -f backend/security/integrity_manifest.json.sig.ed25519 || (echo "FAIL: 缺少 Ed25519 签名" && exit 1)
+          test -f backend/security/manifest_signing_public_key.pem || (echo "FAIL: 缺少内置公钥" && exit 1)
+          python - <<'PY'
+          import hashlib, json
+          m = json.load(open('backend/security/integrity_manifest.json', encoding='utf-8'))
+          declared = m.get('public_key_sha256', '')
+          pub = open('backend/security/manifest_signing_public_key.pem', 'rb').read().translate(None, b'\r')
+          actual = hashlib.sha256(pub).hexdigest()
+          assert declared and declared == actual, f"公钥一致性闸门失败: {declared} != {actual}"
+          files = m.get('files') or {}
+          assert files, "清单 files 为空"
+          print(f"PASS: 完整性清单存在（{len(files)} 模块），公钥一致性闸门通过")
+          PY
 
   # ── comfy B 方案（vendored 内核）守卫 ──────────────────────────
   # MLOps 评估（2026-09-05）P1：comfy_kernel/ 不入库（.gitignore:128），此前 B 方案

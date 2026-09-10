@@ -34,6 +34,11 @@
   - 内核在场判定（步骤级 `if`，用输出传递而非 job 级 `hashFiles`，避免条件上下文歧义）；
   - 在场 → `python scripts/check_comfy_kernel.py .`（只读：结构 / 版本 / 许可 / vendor）+
     `--listen` 回退行棘轮复检 + comfy 适配器单测（`pip install pytest` 级轻依赖，不拉 torch）；
+    > **2026-09-10 演进**：上述"内核只读评估"步骤已由
+    > `python scripts/comfy_kernel_baseline.py --check`（漂移基线守卫）取代 ——
+    > 原 PoC 脚本 `main()` 除目录缺失外恒 return 0，属装饰性门禁，无法真正让 CI 变红；
+    > 新守卫在 `test.yml` `comfy-kernel-guard` job 内以三态判定（基线缺失=FAIL /
+    > 内核缺失=SKIP / 摘要不符=FAIL）。
   - 不在场 → 明确打印 SKIP 及原因。
 - **棘轮双闸不变**：本机 `precheck.ps1`（push 钩子必经）仍是 `--listen` 棘轮的实强制层。
 - 真机 GPU B 方案链路：后续在 `gpu-smoke.yml` 追加同条件 job 复用 `scripts/smoke_comfy.py`

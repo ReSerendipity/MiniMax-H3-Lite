@@ -21,6 +21,10 @@ H3 官方工作流基于 ComfyUI 生态。为支持自定义/官方工作流的�
 - 默认推理后端：`diffusers`（不加载 comfy_kernel）；需要工作流投递时 `INFERENCE_BACKEND="comfy"` 启用内嵌内核。
 - `comfy_kernel/custom_nodes/` 随仓携带 **17 个第三方节点包**（除 `__pycache__` 外），各自许可证见许可证台账、使用前需审计（见 SECURITY.md §四与 D6 台账）。
 - 只读检查脚本：`scripts/check_comfy_kernel.py`。
+  > **2026-09-10 演进**：该 PoC 脚本自 `38e0177` 起不再被任何 CI 步骤调用（它在该提交前
+  > "除目录缺失外恒 return 0"，属装饰性门禁）。内核的 CI 守卫现由
+  > `scripts/comfy_kernel_baseline.py`（一级目录摘要漂移基线，test.yml `comfy-kernel-guard`
+  > job）承担；脚本本身保留为不依赖 GPU/权重的手工 `import comfy` 探测工具。
 
 # 实施影响
 
@@ -31,3 +35,5 @@ H3 官方工作流基于 ComfyUI 生态。为支持自定义/官方工作流的�
 
 - 回滚：回到纯 diffusers 后端（默认配置），comfy_kernel 不加载。
 - 待验证：`scripts/check_comfy_kernel.py` 退出码 0；节点包版本与台账一致。
+  > **2026-09-10 注**：该项的 CI 复核已由 `scripts/comfy_kernel_baseline.py --check`
+  > 取代（见上 L24-27 演进注记）。

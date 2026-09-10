@@ -8,6 +8,8 @@ data
 uploads
 outputs
 .pytest_cache
+# detect-secrets 基线元数据（随 .git 同类，不入包）
+.secrets.baseline
 htmlcov
 __pycache__
 *.pyc

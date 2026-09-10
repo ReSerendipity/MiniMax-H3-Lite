@@ -96,6 +96,17 @@ class Settings:
     # 注意：推理超时由 INFERENCE_TIMEOUT 统一承载（queue_manager._run_with_timeout 消费）。
     # 历史上曾存在未消费的 TASK_TIMEOUT 死配置，已在运维稳定性评估后删除。
 
+    # ── 来源标识失败策略（任务书阶段二，报告2 §六）────────────
+    # 密钥启用（MMH3_SIGN_KEY/.watermark_key）时水印嵌入失败的处理：
+    # False=侧车档（默认，写 .provenance.json 后放行）；True=block 档（阻断产出）。
+    # 无密钥时保持 R9 既有取舍（fail-open 知情接受），本字段不生效。
+    WATERMARK_FAIL_BLOCK: bool = False
+
+    # ── 代码完整性自检（任务书 R10）────────────────────────────
+    # True（默认）：启动时校验完整性清单 + Ed25519 签名，失败拒绝启动（fail-closed）。
+    # 启用前提：密钥定案 → 公钥配套闸门（sign 脚本回验 PASS）→ 再开 enforce。
+    # （避坑 #1：enforce 先于密钥分发 = 分发版无法启动；本仓库公钥已入库、私钥在签发机）
+    INTEGRITY_ENFORCE: bool = True
     # ── 断点续跑 (checkpoint #7) ───────────────────────────
     CHECKPOINT_DIR: Path = _BASE_DIR / "data" / "checkpoints"
     CHECKPOINT_EVERY: int = 5                    # 每完成 N 个镜头保存一次进度
@@ -141,6 +152,10 @@ class Settings:
         ):
             if env.get(env_key):
                 setattr(s, attr, env[env_key])
+        if env.get("MMH3_INTEGRITY_ENFORCE"):
+            s.INTEGRITY_ENFORCE = env["MMH3_INTEGRITY_ENFORCE"].strip().lower() in ("1", "true", "yes")
+        if env.get("MMH3_WATERMARK_FAIL_BLOCK"):
+            s.WATERMARK_FAIL_BLOCK = env["MMH3_WATERMARK_FAIL_BLOCK"].strip().lower() in ("1", "true", "yes")
         return s
 
 

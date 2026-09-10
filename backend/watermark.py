@@ -8,6 +8,12 @@ MM·H3 工作台 — 内容来源标识模块（开发者内部功能，对用�
 - 所有日志均为 debug 级（默认不输出），任何用户可见面（页面/README/终端）
   均不出现"水印"字样。
 
+失败策略（任务书 2026-09-10 阶段二，报告2 §六）：
+- 无签名密钥（R9 默认取舍）：单次尝试、失败仅 debug 日志——保持既有
+  「缺省不签名、对用户完全无感」的知情决策；
+- 签名密钥启用（MMH3_SIGN_KEY/.watermark_key）：embed_video_with_policy
+  执行三档失败策略——重试 1 次 → 写 .provenance.json 侧车审计（默认放行）
+  → block 档直接阻断产出。禁止 fail-open 静默跳过（早期合规缺口）。
 用法（开发者）：
     from backend.watermark import embed_video, extract_video
     embed_video("in.mp4", "out.mp4", payload="shot-123")
@@ -17,12 +23,14 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import logging
 import os
 import struct
-import subprocess
+import subprocess  # nosec B404
 import time
 import zlib
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -184,7 +192,7 @@ def _validate(raw: bytes) -> str | None:
 
 def _probe(p: Path) -> tuple[int, int, float]:
     """返回 (width, height, fps)。"""
-    out = subprocess.run(
+    out = subprocess.run(  # nosec
         ["ffprobe", "-v", "error", "-select_streams", "v:0",
          "-show_entries", "stream=width,height,avg_frame_rate", "-of", "csv=p=0", str(p)],
         capture_output=True, text=True, timeout=60,
@@ -198,7 +206,7 @@ def _probe(p: Path) -> tuple[int, int, float]:
 
 
 def _has_audio(p: Path) -> bool:
-    out = subprocess.run(
+    out = subprocess.run(  # nosec
         ["ffprobe", "-v", "error", "-select_streams", "a:0",
          "-show_entries", "stream=codec_type", "-of", "csv=p=0", str(p)],
         capture_output=True, text=True, timeout=60,
@@ -218,7 +226,7 @@ def embed_video(src: str, dst: str, payload: str, source_id: str = SOURCE_ID) ->
     tmp_v = dst_p.with_name(dst_p.stem + "_wm_tmp.mp4")
     tmp_a = dst_p.with_name(dst_p.stem + "_wm_audio.m4a")
     try:
-        dec = subprocess.run(
+        dec = subprocess.run(  # nosec
             ["ffmpeg", "-v", "error", "-i", str(src_p), "-f", "rawvideo",
              "-pix_fmt", "rgb24", "-"],
             capture_output=True, timeout=1800,
@@ -228,14 +236,14 @@ def embed_video(src: str, dst: str, payload: str, source_id: str = SOURCE_ID) ->
         raw = dec.stdout
         frame_bytes = w * h * 3
         total = len(raw) // frame_bytes
-        enc = subprocess.Popen(
+        enc = subprocess.Popen(  # nosec
             ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
              "-s", f"{w}x{h}", "-r", f"{fps}", "-i", "-",
              "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
              "-pix_fmt", "yuv420p", "-an", str(tmp_v)],
             stdin=subprocess.PIPE,
         )
-        assert enc.stdin is not None
+        assert enc.stdin is not None  # nosec B101
         for i in range(total):
             frame = np.frombuffer(raw, dtype=np.uint8, count=frame_bytes,
                                   offset=i * frame_bytes).reshape(h, w, 3)
@@ -246,13 +254,13 @@ def embed_video(src: str, dst: str, payload: str, source_id: str = SOURCE_ID) ->
         if enc.wait() != 0 or not tmp_v.exists():
             return False
         if _has_audio(src_p):
-            r = subprocess.run(
+            r = subprocess.run(  # nosec
                 ["ffmpeg", "-v", "error", "-y", "-i", str(src_p), "-vn",
                  "-c:a", "copy", str(tmp_a)],
                 capture_output=True, timeout=600,
             )
             if r.returncode == 0 and tmp_a.exists():
-                r2 = subprocess.run(
+                r2 = subprocess.run(  # nosec
                     ["ffmpeg", "-v", "error", "-y", "-i", str(tmp_v), "-i", str(tmp_a),
                      "-c", "copy", "-movflags", "+faststart", str(dst_p)],
                     capture_output=True, timeout=600,
@@ -270,7 +278,7 @@ def embed_video(src: str, dst: str, payload: str, source_id: str = SOURCE_ID) ->
             if f.exists():
                 try:
                     f.unlink(missing_ok=True)
-                except Exception:
+                except Exception:  # nosec B110 - 容忍性清理（extract 失败仅记录）
                     pass
 
 
@@ -283,7 +291,7 @@ def extract_video(src: str, max_bits: int = 4096) -> str | None:
         w, h, _ = _probe(p)
         if w <= 0 or h <= 0:
             return None
-        r = subprocess.run(
+        r = subprocess.run(  # nosec
             ["ffmpeg", "-v", "error", "-i", str(p), "-vframes", "1",
              "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
             capture_output=True, timeout=300,
@@ -295,3 +303,71 @@ def extract_video(src: str, max_bits: int = 4096) -> str | None:
     except Exception as e:  # pragma: no cover
         logger.debug("来源标识提取异常: %s", e)
         return None
+
+# --------------------------------------------------------------------------
+# 失败策略三档（任务书 2026-09-10 阶段二 / 报告2 §六：重试 → 侧车 → block）
+# --------------------------------------------------------------------------
+
+
+def key_enabled() -> bool:
+    """签名密钥是否启用（MMH3_SIGN_KEY 或 .watermark_key 存在）。"""
+    return _key() is not None
+
+
+def provenance_sidecar_path(dst: Path) -> Path:
+    """水印失败侧车审计文件路径（与产出同目录，<stem>.provenance.json）。"""
+    return dst.with_name(dst.stem + ".provenance.json")
+
+
+def write_provenance_sidecar(dst: Path, payload: str, reason: str, attempts: int) -> Path:
+    """写 .provenance.json 侧车元数据（水印失败审计事件落盘）。"""
+    meta = {
+        "schema": 1,
+        "kind": "watermark-embed-failure",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "target": str(dst),
+        "payload": payload,
+        "attempts": attempts,
+        "reason": reason,
+        "signing_key_present": key_enabled(),
+    }
+    sidecar = provenance_sidecar_path(dst)
+    sidecar.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return sidecar
+
+
+def embed_video_with_policy(
+    src: str,
+    dst: str,
+    payload: str,
+    source_id: str = SOURCE_ID,
+    *,
+    retries: int = 1,
+    block_on_fail: bool = False,
+) -> str:
+    """带失败策略的来源标识嵌入（任务书阶段二）。
+
+    无签名密钥（R9 默认）：单次尝试，返回 "ok" 或 "no_key"——不重试、不侧车、
+    不阻断，保持既有「缺省不签名、对用户完全无感」的知情取舍。
+
+    签名密钥启用：三档失败策略——
+      1) 重试 retries 次（默认 1）；
+      2) 仍失败：写 .provenance.json 侧车审计（默认放行，返回 "sidecar"）；
+      3) block_on_fail=True（block 档）：抛 RuntimeError 阻断产出。
+
+    返回值: "ok" | "no_key" | "sidecar"
+    """
+    if not key_enabled():
+        return "ok" if embed_video(src, dst, payload, source_id) else "no_key"
+    attempts = 0
+    for _ in range(1 + retries):
+        attempts += 1
+        if embed_video(src, dst, payload, source_id):
+            return "ok"
+    reason = "embed_failed"
+    if block_on_fail:
+        logger.warning("来源标识嵌入失败 %d 次（block 档），阻断产出: %s", attempts, dst)
+        raise RuntimeError(f"来源标识嵌入失败（block 档）：{dst}")
+    sidecar = write_provenance_sidecar(Path(dst), payload, reason, attempts)
+    logger.warning("来源标识嵌入失败 %d 次，已写侧车审计: %s", attempts, sidecar)
+    return "sidecar"

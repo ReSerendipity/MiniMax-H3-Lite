@@ -1,0 +1,55 @@
+# .github/workflows/docker-gate.yml
+# 发布门禁五步（Docker 实测）——《AI应用分发安全加固指南》阶段三 P1-② 落地：
+# 《分发能力评估.md》列出的剩余前置之一「发布机 --docker 实测」。
+#
+# 背景（执行对照表 · Docker 引擎受阻记录，2026-09-11）：
+#   本机无法安装 Docker 引擎——① desktop.docker.com 下载持续连接重置
+#   （WinError 10054，分块重试 15 轮仅完成 20MB/604MB）；② WSL2 组件损坏
+#   （Wsl/CallMsi/Install/REGDB_E_CLASSNOTREG），提权 wsl --update /
+#   wsl --install --no-distribution 均无法自愈。按任务书「受阻处置·替代方案」，
+#   采用 GitHub 托管 runner（自带 Docker 守护进程）作为等价容器执行域，
+#   完成 verify_release_integrity.py --docker 五步实测；结果作为分发能力
+#   评估的 Docker 门禁证据（对照表留痕）。
+#
+# 设计对齐家族约定（docker-scan.yml / gpu-smoke.yml）：
+#   - permissions: contents: read（最小权限）
+#   - actions hash-pin / 官方 action
+#   - 五步 = build(compileall) + unpack(自检 full+验签) + negative(入包清点)
+#            + tamper(篡改模拟) + smoke(真实启动) + docker(build+容器内 diag)
+#   - 触发：push 到 main 且命中相关路径；或手动 workflow_dispatch
+
+name: Release Integrity Gate (Docker)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'scripts/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'requirements*.txt'
+      - '.github/workflows/docker-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  docker-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run five-step gate (docker)
+        run: python scripts/verify_release_integrity.py --docker

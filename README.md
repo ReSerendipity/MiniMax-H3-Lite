@@ -65,7 +65,7 @@ python -m uvicorn backend.main:app --port 18080
 
 ### 🐳 Docker 部署（可选）
 
-适合 Linux 部署目标 / GPU 服务器 / 希望隔离依赖的环境。完整 SOP 见 [`docs/agents/SOPS.md` SOP-7](docs/agents/SOPS.md)。
+适合 Linux 部署目标 / GPU 服务器 / 希望隔离依赖的环境。完整 SOP 见 `docs/agents/SOPS.md` SOP-7（本地文档，未随仓库发布）。
 
 ```bash
 # ── 部署前三步（顺序不可颠倒；对应评估 v1.0.0 Q2 / SOP-7）────────
@@ -146,3 +146,7 @@ npm run test:frontend   :: 等价于 python scripts/render_pages.py && node test
 - 设计计划：.design.json（本地文档，不在公开仓库）
 - 官方模板（能力真源）：`workflows/` 目录三份 JSON
 - 官方发布页：https://modelscope.cn/models/MiniMax/MiniMax-H3
+
+## 贡献指南
+
+参与贡献请遵循 [组织级贡献指南](https://github.com/ReSerendipity/.github/blob/main/CONTRIBUTING.md)（Conventional Commits + DCO 签名）。

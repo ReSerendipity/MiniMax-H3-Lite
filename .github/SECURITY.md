@@ -83,3 +83,4 @@ ComfyUI-VideoHelperSuite, ComfyUI-WanVideoWrapper, rgthree-comfy
 | `docs/COMPLIANCE_CHECKLIST.md` | 合规检查清单（本地文档，未随仓库发布） |
 | `docs/LICENSE_COMPLIANCE.md` | 三方组件/节点许可证台账与合规判定（本地文档，未随仓库发布） |
 | `scripts/check_comfy_kernel.py` | Comfy 内核复用只读检查脚本 |
+| `.github/SECURITY_MATRIX.md` | 安全需求矩阵（R1–R10）、取证策略、代码完整性防线（统一追踪入口） |

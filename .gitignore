@@ -179,3 +179,11 @@ pytest_tmp/
 # --- auto-tidy: 运行时产物自动补齐 (auto) ---
 .workbuddy-ai/
 outputs/
+
+# 本地 git 目录备份（复数 backups/，scripts 备份工具产物，2026-09-12）
+backups/
+# 本地清理工具（不入库）
+scripts/safe-clean.bat
+scripts/safe-clean.sh
+# 仓库复查/学习计划书（本地备忘，不入库）
+学习仓库复查后续任务执行计划书.md

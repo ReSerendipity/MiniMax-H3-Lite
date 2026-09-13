@@ -1,6 +1,6 @@
 # MM·H3 工作台 · MiniMax H3 视频生成时间线工作台
 
-[![CI](https://github.com/ReSerendipity/MiniMax-H3-lite/actions/workflows/test.yml/badge.svg)](https://github.com/ReSerendipity/MiniMax-H3-lite/actions)
+[![CI](https://github.com/ReSerendipity/MiniMax-H3-lite/actions/workflows/test.yml/badge.svg)](https://github.com/ReSerendipity/MiniMax-H3-lite/actions) [![gitleaks](https://img.shields.io/badge/secret%20scan-gitleaks%20passing-0080FF?style=for-the-badge)](https://github.com/ReSerendipity/MiniMax-H3-lite/actions/workflows/gitleaks.yml)
 
 一个面向开发者的本地视频生成工作台：以**多镜头时间线**编排视频项目，输入提示词 / 参数 / 参考素材，调用本地 **MiniMax H3**（H3-Base）推理服务逐镜头生成视频并预览成片。
 

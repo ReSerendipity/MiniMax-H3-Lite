@@ -14,6 +14,24 @@ permissions:
   contents: read
 
 jobs:
+
+  # ── 依赖锁一致性门禁（防 Dependabot 分组升级破坏 requirements-lock.txt）──
+  lock-consistency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: 锁文件可解析性断言（dry-run 安装，不下载 wheel）
+        # 仅解析依赖元数据；若锁内存在版本冲突（如 pydantic-core 与 pydantic 约束不一致）
+        # 会在解析阶段即报 ResolutionImpossible，远快于 python-test 的全量 torch 安装。
+        run: |
+          python -m pip install --upgrade pip
+          pip install --dry-run -r requirements-lock.txt
   # ── Python 后端测试 ──────────────────────────────────────
   python-test:
     strategy:

@@ -1,7 +1,7 @@
 # MM·H3 工作台后端依赖
 fastapi>=0.104.0
-uvicorn[standard]>=0.24.0
-pydantic>=2.0.0
+uvicorn[standard]>=0.52.4
+pydantic>=2.13.5
 python-multipart>=0.0.6
 jinja2>=3.1.0
 pillow>=9.0.0
@@ -9,7 +9,7 @@ cryptography>=42.0.0  # 代码完整性自检（R10，Ed25519 验签/签名）
 cryptography>=42.0.0  # 代码完整性自检（R10，Ed25519 验签/签名）
 # ── 推理依赖（真实推理需要；已验证组合：diffusers 0.39.0 + transformers 5.x）──
 diffusers==0.40.0
-transformers>=4.41.2,<6
+transformers>=5.17.0,<6
 
 # ── Comfy 内核进程内推理（B 方案，脱离外部 ComfyUI）────────
 # av 供 comfy 的 video_types 导入 + 视频参考帧读取；imageio-ffmpeg 提供 ffmpeg 用于 mp4 合成
@@ -26,10 +26,10 @@ blake3>=0.4.0
 simpleeval>=1.0.0
 yarl>=1.18.0
 torchsde>=0.2.6
-scipy>=1.11.0
+scipy>=1.18.1
 sentencepiece>=0.1.99
-comfy-kitchen==0.2.31
-comfy-aimdo==0.4.13
+comfy-kitchen==0.2.33
+comfy-aimdo==0.5.3
 PyOpenGL>=3.1.8
 kornia>=0.7.1
 pydantic-settings~=2.0
@@ -38,7 +38,7 @@ spandrel>=0.3.0
 # ── 测试依赖 ──────────────────────────────────────
 pytest>=7.4.0
 pytest-cov>=4.1.0
-pytest-benchmark>=4.0.0
+pytest-benchmark>=5.3.0
 
 # ── 安全扫描依赖 ──────────────────────────────────
 pip-audit>=2.6.0

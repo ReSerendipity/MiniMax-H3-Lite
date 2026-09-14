@@ -8,7 +8,7 @@ pillow>=9.0.0
 cryptography>=42.0.0  # 代码完整性自检（R10，Ed25519 验签/签名）
 cryptography>=42.0.0  # 代码完整性自检（R10，Ed25519 验签/签名）
 # ── 推理依赖（真实推理需要；已验证组合：diffusers 0.39.0 + transformers 5.x）──
-diffusers==0.39.0
+diffusers==0.40.0
 transformers>=4.41.2,<6
 
 # ── Comfy 内核进程内推理（B 方案，脱离外部 ComfyUI）────────

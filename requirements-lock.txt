@@ -21,7 +21,7 @@ colorama==0.4.6
 coverage[toml]==7.15.4
 cyclonedx-python-lib==11.12.0
 defusedxml==0.7.1
-diffusers==0.39.0
+diffusers==0.40.0
 fastapi==0.141.1
 filelock==3.32.3
 fsspec==2026.7.0

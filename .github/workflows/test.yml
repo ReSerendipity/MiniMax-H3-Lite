@@ -150,7 +150,7 @@ jobs:
   # job 把守，模板此处只提供 typecheck）。
   # 基线 .ci/mypy_baseline.txt=7：阻断债务上升而非要求清零；模板口径为
   # typecheck 只装 mypy 不装项目依赖，改 mypy 版本须重算基线。
-  # （原内联实现见 git 历史 f13e1fc；迁移记录 docs/reports/家族经验迁移_mypy_ratchet门禁_20260903.md）
+  # （原内联实现见 git 历史 f13e1fc；mypy ratchet 门禁 2026-09-03 迁移自组织级 reusable workflow（原迁移报告未随本仓留存））
   typecheck:
     name: Typecheck (mypy ratchet)
     uses: ReSerendipity/.github/.github/workflows/python-quality-baseline.yml@main

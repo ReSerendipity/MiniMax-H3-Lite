@@ -1,5 +1,41 @@
 # Changelog
 
+## [2.5.0](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.4.1...v2.5.0) (2026-09-15)
+
+
+### Features
+
+* **ci:** docker 发布门禁五步实测（Docker 引擎本机受阻的替代执行域） ([385104e](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/385104ea0bb05279fe2efa414989d65282d39c21))
+* **integrity:** R10 代码完整性防线 + 水印失败三档策略 + 发布门禁 ([75df382](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/75df38282120e25022002c6674d7de9c54b2cc3e))
+* **integrity:** R10 代码完整性防线——核心模块清单 + Ed25519 签名 + 启动自检 enforce ([75a4b42](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/75a4b420cf6b0fd2c7bcee3d8039caccc7e3b861))
+* **scripts:** 完整性工具链——密钥生成/清单生成/签名/诊断/发布门禁 ([642ccf8](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/642ccf85ff658d2df087ba3fde6f1bc17e442b28))
+* **security+guard:** vendored 内核漂移基线、compose 挂载门禁与家族根目录守卫 ([646a788](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/646a788bfc5cc97f79fcc50ef14100e62f649f49))
+* **security+guard:** vendored 内核漂移基线、compose 挂载门禁与家族根目录守卫 ([02f4d87](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/02f4d87c357486272f38bf028935b6d6926481fb))
+* **watermark:** 签名启用时水印失败三档策略（重试→侧车→block），无 fail-open ([f2e5e0e](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/f2e5e0ed5e33fda08dfdfaadb2ae8783378a53b9))
+
+
+### Bug Fixes
+
+* **deps:** requirements-lock 的 pydantic-core 对齐 2.46.5（pydantic 2.13.5 精确依赖该版本；[#25](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/25) 分组升级将 core 抬到 2.49.0 造成锁内不一致，pip 解析 ResolutionImpossible） ([#32](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/32)) ([e6f6789](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/e6f6789f75ec086740162f1f011577d03f23b241))
+* **test:** D8 回归测试跨平台编码修复 —— 显式 UTF-8 解码子进程输出 ([fb2be37](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/fb2be3754c5c8671a1340e41750cee77d6d406a9))
+
+
+### Documentation
+
+* **adr:** 标注 check_comfy_kernel.py 自 38e0177 起退役，守卫职责移交基线脚本 ([48cb612](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/48cb6128deedd45a47304156536bdebc9be76e2e))
+* **compliance:** GPL 合规说明随主线进 main（自 cloud-native-remediation 41dd4f4 带入） ([359e03c](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/359e03cebe3b382d4616c1126c7cd244440f3ce2))
+* **security:** SECURITY.md 新增 R10 防线与三档策略指针；CI 完整性断言；镜像排除基线 ([aa8ece1](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/aa8ece17b221ba5b69c468cbb5d4ddcb5cd39a28))
+
+
+### CI/CD
+
+* add auto-merge workflow (Dependabot non-major + automerge label) ([#22](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/22)) ([907c642](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/907c64273606f64c94777f44834c51329460b14e))
+* add codeql analysis ([f864865](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/f864865fb14a655aa3222b37d0089cdafe40dbce))
+* **automerge:** fetch-metadata 跳过 commit 签名校验（本地变基分支无法携带 dependabot 签名，PR 作者已在 if 门禁校验） ([#24](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/24)) ([9903a07](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/9903a07aea3cbbc7ef2d10b14ac0b2845e110004))
+* fix self-purify wiring (continue-on-error must live in reusable job) ([405744b](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/405744ba65e5b772de2a8fed0f48c060c659b770))
+* **test:** 新增依赖锁一致性门禁（防 Dependabot 分组升级破坏 lock） ([#33](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/33)) ([ac773eb](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/ac773ebc2af5a41b7043bc75da44dda071f8f5c6))
+* 收敛 Dependabot 的 PR 数量与 Actions 算力开销 ([#23](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/23)) ([21dcdd1](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/21dcdd171813d7f245b3a6722289d1ba52ee4850))
+
 ## [2.4.1](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.4.0...v2.4.1) (2026-09-08)
 
 

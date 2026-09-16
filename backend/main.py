@@ -24,7 +24,7 @@ from routers.queue_manager import queue_depth
 
 configure_logging()  # 日志落盘到 logs/backend.log（滚动），崩溃后可回放
 
-# 版本单一事实来源：仓库根 .release-please-manifest.json（release-please 维护）
+# 版本单一事实来源：仓库根 package.json（发版时人工随 tag 同步，见 docs/adr/0004 修订注记）
 try:  # 扁平导入（backend 目录已加入 sys.path）
     from version import __version__ as APP_VERSION
 except ImportError:  # pragma: no cover - 包形态兜底

@@ -1,6 +1,6 @@
 # ADR 0004：发布版本治理（版本单一来源 + 门禁恢复阻断）
 
-- **状态**：Implemented
+- **状态**：Implemented（2026-09-16 部分取代，见文末「修订注记」）
 - **日期**：2026-09-05
 - **决策者**：仓库所有者（全权委托执行）
 - **来源**：发布版本管理评估（P0 版本口径分裂 / P1 门禁弱化 / P1 版本历史断层）
@@ -54,3 +54,14 @@
 
 - 正面：版本对外一致；发布失败可见；前端包版本不再漂移；覆盖率口径统一。
 - 代价：release-please 失败会让 main 变红（需按 `FIX_LOG.md` 流程止损）；CI 覆盖率门槛提高 20 个百分点（当前余量约 9 个百分点，新增代码需同步补测）。
+
+
+---
+
+## 修订注记（2026-09-16 · release-please 停用）
+
+release-please 于 2026-09-16 停用：工作流 `release-please.yml` 删除（bbe6996），发布改为人工 tag 驱动；`.release-please-manifest.json`（dba745e）与 `release-please-config.json`（37fb127）残留一并清理。据此对本文决策做如下修订：
+
+- **D1 版本单一事实来源**：由 `.release-please-manifest.json` 改为仓库根 `package.json` 的 `version` 字段（当前 `2.5.0`）。`backend/version.py`（`read_project_version`）、`trivy.yml` 的 VERSION build-arg、`tests/test_version_consistency.py` 已同步切换；文件缺失/损坏时仍回退 `0.0.0-dev`。
+- **D2 发布门禁**：release PR 审查机制随 release-please 一并取消，改为「人工 bump `package.json` → 本地全量验证 → 打 tag」的人工门禁；`test.yml` 侧的 continue-on-error / `|| true` 禁令保持不变。
+- 本文其余内容（背景、D3、D4 及当时实现细节）按当时决策存档保留。

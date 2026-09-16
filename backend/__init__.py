@@ -1,6 +1,6 @@
 """MM·H3 工作台后端包。
 
-版本号经 ``backend.version`` 从 release-please manifest 派生（禁止硬编码）。
+版本号经 ``backend.version`` 从仓库根 ``package.json`` 派生（禁止硬编码）。
 """
 try:  # 包形态：uvicorn backend.main:app / 测试 from backend.main import app
     from backend.version import __version__

@@ -79,7 +79,6 @@ root_allowlist:
   - package-lock.json
   - package.json
   - pytest.ini
-  - release-please-config.json
   - requirements-frozen-20260913.txt
   - requirements-lock.txt
   - requirements.txt

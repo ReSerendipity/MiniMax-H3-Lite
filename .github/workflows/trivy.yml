@@ -51,14 +51,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Read app version from release-please manifest
+      - name: Read app version from package.json
         id: appver
         # 用 python3：ubuntu-24.04 runner 无 `python` 命令（PEP 668），此前静默
         # 失败导致 VERSION build-arg 为空（2026-09-05 Trivy CI 首跑实证）。
         # 注意引号层次：YAML 单引号外壳 + python 代码内全部双引号，
         # 不得出现反斜杠续行（曾报 SyntaxError: unexpected character after
         # line continuation character，VERSION 再次为空）。
-        run: echo "version=$(python3 -c 'import json;print(json.load(open(".release-please-manifest.json"))["."])')" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(python3 -c 'import json;print(json.load(open("package.json"))["version"])')" >> "$GITHUB_OUTPUT"
 
       - name: Build image (local only; not pushed)
         uses: docker/build-push-action@v6

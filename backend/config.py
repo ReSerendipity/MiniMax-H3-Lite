@@ -89,6 +89,11 @@ class Settings:
     AUDIO_SAMPLE_RATE: int = 32000
     OUTPUT_BIT_DEPTH: int = 8            # 固定输出(官方 CreateVideo bit_depth)
     OUTPUT_FORMAT: str = "mp4"           # 固定输出(官方 SaveVideo format=auto)
+
+    # P1-2 显式 AI 生成标识（合规整改 2026-09-15）：产物文件名默认携带可读后缀，
+    # 便于对外传播时履行显式标识义务；与隐式取证水印（watermark.py）相互独立。
+    EXPLICIT_AI_LABEL: bool = True
+    EXPLICIT_AI_LABEL_SUFFIX: str = "_AI"
     MAX_PROMPT_CHARS: int = 7000
 
     # ── 队列 ──────────────────────────────────────────────

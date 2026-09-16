@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-10T08:25:30.665673+00:00",
+  "generated_at": "2026-09-16T05:17:56.333070+00:00",
   "generator": "scripts/generate_integrity_manifest.py",
   "description": "backend 核心模块 + comfy_kernel 关键入口 SHA256 完整性清单（行尾归一化）",
   "public_key_sha256": "c3a09cb118828137bfc32bb8671b93302dc2c82bfe6aa6fc15a0065304103da6",
   "files": {
     "backend/__init__.py": "19df75c21cd66f7ac9355e97768a62585302f995f81c1f582865d0801153361d",
     "backend/checkpoint.py": "96eb55b1912c07d5c7dd35b2ead20180c1d3863647ebd33071bd85be5120fc12",
-    "backend/config.py": "6b2294373c1fb4b48efe088a3bf6ffffd5a7a0a7e26b86b056cbda24bb252afd",
+    "backend/config.py": "7956b75785032dba9ec1b6029d9411aaabb8b668b28aa232c3079e1b955f3fc0",
     "backend/database.py": "2bf08bd23950a51e57e0f51e1f65da3d7fe316813345ff37c6cd88b0849538f3",
     "backend/engine_registry.py": "b745cf87653fe8d19bf4cf01704f7fd410d0c7a507c08068dac0db77643d6d74",
     "backend/h3/__init__.py": "a990606938d68dd6b97e4c87c3e4a2e989eec5f8622a1094037cc29ee0c4002b",
@@ -17,7 +17,7 @@
     "backend/routers/comfy_engine.py": "f20968248324ac2ba30ef4c62b89172649291e697e2c18ef70a39fd0bc450701",
     "backend/routers/generations.py": "d689f32853a2c8b009f90addd3324a1b9b277e676b6cc4cc6eb32f503bce7b20",
     "backend/routers/history.py": "79060ac7b811fb6dda2a7bf2c3d5d5bd05ee2031f9c0c87d7df57170e1000a51",
-    "backend/routers/inference.py": "5771484eee4af9b29da5fd4b77b779b7ae8a160e42c61d603b8d5e1cf02c756e",
+    "backend/routers/inference.py": "ca49f81fc6720b57dc9d64211150be0e2bca562ef4089b339b52bac0ac15153a",
     "backend/routers/projects.py": "025e250a048d2aef6125dcb85b208b48d1602eb9dc6fe3e1067d0a371caa2174",
     "backend/routers/queue_manager.py": "7b129005b5f55bacf31386d7a043c75a1755f3976034a1dceb33a82533150441",
     "backend/routers/shots.py": "3f265da4cb572b8d2f0c10ca82f0aab2de1c6a30fbedd2b95f0dca38e2e5e888",

@@ -59,6 +59,17 @@
 {% include "partials/statusbar.html" %}
 {% include "partials/history.html" %}
 
+<!-- P1-1 首次使用协议确认（合规整改 2026-09-15，shared.js 控制仅首显） -->
+<div id="mmh3Agreement" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,12,16,.72);align-items:center;justify-content:center">
+  <div style="background:#fdfdfc;color:#17191b;max-width:540px;width:calc(100% - 48px);border:1px solid #c9c9c2;padding:26px 28px;font-size:13.5px;line-height:1.7">
+    <div style="font-weight:600;font-size:16px;margin-bottom:10px">使用前须知</div>
+    <p style="margin:0 0 8px">本工作台基于本地 MiniMax H3 模型生成视频。<b>模型受 <a href="https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE" target="_blank" rel="noopener" style="color:#2f6f63">MiniMax H3 Community License</a> 约束</b>（地域排除欧盟/英国/韩国/美国；商用年收入超 2000 万美元需事先获得 MiniMax 书面授权）。</p>
+    <p style="margin:0 0 8px">继续使用即表示你已阅读并同意 <a href="https://github.com/ReSerendipity/MiniMax-H3-lite/blob/main/USER_AGREEMENT.md" target="_blank" rel="noopener" style="color:#2f6f63">《用户协议》</a> 与 <a href="https://github.com/ReSerendipity/MiniMax-H3-lite/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener" style="color:#2f6f63">《隐私政策》</a>：不生成违法内容、不经同意不深度伪造他人肖像/声音、不去除内容来源标识或 AI 标识；输出内容对外传播时遵守所在辖区 AI 生成内容标识要求。</p>
+    <label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0"><input type="checkbox" id="mmh3AgreeChk"><span>我已阅读并同意《用户协议》《隐私政策》及上述模型许可要点</span></label>
+    <button id="mmh3AgreeBtn" type="button" disabled style="width:100%;padding:9px 0;opacity:.5">知道了，开始使用</button>
+  </div>
+</div>
+
 <!-- 首访展示壳引导（shared.js 渲染内容，仅首次出现） -->
 <div class="shell-modal" id="shellModal"></div>
 

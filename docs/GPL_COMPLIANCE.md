@@ -55,8 +55,8 @@
 
 | 包 | 钉版 | 许可 | 依据（均为本仓当场实测） |
 |---|---|---|---|
-| `comfy-aimdo` | `==0.4.13`（`requirements.txt:30`） | **GPL-3.0** | 安装副本 `.venv/Lib/site-packages/comfy_aimdo-0.4.13.dist-info/licenses/LICENSE` 前二行：`This project is licensed under the GNU General Public License v3.0.` / `The original author/copyright holder reserves the right to offer the`。上游 GitHub 标 `NOASSERTION` 仅因许可正文前置了那段非标准声明，不改变"按 GPL-3.0 授权"的判定 |
-| `comfy-kitchen` | `==0.2.31`（`requirements.txt:29`） | Apache-2.0 | 安装副本 `comfy_kitchen-0.2.31.dist-info/METADATA` 含 `License: Apache-2.0`；上游 `Comfy-Org/comfy-kitchen` LICENSE 一致 |
+| `comfy-aimdo` | `==0.5.3`（`requirements.txt:32`，2026-09-15 与 requirements 同步） | **GPL-3.0** | 安装副本 `.venv/Lib/site-packages/comfy_aimdo-0.4.13.dist-info/licenses/LICENSE` 前二行：`This project is licensed under the GNU General Public License v3.0.` / `The original author/copyright holder reserves the right to offer the`。上游 GitHub 标 `NOASSERTION` 仅因许可正文前置了那段非标准声明，不改变"按 GPL-3.0 授权"的判定 |
+| `comfy-kitchen` | `==0.2.33`（`requirements.txt:31`，2026-09-15 与 requirements 同步） | Apache-2.0 | 安装副本 `comfy_kitchen-0.2.31.dist-info/METADATA` 含 `License: Apache-2.0`；上游 `Comfy-Org/comfy-kitchen` LICENSE 一致；0.2.33 另经 PyPI 元数据核实 License: Apache-2.0（2026-09-15） |
 
 `comfy-aimdo` 与内核同为**进程内**依赖：它在运行时被直接 import 进本项目的推理路径
 （`backend/routers/comfy_engine.py:374` `import comfy_aimdo.control as _ctl`，并在 L391-392

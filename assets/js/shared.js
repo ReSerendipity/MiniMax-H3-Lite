@@ -640,7 +640,7 @@ function getActiveParams(){
   if(as&&as.value)p.sampler=as.value;
   var asch=$('advScheduler');
   if(asch&&asch.value)p.scheduler_override=asch.value;
-  
+
   var ad=$('advDenoise');
   if(ad&&ad.value.trim()!==''){
     var den=parseFloat(ad.value.trim());
@@ -1117,10 +1117,10 @@ init();
     /* 比例变化须同步刷新分辨率像素读数（原 .p-row 分支已失配） */
     if(window.__mmSyncResPx)window.__mmSyncResPx();
   }
-  
+
   // 初始化时执行（延时确保 DOM 就绪）
   setTimeout(syncAspectDisplay, 100);
-  
+
   // 监听点击事件
   var aspectBody = document.querySelector('#aspectFold .fold-body');
   if(aspectBody){
@@ -1148,13 +1148,13 @@ init();
 (function(){
   var loraSlots = [];
   var maxLoras = 6;
-  
+
   function updateLoraCount(){
     var countEl = document.getElementById('loraCount');
     var activeCount = loraSlots.filter(function(s){return s&&s.name}).length;
     if(countEl)countEl.textContent = activeCount + '/' + maxLoras;
   }
-  
+
   function renderLoraSlots(){
     var slots = document.querySelectorAll('.lora-slot');
     slots.forEach(function(slot){
@@ -1162,7 +1162,7 @@ init();
       var nameEl = slot.querySelector('.lora-slot-name');
       var btn = slot.querySelector('.lora-slot-btn');
       var rmBtn = slot.querySelector('.lora-remove') || createRemoveButton(slot);
-      
+
       if(loraSlots[idx]&&loraSlots[idx].name){
         nameEl.textContent = loraSlots[idx].name;
         slot.classList.add('active');
@@ -1177,7 +1177,7 @@ init();
     });
     updateLoraCount();
   }
-  
+
   function createRemoveButton(slot){
     var btn = document.createElement('button');
     btn.type = 'button';
@@ -1192,12 +1192,12 @@ init();
     slot.appendChild(btn);
     return btn;
   }
-  
+
   // 初始化
   setTimeout(function(){
     loraSlots = new Array(maxLoras).fill(null);
     renderLoraSlots();
-    
+
     // 绑定点击事件
     document.querySelectorAll('.lora-slot-btn').forEach(function(btn){
       btn.addEventListener('click', function(){
@@ -1265,4 +1265,27 @@ init();
   if(wmInput) wmInput.addEventListener('input', applyWatermark);
 
   setTimeout(function(){ applyTags(); applyHint(); applyWatermark(); }, 80);
+})();
+
+
+/* ── P1-1 首次使用协议确认（合规整改 2026-09-15）────────────────────────── */
+(function(){
+  var KEY = 'mmh3:agreement:v1';
+  var AGREEMENT_VERSION = '2026-09-15';
+  try {
+    if (localStorage.getItem(KEY) === AGREEMENT_VERSION) return;
+    var box = document.getElementById('mmh3Agreement');
+    if (!box) return;
+    box.style.display = 'flex';
+    var chk = document.getElementById('mmh3AgreeChk');
+    var btn = document.getElementById('mmh3AgreeBtn');
+    if (chk && btn) {
+      chk.addEventListener('change', function(){ btn.disabled = !chk.checked; btn.style.opacity = chk.checked ? '1' : '.5'; });
+      btn.addEventListener('click', function(){
+        if (!chk.checked) return;
+        try { localStorage.setItem(KEY, AGREEMENT_VERSION); } catch(e) {}
+        box.style.display = 'none';
+      });
+    }
+  } catch(e) { /* localStorage 不可用（隐私模式）时静默跳过 */ }
 })();

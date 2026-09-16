@@ -180,7 +180,10 @@ def run_inference(task_id: str) -> dict:
 
     aid = new_id("ast_")
     ext = ".mp4"
-    stored_name = f"{aid}{ext}"
+    # P1-2 显式 AI 生成标识：产物文件名默认携带 _AI 后缀（config 可关闭），
+    # 与隐式取证水印无关；缩略图仍用原始 aid，不受影响。
+    label_suffix = getattr(settings, "EXPLICIT_AI_LABEL_SUFFIX", "_AI") if getattr(settings, "EXPLICIT_AI_LABEL", True) else ""
+    stored_name = f"{aid}{label_suffix}{ext}"
     dest = settings.ASSETS_DIR / stored_name
 
     if isinstance(result, (bytes, bytearray)):

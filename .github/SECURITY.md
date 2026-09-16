@@ -33,7 +33,7 @@ MiniMax-H3-lite 是**本地单机运行**的 MiniMax H3 视频生成时间线工
 
 ```
 comfyui_controlnet_aux, ComfyUI_Dynamic-RAMCache, ComfyUI_IPAdapter_plus,
-ComfyUI_toyxyz_test_nodes, ComfyUI_UltimateSDUpscale, ComfyUI-EsesImageCompare,
+ComfyUI_toyxyz_test_nodes, ComfyUI_UltimateSDUpscale,
 ComfyUI-GGUF, ComfyUI-Impact-Pack, ComfyUI-Inspire-Pack, ComfyUI-KJNodes,
 ComfyUI-Manager, ComfyUI-ReservedVRAM, ComfyUI-RMBG, ComfyUI-SeedVR2_VideoUpscaler,
 ComfyUI-VideoHelperSuite, ComfyUI-WanVideoWrapper, rgthree-comfy
@@ -81,6 +81,6 @@ ComfyUI-VideoHelperSuite, ComfyUI-WanVideoWrapper, rgthree-comfy
 | `backend/routers/queue_manager.py` | 任务队列（单机串行 `MAX_CONCURRENCY`）与断点续跑 |
 | `comfy_kernel/custom_nodes/` | 17 个第三方节点包（B 方案，需审计） |
 | `docs/COMPLIANCE_CHECKLIST.md` | 合规检查清单（本地文档，未随仓库发布） |
-| `docs/LICENSE_COMPLIANCE.md` | 三方组件/节点许可证台账与合规判定（本地文档，未随仓库发布） |
+| `docs/LICENSE_COMPLIANCE.md` | 三方组件/节点许可证台账与合规判定（已随仓库发布） |
 | `scripts/check_comfy_kernel.py` | Comfy 内核复用只读检查脚本 |
 | `.github/SECURITY_MATRIX.md` | 安全需求矩阵（R1–R10）、取证策略、代码完整性防线（统一追踪入口） |

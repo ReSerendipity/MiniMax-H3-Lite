@@ -1,6 +1,7 @@
 # MiniMax-H3-lite 许可证合规台账（License Compliance）
 
-> 最后更新：2026-09-03（§3.4 四项未决收口：节点包 LICENSE 实测复核 + Image/MiniMax 不对称说明；节点包实测 19 个）。
+> 最后更新：2026-09-15（P0-2：ComfyUI-EsesImageCompare 已整体移出 comfy_kernel 工作区，激活节点包 17 个；§1b 依赖钉版与 requirements.txt 同步）。
+> 历史记录：2026-09-03（§3.4 四项未决收口：节点包 LICENSE 实测复核 + Image/MiniMax 不对称说明；节点包实测 19 个）。
 > 本台账覆盖**随仓内嵌/随包分发**的组件；Python 依赖以 `pyproject.toml` 为准，另行核查。
 > ⚠️「商用合规 / 合规要求」两列仅记录**事实与风险提示**，不构成法律意见；标「需人工确认」者必须逐项人工补查后再分发。
 
@@ -16,12 +17,12 @@
 |---|---|---|---|
 | `comfy_kernel/`（上游 ComfyUI 内核） | GPL-3.0 | ⚠️ 传染风险（进程内复用）；具体分发形态需人工评估 | 隔离进程边界，或改用 Apache-2.0 等价实现；保留上游版权与许可文本 |
 
-## 3. `comfy_kernel/custom_nodes/` 第三方节点包（19 个，除 `__pycache__` 外）
+## 3. `comfy_kernel/custom_nodes/` 第三方节点包（17 个激活节点包，除 `__pycache__` 外；EsesImageCompare 已于 2026-09-15 移出）
 
 > §3.4 四项未决收口记录（2026-09-03，LICENSE 文件实测复核）：
 > ① `ComfyUI_Dynamic-RAMCache` 原记 **NOT FOUND** 实为「**目录存在但无 LICENSE 文件**」→ **已核实上游 `Windecay/ComfyUI_Dynamic-RAMCache` 为 MIT（README 声明，82★，pushed 2026-06-13）**，vendor 副本缺失的 LICENSE 已补回 `comfy_kernel/custom_nodes/ComfyUI_Dynamic-RAMCache/LICENSE`（2026-09-03 收口，见下表该行）；
 > ② 9 个 GPL-3.0 节点 LICENSE 首行均实测为 `GNU GENERAL PUBLIC LICENSE`，**传染风险成立**；
-> ③ `ComfyUI-EsesImageCompare` 许可实测为 `"My ComfyUI Nodes License" (1.0)`，**明确禁止 Bundling / Code Reuse / 再分发**，**当前 vendor 进仓即违反许可**；
+> ③ `ComfyUI-EsesImageCompare` 许可实测为 `"My ComfyUI Nodes License" (1.0)`，**明确禁止 Bundling / Code Reuse / 再分发**——**已处置（2026-09-15）**：节点目录整体移出 `comfy_kernel/`（含 `_removed_nodes/` 暂存区），工作区不再携带该许可冲突代码；恢复使用须先取得作者书面授权并仅作外部安装；
 > ④ Image vs MiniMax 不对称：Image `comfy_kernel/custom_nodes/` 仅 2 个示例节点（业务节点在 `app/integrated_app/native/`），MiniMax vendor 19 个 → 为架构差异非缺陷，MiniMax 侧须按本台账逐包复核。
 
 | 组件 | 许可证 | 商用合规 | 合规要求 |
@@ -31,7 +32,7 @@
 | ComfyUI_IPAdapter_plus | GPL-3.0（LICENSE 实测） | ⚠️ 已核实 GPL-3.0（2026-09-03），传染风险 | 隔离进程边界/改用 Apache 等价实现；保留上游版权 |
 | ComfyUI_toyxyz_test_nodes | GPL-3.0（实测） | ⚠️ 已核实 GPL-3.0（2026-09-03），传染风险 | 同上 |
 | ComfyUI_UltimateSDUpscale | GPL-3.0（实测） | ⚠️ 已核实 GPL-3.0（2026-09-03），传染风险 | 同上 |
-| ComfyUI-EsesImageCompare | "My ComfyUI Nodes License" (1.0)（LICENSE.txt 实测） | 🚫 **禁止 Bundling/Code Reuse/再分发**（仅 quasiblob 原仓分发） | ⚠️ **当前 vendor 进仓违反许可**：须移除该节点，或获作者书面授权后仅作外部安装（不从本仓分发） |
+| ComfyUI-EsesImageCompare | "My ComfyUI Nodes License" (1.0)（LICENSE.txt 实测） | 🚫 **禁止 Bundling/Code Reuse/再分发**（仅 quasiblob 原仓分发） | ✅ **已处置（2026-09-15）**：目录已移出 comfy_kernel 工作区（备份存档于维护者工作台，不随任何分发物携带）；如需恢复须获作者书面授权并仅作外部安装 |
 | ComfyUI-GGUF | Apache-2.0（LICENSE 首行） | ✅ 已核实 2026-09-03 | 保留版权声明 |
 | ComfyUI-Impact-Pack | GPL-3.0（实测） | ⚠️ 已核实 GPL-3.0（2026-09-03），传染风险 | 隔离/改用 Apache 等价 |
 | ComfyUI-Inspire-Pack | GPL-3.0（实测） | ⚠️ 已核实 GPL-3.0（2026-09-03），传染风险 | 同上 |

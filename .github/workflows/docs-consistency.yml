@@ -15,7 +15,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Audit spec references
-        run: python scripts/check_spec_refs.py
+        # 家族审计器在干净 checkout 缺席时，降级为自包含死链审计（不再静默 skip）
+        run: python scripts/check_spec_refs.py --minimal
       - name: license-notice-check
         # 防退化：NOTICE 若被删掉内核 GPL 声明，本步骤拦下。
         # 只断言入库文件 —— docs/ 被 .gitignore 排除，在 CI 里用

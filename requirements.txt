@@ -1,6 +1,6 @@
 # MM·H3 工作台后端依赖
 fastapi>=0.104.0
-uvicorn[standard]>=0.52.4
+uvicorn[standard]>=0.53.0
 pydantic>=2.13.5
 python-multipart>=0.0.6
 jinja2>=3.1.0
@@ -20,10 +20,10 @@ soundfile>=0.12.0
 einops>=0.7.0
 aiohttp>=3.11.8
 psutil>=5.9.0
-alembic>=1.19.2
+alembic>=1.20.0
 SQLAlchemy>=2.0.0
 blake3>=1.0.9
-simpleeval>=1.0.0
+simpleeval>=1.0.8
 yarl>=1.18.0
 torchsde>=0.2.6
 scipy>=1.18.1

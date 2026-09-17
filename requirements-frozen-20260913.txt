@@ -1,11 +1,11 @@
 aiohappyeyeballs==2.7.1
 aiohttp==3.14.3
 aiosignal==1.4.0
-alembic==1.19.2
+alembic==1.20.0
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
-ast_serialize==0.11.1
+ast_serialize==0.11.2
 attrs==26.1.0
 autoflake==2.4.0
 autopep8==2.3.2
@@ -21,7 +21,7 @@ click==8.5.0
 colorama==0.4.6
 comfy-aimdo==0.5.3
 comfy-kitchen==0.2.33
-coverage==7.16.0
+coverage==7.16.1
 cryptography==50.0.1
 cyclonedx-python-lib==11.12.0
 defusedxml==0.7.1
@@ -102,7 +102,7 @@ scipy==1.18.1
 sentencepiece==0.2.2
 setuptools==84.0.0
 shellingham==1.5.4
-simpleeval==1.0.7
+simpleeval==1.0.8
 sortedcontainers==2.4.0
 soundfile==0.14.0
 spandrel==0.4.2
@@ -116,14 +116,14 @@ torch @ file:///C:/Users/Doro/MiniMax-H3-lite/_dl/manual/torch-2.9.1%2Bcu130-cp3
 torchaudio @ file:///C:/Users/Doro/MiniMax-H3-lite/_dl/manual/torchaudio-2.9.1%2Bcu130-cp312-cp312-win_amd64.whl#sha256=7533a17bed21e5b86b8c49fd79656779779f2c991aef2804af6f318d2022ea6a
 torchsde==0.2.6
 torchvision @ file:///C:/Users/Doro/MiniMax-H3-lite/_dl/manual/torchvision-0.24.1%2Bcu130-cp312-cp312-win_amd64.whl#sha256=d31ceaded0d9b737471fa680ccd9e1acb6d5f0f70f03ef3a8d786a99c79da7cf
-tqdm==4.70.0
+tqdm==4.70.1
 trampoline==0.1.2
 transformers==5.17.0
 typer==0.27.2
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 urllib3==2.7.0
-uvicorn==0.52.4
+uvicorn==0.53.0
 virtualenv==21.7.9
 watchfiles==1.2.0
 websockets==17.1

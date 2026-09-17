@@ -18,7 +18,7 @@ cffi==2.1.1
 charset-normalizer==3.5.1
 click==8.5.0
 colorama==0.4.6
-coverage[toml]==7.16.0
+coverage[toml]==7.16.1
 cyclonedx-python-lib==11.12.0
 defusedxml==0.7.1
 diffusers==0.40.0
@@ -54,7 +54,7 @@ py-cpuinfo==9.0.0
 py-serializable==2.1.0
 pycparser==3.0
 pydantic==2.13.5
-pydantic-core==2.46.5
+pydantic-core==2.49.0
 pygments==2.21.0
 pyparsing==3.3.2
 pytest==9.1.1
@@ -74,13 +74,13 @@ starlette==1.6.0
 tokenizers==0.23.2
 tomli==2.4.1
 tomli-w==1.2.0
-tqdm==4.70.0
+tqdm==4.70.1
 transformers==5.17.0
 typer==0.27.2
 typing-extensions==4.16.0
 typing-inspection==0.4.4
 urllib3==2.7.0
-uvicorn[standard]==0.52.4
+uvicorn[standard]==0.53.0
 watchfiles==1.2.0
 websockets==17.1
 zipp==4.1.0

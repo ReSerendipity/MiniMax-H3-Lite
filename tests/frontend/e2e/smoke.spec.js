@@ -10,6 +10,16 @@
 
 import { test, expect } from '@playwright/test';
 
+// 首次使用协议确认（合规整改 2026-09-15）为一次性弹窗：#mmh3Agreement 以
+// z-index:9999 + inset:0 全屏遮罩，未同意时会拦截页面所有点击。
+// 测试上下文预置“已同意”状态，使 shared.js 跳过弹窗，避免遮罩阻塞交互断言。
+// （真实用户首访仍需手动勾选同意，此 seed 仅作用于 E2E 自动化上下文。）
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('mmh3:agreement:v1', '2026-09-15');
+  });
+});
+
 // ── 辅助函数 ──────────────────────────────────────────────
 async function closeShellModal(page) {
   // 点击第一个展示壳卡片关闭模态框

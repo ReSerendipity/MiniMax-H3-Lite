@@ -201,26 +201,42 @@ def _env_key_from(node: ast.AST) -> str | None:
     return None
 
 
+def _is_settings_base(node: ast.AST) -> bool:
+    """node 是否为 settings（Name）或 xx.settings（Attribute）。"""
+    if isinstance(node, ast.Name) and node.id == "settings":
+        return True
+    if isinstance(node, ast.Attribute) and node.attr == "settings":
+        return True
+    return False
+
+
 def is_read_as_settings_attr(attr: str, files: list[Path]) -> bool:
-    """backend/ 中是否出现 settings.<attr> 的读取（Load 上下文）。"""
+    """backend/ 中是否出现 settings.<attr> 或 getattr(settings, "<attr>"[, ...]) 的读取。
+
+    覆盖两种消费形态：
+      - 直读：``settings.EXPLICIT_AI_LABEL``（ast.Attribute，Load 上下文）
+      - getattr 字符串字面量：``getattr(settings, "EXPLICIT_AI_LABEL", True)``
+        （inference.py 当前的消费方式，旧版 AST 直读检测漏判 → 误报幽灵字段，
+        见 2026-09-16 main Test & Quality security-assertions 失败复盘）
+    """
     for path in files:
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
         except (OSError, SyntaxError):
             continue
         for node in ast.walk(tree):
-            if not isinstance(node, ast.Attribute):
-                continue
-            if node.attr != attr:
-                continue
-            if not isinstance(node.ctx, ast.Load):
-                continue
-            base = node.value
-            # base 为 settings（Name）或 xx.settings（Attribute）
-            if isinstance(base, ast.Name) and base.id == "settings":
-                return True
-            if isinstance(base, ast.Attribute) and base.attr == "settings":
-                return True
+            # 1) 直读：settings.<attr>（Load 上下文）
+            if isinstance(node, ast.Attribute) and node.attr == attr and isinstance(node.ctx, ast.Load):
+                if _is_settings_base(node.value):
+                    return True
+            # 2) getattr 形式：getattr(settings, "<attr>"[, default])
+            if isinstance(node, ast.Call):
+                f = node.func
+                if isinstance(f, ast.Name) and f.id == "getattr" and len(node.args) >= 2:
+                    base = node.args[0]
+                    name_arg = node.args[1]
+                    if isinstance(name_arg, ast.Constant) and name_arg.value == attr and _is_settings_base(base):
+                        return True
     return False
 
 

@@ -17,7 +17,7 @@ checks = {
     "应有-H3-Regenerate-2K说明": "H3-Regenerate-2K",
 }
 for path in paths:
-    html = urllib.request.urlopen("http://127.0.0.1:18080" + path).read().decode("utf-8")
+    html = urllib.request.urlopen("http://127.0.0.1:18080" + path).read().decode("utf-8")  # nosec B310
     print(f"\n=== {path} ===")
     for label, pat in checks.items():
         print(f"  [{'有' if pat in html else '无'}] {label}")

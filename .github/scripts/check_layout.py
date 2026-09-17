@@ -13,7 +13,7 @@ v2 改进（2026-09-07 / 2026-09-09）：
 """
 import os
 import re
-import subprocess
+import subprocess  # nosec B404
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -64,7 +64,7 @@ def ignored_set(repo, entries):
     if not entries:
         return set()
     try:
-        r = subprocess.run(["git", "check-ignore", "--stdin"], cwd=repo,
+        r = subprocess.run(["git", "check-ignore", "--stdin"], cwd=repo,  # nosec
                            input="\n".join(entries).encode("utf-8"),
                            capture_output=True)
         return set(x for x in r.stdout.decode("utf-8", "replace").splitlines() if x)

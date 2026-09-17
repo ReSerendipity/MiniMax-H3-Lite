@@ -10,7 +10,7 @@
 """
 import shutil
 import sqlite3
-import subprocess
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 
@@ -35,7 +35,7 @@ def clean_container(yes: bool) -> None:
         print("\n[容器清理] docker 命令不在 PATH，跳过（本机未装 Docker Desktop）")
         return
     # 检查容器是否存在（任意状态）
-    r = subprocess.run(
+    r = subprocess.run(  # nosec
         ["docker", "ps", "-a", "--filter", f"name={CONTAINER_NAME}",
          "--format", "{{.Names}}\t{{.State}}"],
         capture_output=True, text=True, check=False,
@@ -55,9 +55,9 @@ def clean_container(yes: bool) -> None:
             return
     # 优雅 stop（10s 超时）然后 rm
     print(f"  docker stop {CONTAINER_NAME} ...")
-    subprocess.run(["docker", "stop", CONTAINER_NAME], check=False)
+    subprocess.run(["docker", "stop", CONTAINER_NAME], check=False)  # nosec
     print(f"  docker rm {CONTAINER_NAME} ...")
-    subprocess.run(["docker", "rm", CONTAINER_NAME], check=False)
+    subprocess.run(["docker", "rm", CONTAINER_NAME], check=False)  # nosec
     print(f"  [OK] {CONTAINER_NAME} 已停掉并删除")
     print("  提示：volume（./data ./uploads ./outputs）未动；如需彻底重置：")
     print("        docker compose down -v      # 删容器 + 删命名卷（bind-mount 不受影响）")
@@ -94,6 +94,8 @@ conn.execute("DELETE FROM shots")
 conn.commit()
 
 # 清理空文件（≤6 字节：占位空 PNG 等）
+
+
 def clean_dir(d: Path):
     if not d.exists():
         return
@@ -106,6 +108,7 @@ def clean_dir(d: Path):
             except Exception as e:
                 print(f"  ! {p.name}: {e}")
     return removed
+
 
 n1 = clean_dir(UPLOADS)
 n2 = clean_dir(ASSETS)

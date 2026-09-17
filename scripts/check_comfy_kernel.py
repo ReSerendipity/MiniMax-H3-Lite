@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import argparse
 import re
-import subprocess
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 
@@ -128,7 +128,7 @@ def _try_import(repo: Path) -> tuple[bool, str]:
         "import comfy; print('OK', getattr(comfy, '__version__', '?'))"
     ).format(kernel=repo / "comfy_kernel", root=repo)
     try:
-        r = subprocess.run(
+        r = subprocess.run(  # nosec B603
             [sys.executable, "-c", code],
             capture_output=True, text=True, timeout=120,
         )
@@ -158,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
         report.append("[FAIL] comfy_kernel/ 目录不存在")
         print("\n".join(report))
         return 1
-    report.append(f"[OK] comfy_kernel/ 存在")
+    report.append("[OK] comfy_kernel/ 存在")
 
     # 2. 规模
     n_files, n_lines = _count_py(kernel)

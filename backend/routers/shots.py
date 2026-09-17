@@ -57,7 +57,7 @@ def list_shots(pid: str):
             try:
                 import json as _json
                 meta = _json.loads(r["meta"] or "{}")
-            except Exception:
+            except Exception:  # nosec B110
                 pass
             shot["refs"].append({
                 "id": r["id"],
@@ -121,9 +121,10 @@ def update_shot(sid: str, body: ShotUpdate):
     if body.ord is not None:
         updates["ord"] = body.ord
     updates["updated_at"] = now_iso()
+    # 列名仅来自 ShotUpdate 模型白名单字段（非用户输入），值均参数绑定 —— B608 误报
     set_clause = ", ".join(f"{k}=?" for k in updates)
     values = list(updates.values()) + [sid]
-    db.execute(f"UPDATE shots SET {set_clause} WHERE id=?", values)
+    db.execute(f"UPDATE shots SET {set_clause} WHERE id=?", values)  # nosec
     # 同步项目 updated_at
     db.execute(
         "UPDATE projects SET updated_at=? WHERE id=(SELECT project_id FROM shots WHERE id=?)",

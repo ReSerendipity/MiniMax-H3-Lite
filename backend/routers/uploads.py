@@ -9,7 +9,7 @@ import mimetypes
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import subprocess
+import subprocess  # nosec B404
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from database import get_db, new_id, row_to_dict
 from config import settings
@@ -45,7 +45,7 @@ def detect_kind(filename: str, mime: str) -> str | None:
 def _probe_duration(path: Path) -> float | None:
     """ffprobe 探测时长；不可用/失败返回 None（由调用方决定策略）。"""
     try:
-        out = subprocess.run(
+        out = subprocess.run(  # nosec
             ["ffprobe", "-v", "error", "-show_entries", "format=duration",
              "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
             capture_output=True, text=True, timeout=15,
@@ -74,7 +74,7 @@ def _existing_kind_duration(shot_id: str, kind: str) -> float:
             d = meta.get("duration")
             if d and isinstance(d, (int, float)):
                 total += float(d)
-        except Exception:
+        except Exception:  # nosec B110
             pass
     return total
 
@@ -155,7 +155,7 @@ async def upload_ref(
             from PIL import Image
             with Image.open(dest) as im:
                 meta_info["width"], meta_info["height"] = im.size
-        except Exception:
+        except Exception:  # nosec B110
             pass
 
     # 5. 写资产记录

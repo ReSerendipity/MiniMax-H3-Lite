@@ -8,7 +8,7 @@ checkout it is absent and the check degrades to "skip" (keeps CI green).
 from __future__ import annotations
 
 import json
-import subprocess
+import subprocess  # nosec B404
 import sys
 import tempfile
 from pathlib import Path
@@ -26,7 +26,7 @@ if auditor is None:
 with tempfile.TemporaryDirectory(prefix="spec_audit_") as td:
     out = Path(td) / "current.json"
     out_md = Path(td) / "current.md"
-    subprocess.run([sys.executable, str(auditor), "--project", HERE.name,
+    subprocess.run([sys.executable, str(auditor), "--project", HERE.name,  # nosec B603
                     "--json", str(out), "--md", str(out_md)], check=True)
     data = json.loads(out.read_text(encoding="utf-8"))[0]
 

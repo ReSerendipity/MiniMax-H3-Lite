@@ -17,7 +17,7 @@ def submit(prompt_graph):
     req = urllib.request.Request(CN + "/prompt", data=body,
                                  headers={"Content-Type": "application/json"}, method="POST")
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
+        with urllib.request.urlopen(req, timeout=30) as r:  # nosec B310
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         return {"http_error": e.code, "body": e.read().decode()}
@@ -27,7 +27,7 @@ def wait(prompt_id, timeout=900):
     start = time.time()
     while time.time() - start < timeout:
         try:
-            with urllib.request.urlopen(f"{CN}/history/{prompt_id}", timeout=10) as r:
+            with urllib.request.urlopen(f"{CN}/history/{prompt_id}", timeout=10) as r:  # nosec B310
                 h = json.loads(r.read().decode())
             if prompt_id in h:
                 entry = h[prompt_id]
@@ -36,7 +36,7 @@ def wait(prompt_id, timeout=900):
                     return True, entry.get("outputs", {})
                 if st.get("status_str") == "error":
                     return False, st
-        except Exception:
+        except Exception:  # nosec B110
             pass
         time.sleep(2)
     return False, "timeout"

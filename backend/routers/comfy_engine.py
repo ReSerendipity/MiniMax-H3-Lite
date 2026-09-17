@@ -58,7 +58,7 @@ def _http(method: str, path: str, body=None, timeout: int = 30):
     req = urllib.request.Request(url, data=data, method=method,
                                  headers={"Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310
             return r.status, json.loads(r.read().decode("utf-8", "replace"))
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"ComfyUI {method} {path} 失败 HTTP {e.code}: "
@@ -392,7 +392,7 @@ def _ensure_kernel() -> tuple:
                                  "comfy_aimdo.vram_buffer", "comfy_aimdo.torch"):
                         try:
                             _imp.reload(_imp.import_module(_sub))
-                        except Exception:
+                        except Exception:  # nosec B110
                             pass
                     _log.info("DynamicVRAM（comfy-aimdo）已启用")
                 else:

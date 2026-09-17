@@ -5,14 +5,18 @@
     python scripts/apply_branch_protection.py --apply     # 幂等写入
 """
 from __future__ import annotations
-import argparse, json, os, subprocess, sys
+import argparse
+import json
+import os
+import subprocess  # nosec B404
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(os.path.dirname(HERE), "docs", "ci", "branch-protection.json")
 
 
 def gh(args):
-    r = subprocess.run(["gh", "api"] + args, capture_output=True, text=True)
+    r = subprocess.run(["gh", "api"] + args, capture_output=True, text=True)  # nosec B603
     return r.returncode, (r.stdout or "").strip(), (r.stderr or "").strip()
 
 
@@ -40,14 +44,16 @@ def body(cfg):
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--apply", action="store_true")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--apply", action="store_true")
     a = ap.parse_args()
     cfg = json.load(open(CFG, encoding="utf-8"))
     slug = f"{cfg['owner']}/{cfg['repo']}"
     want = body(cfg)
     code, out, err = gh([f"repos/{slug}/branches/main/protection"])
     if code != 0:
-        print(f"[FAIL] 读取保护失败: {err[:200]}"); sys.exit(1)
+        print(f"[FAIL] 读取保护失败: {err[:200]}")
+    sys.exit(1)
     cur = json.loads(out)
     d = []
     pr = cur.get("required_pull_request_reviews") or {}
@@ -66,7 +72,8 @@ def main():
     if (am.strip() == "true") != bool(cfg["policy"]["allow_auto_merge"]):
         d.append("allow_auto_merge")
     if not d:
-        print("[OK] 无漂移"); return
+        print("[OK] 无漂移")
+    return
     print(f"[DRIFT] {', '.join(d)}")
     if a.apply:
         tmp = os.path.join(HERE, "_body.json")

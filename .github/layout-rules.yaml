@@ -24,35 +24,35 @@ artifact_root_patterns:
   - 'tmp_.*'
   - '.*~$'
 gitignored_expect:
-  - !! "\345\255\246\344\271\240\344\273\223\345\272\223\345\244\215\346\237\245\345\220\216\347\273\255\344\273\273\345\212\241\346\211\247\350\241\214\350\256\241\345\210\222\344\271\246.md"
-  - !! .benchmarks
-  - !! .canvas-meta.json
-  - !! .coverage
-  - !! .design.json
-  - !! .mypy_cache
-  - !! .pytest_cache
-  - !! .ruff_cache
-  - !! .trae
-  - !! .workbuddy
-  - !! .workbuddy-ai
-  - !! AGENTS.md
-  - !! FIX_LOG.md
-  - !! LOCAL_RULES.md
-  - !! _archive
-  - !! backups
-  - !! comfy_kernel
-  - !! coverage.xml
-  - !! data
-  - !! htmlcov
-  - !! logs
-  - !! model
-  - !! node_modules
-  - !! outputs
-  - !! precheck.ps1
-  - !! screenshots
-  - !! skills-learning
+  - 学习仓库复查后续任务执行计划书.md"
+  - .benchmarks
+  - .canvas-meta.json
+  - .coverage
+  - .design.json
+  - .mypy_cache
+  - .pytest_cache
+  - .ruff_cache
+  - .trae
+  - .workbuddy
+  - .workbuddy-ai
+  - AGENTS.md
+  - FIX_LOG.md
+  - LOCAL_RULES.md
+  - _archive
+  - backups
+  - comfy_kernel
+  - coverage.xml
+  - data
+  - htmlcov
+  - logs
+  - model
+  - node_modules
+  - outputs
+  - precheck.ps1
+  - screenshots
+  - skills-learning
 root_allowlist:
-  - "docs
+  - docs
   - .dockerignore
   - .gitattributes
   - .githooks

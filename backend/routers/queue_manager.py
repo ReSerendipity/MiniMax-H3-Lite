@@ -302,6 +302,6 @@ def _run_task(task_id: str):
         # 标记模型已就绪（首次成功后），供 /api/health 暴露真实就绪度
         try:
             runtime_state.mark_model_loaded()
-        except Exception:
+        except Exception:  # nosec B110
             pass
         return

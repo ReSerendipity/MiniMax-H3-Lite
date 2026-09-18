@@ -84,3 +84,11 @@ ComfyUI-VideoHelperSuite, ComfyUI-WanVideoWrapper, rgthree-comfy
 | `docs/LICENSE_COMPLIANCE.md` | 三方组件/节点许可证台账与合规判定（已随仓库发布） |
 | `scripts/check_comfy_kernel.py` | Comfy 内核复用只读检查脚本 |
 | `.github/SECURITY_MATRIX.md` | 安全需求矩阵（R1–R10）、取证策略、代码完整性防线（统一追踪入口） |
+
+## 附：治理与勘误速查（2026-09-18）
+
+- **日志（勘误用）**：`logs/backend.log`（后端服务，RotatingFileHandler 滚动）；`_archive/logs/mypy_scan.log`（mypy 基线扫描留档）。
+- **分支拓扑**：`origin/main` = 完整项目历史（216 提交，PR #1–#38）+ 合规治理（2026-09-17 合并提交 `f0defbc`，现远端顶端含 dependabot 自动合并）；`compliance/legal-remediation-20260916` 为合规工作分支（含完整历史基座）。main 分支保护 enabled / enforce_admins=true / 无 required checks——管理员可直推，非管理员走功能分支 + PR。
+- **scripts/ 门禁**：CI **无 bandit job**，scripts/ 的 flake8/bandit 只由本地钩子把关——改动 `scripts/` 后务必本地跑过（2026-09-17 已完成存量清理）。
+- **Python 安全注释**：bandit 豁免用纯 `# nosec`（`# nosec B603,B607` 只压 B607 不压 B603）。
+- **YAML 陷阱**（`.github/layout-rules.yaml`）：禁 `!!` 标签前缀、禁八进制转义、中文文件名加引号（check-yaml 拒绝）。

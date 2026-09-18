@@ -44,6 +44,16 @@ Python 项目：
 grep -rn --include='*.py' -iE 'C:\\Users|/home/|/Users/' .
 ```
 
+自动化门禁（已接入 `.githooks/pre-commit`，提交时自动执行）：
+
+```bash
+# 提交时拦截新引入的本机绝对路径；--all 全库审计（人工复核用）
+python scripts/check_no_hardcoded_paths.py          # 默认：git diff --cached
+python scripts/check_no_hardcoded_paths.py --all    # 全库
+```
+
+> 规则：占位符（`/home/user`、`C:\Users\me` 等）与豁免清单（`Dockerfile` 容器路径、`locales/` 占位文案、`.env.example`、测试断言文件等）见脚本头部注释；新增豁免必须人工复核后加入 `ALLOWLIST` 并注明理由。
+
 ## 2. Git 工作流（强制）
 
 - main 受保护：禁止直推。流程：`git fetch` → 从 `origin/main` 建分支 → 修改 → `git commit -s`（DCO）→ push（过 pre-push 门禁）→ GitHub PR。
@@ -71,6 +81,13 @@ grep -rn --include='*.py' -iE 'C:\\Users|/home/|/Users/' .
 - 修改 `.gitattributes` / `.gitignore` / `.mailmap` 前先确认与上游 `origin/main` 一致，避免重复 / 冲突提交。
 
 ## 5. 本仓修复记录（2026-09-18）
+
+第二轮（检查脚本落地 + 首轮遗漏补齐）：
+
+- `scripts/check_no_hardcoded_paths.py`：新增路径可移植性检查脚本，已接入 `.githooks/pre-commit`（提交时 `git diff --cached` 拦截）。
+- `scripts/check_spec_refs.py`：docstring 中的本机路径说明改为通用表述（首轮遗漏，本轮补齐）。
+
+首轮（PR #46）：
 
 - `backend/routers/comfy_engine.py`（生产代码）：`C:\Users\Doro\APP\ComfyUI-aki-v3\ComfyUI\input|output` 两处硬编码改为**环境变量 + 项目内默认值**：`MMH3_COMFY_INPUT_DIR` / `MMH3_COMFY_OUTPUT_DIR`，默认 `data/comfy_input`、`data/comfy_output`。
 - `requirements-frozen-20260913.txt`：torch / torchaudio / torchvision 的 `file:///C:/Users/Doro/.../_dl/manual/*.whl` 改为**官方 PyTorch 索引 URL**（`https://download.pytorch.org/whl/cu130/...`，文件名与 sha256 不变）。

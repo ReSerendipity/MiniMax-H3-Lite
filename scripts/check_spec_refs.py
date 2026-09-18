@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Thin wrapper -> shared family auditor; --minimal fallback for CI.
 
-The auditor lives OUTSIDE this repo (C:\\Users\\Doro\\.spec_audit).  On a
+The auditor lives OUTSIDE this repo (a sibling .spec_audit directory next to
 developer machine it is found and the check is authoritative.  In a fresh CI
 checkout it is absent: with ``--minimal`` (used by docs-consistency.yml) a
 self-contained dead-link audit runs over tracked Markdown instead of silently

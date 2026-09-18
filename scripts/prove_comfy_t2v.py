@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """一次性验证：把 aki 自带官方 H3 t2v 工作流通过 ComfyUI HTTP API 跑通，出 mp4。
 
+DEV-ONLY：依赖外部 ComfyUI 安装目录（batch_workflow_generator 工具与官方工作流）。
+默认读取本机 aki-v3 安装；其他机器请用环境变量 COMFYUI_ROOT 指向你的 ComfyUI 根目录。
+
 用途：证明「MiniMax-H3-lite 用 comfy 后端 + ComfyUI」这条路能真正生成视频。
 """
 import json
+import os
 import sys
 import time
 import urllib.request
@@ -43,12 +47,14 @@ def wait(prompt_id, timeout=900):
 
 
 def main():
-    # 用 aki 自带转换工具把 editor 工作流转成 API
-    sys.path.insert(0, r"C:\Users\Doro\APP\ComfyUI-aki-v3\tool")
+    # 用 aki 自带转换工具把 editor 工作流转成 API（COMFYUI_ROOT 可覆盖）
+    _comfy_root = os.environ.get("COMFYUI_ROOT", r"C:\Users\Doro\APP\ComfyUI-aki-v3")
+    sys.path.insert(0, os.path.join(_comfy_root, "tool"))
     from batch_workflow_generator import load_workflow_json, extract_api_prompt
 
     d = load_workflow_json(
-        r"C:\Users\Doro\APP\ComfyUI-aki-v3\ComfyUI\user\default\workflows\video_minimax_h3_t2v.json")
+        os.path.join(_comfy_root, "ComfyUI", "user", "default", "workflows",
+                     "video_minimax_h3_t2v.json"))
     api = extract_api_prompt(d)
     # 剔除前端假节点（MarkdownNote），它们不是可执行算子
     api = {nid: n for nid, n in api.items()

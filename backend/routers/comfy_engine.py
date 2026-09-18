@@ -301,7 +301,8 @@ def _input_image_name(path: str) -> str:
     if not Path(path).is_absolute():
         return Path(path).name
     import shutil
-    dest = Path(r"C:\Users\Doro\APP\ComfyUI-aki-v3\ComfyUI\input")
+    # 输入目录可移植化：默认项目内 data/comfy_input，可用 MMH3_COMFY_INPUT_DIR 覆盖
+    dest = Path(os.environ.get("MMH3_COMFY_INPUT_DIR", str(_BASE_DIR / "data" / "comfy_input")))
     dest.mkdir(parents=True, exist_ok=True)
     name = f"mmh3_{uuid.uuid4().hex}" + Path(path).suffix
     shutil.copy(path, dest / name)
@@ -492,7 +493,8 @@ def _wait(prompt_id: str, timeout: int = 1800) -> dict:
 
 
 # 仅供 HTTP 旧路径：外部 ComfyUI 的输出目录（进程内路径不走这里）
-_HTTP_OUT_DIR = Path(r"C:\Users\Doro\APP\ComfyUI-aki-v3\ComfyUI\output")
+# 可移植化：默认项目内 data/comfy_output，可用 MMH3_COMFY_OUTPUT_DIR 覆盖
+_HTTP_OUT_DIR = Path(os.environ.get("MMH3_COMFY_OUTPUT_DIR", str(_BASE_DIR / "data" / "comfy_output")))
 
 
 def _freshest_output(outputs: dict) -> Path:

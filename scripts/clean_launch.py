@@ -48,19 +48,21 @@ def find_winpython():
         py = wpy_dir / "python" / "python.exe"
         if py.exists():
             return str(py)
-    # 2. 兄弟项目共享 WinPython（Seedvr2 / TTS_MultiModel / Image_MultiModel）
+    # 2. 兄弟项目共享 WinPython（同级目录探测；可用 MMH3_SIBLING_ROOT 指向兄弟项目根）
+    _sibling_root = Path(os.environ.get("MMH3_SIBLING_ROOT", str(PROJECT_ROOT.parent)))
     for ref in (
-        Path(r"C:\Users\Doro\Seedvr2\WPy64-312101\python\python.exe"),
-        Path(r"C:\Users\Doro\TTS_MultiModel\WPy64-312101\python\python.exe"),
-        Path(r"C:\Users\Doro\Image_MultiModel\WPy64-312101\python\python.exe"),
+        _sibling_root / "Seedvr2" / "WPy64-312101" / "python" / "python.exe",
+        _sibling_root / "TTS_MultiModel" / "WPy64-312101" / "python" / "python.exe",
+        _sibling_root / "Image_MultiModel" / "WPy64-312101" / "python" / "python.exe",
     ):
         if ref.exists():
             return str(ref)
-    # 3. 系统级 CUDA Python（含 cu13x PyTorch，推理可用）
-    for sys_py in (
-        Path(r"C:\Python312\python.exe"),
-        Path(r"C:\Users\Doro\APP\ComfyUI-aki-v3\python\python.exe"),
-    ):
+    # 3. 系统级 CUDA Python（含 cu13x PyTorch，推理可用）；可用 MMH3_EXTRA_PYTHON 追加候选
+    _sys_candidates = [Path(r"C:\Python312\python.exe")]
+    _extra = os.environ.get("MMH3_EXTRA_PYTHON")
+    if _extra:
+        _sys_candidates.append(Path(_extra))
+    for sys_py in _sys_candidates:
         if sys_py.exists():
             try:
                 code = subprocess.run(  # nosec B603: 固定解释器 + 固定探针参数，无不可信输入

@@ -112,10 +112,10 @@ sympy==1.14.0
 tokenizers==0.23.2
 tomli==2.4.1
 tomli_w==1.2.0
-torch @ file:///C:/Users/Doro/MiniMax-H3-lite/_dl/manual/torch-2.9.1%2Bcu130-cp312-cp312-win_amd64.whl#sha256=cd3232a562ad2a2699d48130255e1b24c07dfe694a40dcd24fad683c752de121
-torchaudio @ file:///C:/Users/Doro/MiniMax-H3-lite/_dl/manual/torchaudio-2.9.1%2Bcu130-cp312-cp312-win_amd64.whl#sha256=7533a17bed21e5b86b8c49fd79656779779f2c991aef2804af6f318d2022ea6a
+torch @ https://download.pytorch.org/whl/cu130/torch-2.9.1%2Bcu130-cp312-cp312-win_amd64.whl#sha256=cd3232a562ad2a2699d48130255e1b24c07dfe694a40dcd24fad683c752de121
+torchaudio @ https://download.pytorch.org/whl/cu130/torchaudio-2.9.1%2Bcu130-cp312-cp312-win_amd64.whl#sha256=7533a17bed21e5b86b8c49fd79656779779f2c991aef2804af6f318d2022ea6a
 torchsde==0.2.6
-torchvision @ file:///C:/Users/Doro/MiniMax-H3-lite/_dl/manual/torchvision-0.24.1%2Bcu130-cp312-cp312-win_amd64.whl#sha256=d31ceaded0d9b737471fa680ccd9e1acb6d5f0f70f03ef3a8d786a99c79da7cf
+torchvision @ https://download.pytorch.org/whl/cu130/torchvision-0.24.1%2Bcu130-cp312-cp312-win_amd64.whl#sha256=d31ceaded0d9b737471fa680ccd9e1acb6d5f0f70f03ef3a8d786a99c79da7cf
 tqdm==4.70.1
 trampoline==0.1.2
 transformers==5.17.0

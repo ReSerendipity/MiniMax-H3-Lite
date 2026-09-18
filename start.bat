@@ -107,24 +107,24 @@ if exist "%WP_LEGACY%\python\python.exe" (
     goto :python_found
 )
 
-:: 2e. Try sibling projects' WinPython (Seedvr2 / TTS_MultiModel / Image_MultiModel)
-set "REF_WPY1=C:\Users\Doro\Seedvr2\WPy64-312101\python\python.exe"
-if exist "%REF_WPY1%" (
-    set "PYTHON_CMD=%REF_WPY1%"
+:: 2e. Try sibling projects' WinPython (Seedvr2 / TTS_MultiModel / Image_MultiModel)——同级相对探测，可用 SEEDVR2_WPY / TTS_WPY / IMAGE_WPY 环境变量覆盖
+if "%SEEDVR2_WPY%"=="" set "SEEDVR2_WPY=%~dp0..\Seedvr2\WPy64-312101\python\python.exe"
+if exist "%SEEDVR2_WPY%" (
+    set "PYTHON_CMD=%SEEDVR2_WPY%"
     echo [OK] Found shared WinPython from Seedvr2
     goto :python_found
 )
 
-set "REF_WPY2=C:\Users\Doro\TTS_MultiModel\WPy64-312101\python\python.exe"
-if exist "%REF_WPY2%" (
-    set "PYTHON_CMD=%REF_WPY2%"
+if "%TTS_WPY%"=="" set "TTS_WPY=%~dp0..\TTS_MultiModel\WPy64-312101\python\python.exe"
+if exist "%TTS_WPY%" (
+    set "PYTHON_CMD=%TTS_WPY%"
     echo [OK] Found shared WinPython from TTS_MultiModel
     goto :python_found
 )
 
-set "REF_WPY3=C:\Users\Doro\Image_MultiModel\WPy64-312101\python\python.exe"
-if exist "%REF_WPY3%" (
-    set "PYTHON_CMD=%REF_WPY3%"
+if "%IMAGE_WPY%"=="" set "IMAGE_WPY=%~dp0..\Image_MultiModel\WPy64-312101\python\python.exe"
+if exist "%IMAGE_WPY%" (
+    set "PYTHON_CMD=%IMAGE_WPY%"
     echo [OK] Found shared WinPython from Image_MultiModel
     goto :python_found
 )

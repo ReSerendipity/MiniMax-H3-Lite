@@ -7,6 +7,12 @@ updates:
     schedule: { interval: monthly }
     open-pull-requests-limit: 5
     labels: [dependencies]
+    ignore:
+      # pydantic-core 只能作为 pydantic 的精确配对版本入库（2.13.5 仅接受 2.46.5），
+      # 单独升级必然造成锁内自相矛盾 -> pip ResolutionImpossible。
+      # 事故复发两次：#25 (2026-09-14)、#44 (2026-09-17) 均把 core 抬到 2.49.0 打断 CI。
+      # 随 pydantic 一起手工维护；pydantic 本体升级由 lock-consistency 闸门兜底。
+      - dependency-name: "pydantic-core"
     groups:
       minor-and-patch:
         applies-to: version-updates

@@ -79,17 +79,65 @@ def scan_comfy_core(kernel: Path) -> dict[str, str]:
     return files, missing
 
 
+def check_freshness(manifest_path: Path) -> int:
+    """比对已提交清单与 backend/ 实际哈希（只读，不写文件）。
+
+    CI / 本地钩子用它拦住「改了 backend 代码却没重算重签清单」——这类漂移会让
+    enforce 模式的启动自检直接拒启。comfy_kernel 是 vendored 不入库，不参与比对。
+    """
+    if not manifest_path.exists():
+        print(f"[FAIL] 清单不存在: {manifest_path.relative_to(ROOT)}")
+        return 1
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        committed = payload["files"]
+    except (KeyError, ValueError, OSError) as e:
+        print(f"[FAIL] 清单无法解析: {e}")
+        return 1
+
+    actual = scan_py_tree(ROOT / "backend")
+    changed = sorted(k for k, v in actual.items() if k in committed and committed[k] != v)
+    unregistered = sorted(set(actual) - set(committed))
+    gone = sorted(set(k for k in committed if k.startswith("backend/")) - set(actual))
+
+    if not (changed or unregistered or gone):
+        print(f"[OK] 清单新鲜度：{len(actual)} 个 backend 模块哈希一致，无未登记/无失效条目")
+        return 0
+
+    print(f"[FAIL] 清单漂移：{len(changed)} 个哈希不一致"
+          f"，{len(unregistered)} 个新文件未登记，{len(gone)} 个条目已失效")
+    for k in changed:
+        print(f"  ~ {k}")
+    for k in unregistered:
+        print(f"  + {k}")
+    for k in gone:
+        print(f"  - {k}")
+    print(f"清单 generated_at={payload.get('generated_at', '?')}")
+    print("修复（签发机，需 data/.manifest_signing_key）：")
+    print("  python scripts/generate_integrity_manifest.py --no-comfy")
+    print("  python scripts/sign_integrity_manifest.py")
+    return 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="生成核心模块完整性清单")
     parser.add_argument(
         "--no-comfy", action="store_true",
         help="不扫描 comfy_kernel（本机无 vendored 内核时用；默认缺失条目仅警告）",
     )
+    parser.add_argument(
+        "--check", action="store_true",
+        help="只比对已提交清单与 backend/ 实际哈希，不写文件；漂移时退出码 1",
+    )
     args = parser.parse_args()
 
     out_dir = ROOT / "backend" / "security"
-    out_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = out_dir / "integrity_manifest.json"
+
+    if args.check:
+        return check_freshness(manifest_path)
+
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     files = scan_py_tree(ROOT / "backend")
     print(f"[OK] backend 核心模块: {len(files)} 个")

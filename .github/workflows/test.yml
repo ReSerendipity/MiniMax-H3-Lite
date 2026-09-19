@@ -32,6 +32,24 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install --dry-run -r requirements-lock.txt
+
+  # ── 完整性清单新鲜度门禁（防改了 backend 代码却忘了重算重签清单）──────────
+  # 漂移的后果不是"红线"而已：INTEGRITY_ENFORCE 默认 True 且 fail-closed，
+  # 从这种 main 全新装出去的工作台会在启动自检处直接拒启（2026-09-17~09-19 实况）。
+  # 纯标准库脚本，无需装依赖，故排在 python-test 之前秒级返回。
+  integrity-freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: 清单 vs backend/ 实际哈希（漂移即失败并给出重签命令）
+        run: python scripts/generate_integrity_manifest.py --check
+
   # ── Python 后端测试 ──────────────────────────────────────
   python-test:
     strategy:

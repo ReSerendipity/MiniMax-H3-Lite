@@ -520,9 +520,11 @@ def extract_video(src: str, max_bits: int = 4096) -> str | None:
         y_size = w * h
         diffs: list[list[float]] = []
         idx = 0
+        pout = proc.stdout
+        assert pout is not None  # nosec B101 - 同 449 行 enc.stdin 口径
         try:
             while len(diffs) < e_max:
-                buf = proc.stdout.read(frame_bytes)
+                buf = pout.read(frame_bytes)
                 if buf is None or len(buf) < frame_bytes:
                     break
                 if idx % _FRAME_INTERVAL == 0:
@@ -536,7 +538,7 @@ def extract_video(src: str, max_bits: int = 4096) -> str | None:
                 idx += 1
         finally:
             try:
-                proc.stdout.close()
+                pout.close()
             finally:
                 proc.terminate()
                 try:

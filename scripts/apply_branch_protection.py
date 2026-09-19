@@ -16,7 +16,8 @@ CFG = os.path.join(os.path.dirname(HERE), "docs", "ci", "branch-protection.json"
 
 
 def gh(args):
-    r = subprocess.run(["gh", "api"] + args, capture_output=True, text=True)  # nosec B603
+    r = subprocess.run(["gh", "api"] + args, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")  # nosec B603
     return r.returncode, (r.stdout or "").strip(), (r.stderr or "").strip()
 
 

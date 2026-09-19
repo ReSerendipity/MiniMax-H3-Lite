@@ -2,7 +2,11 @@
 """Thin wrapper -> shared family auditor; --minimal fallback for CI.
 
 The auditor lives OUTSIDE this repo (a sibling .spec_audit directory next to
-developer machine it is found and the check is authoritative.  In a fresh CI
+the project).  On a developer machine where it is found the check is
+authoritative.  Its console output is captured and decoded UTF-8 (same
+convention as _git()) with the child forced via PYTHONIOENCODING, so a
+cp936-locale Windows console no longer crashes the run before a verdict is
+printed (2026-09-18 harness re-check).  In a fresh CI
 checkout it is absent: with ``--minimal`` (used by docs-consistency.yml) a
 self-contained dead-link audit runs over tracked Markdown instead of silently
 skipping — any relative Markdown link whose target is missing on disk AND not
@@ -13,6 +17,7 @@ the legacy behaviour (skip, exit 0) is preserved.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess  # nosec B404（git 仅以列表参数调用，无 shell 拼接）
@@ -82,12 +87,30 @@ def minimal_audit() -> int:
     return 1 if findings else 0
 
 
+def _echo(stream, text: str) -> None:
+    """向本机可能非 UTF-8 的控制台（如 cp936）安全输出，范围外字符转义而非崩溃。"""
+    enc = getattr(stream, "encoding", None) or "utf-8"
+    stream.write(text.encode(enc, "backslashreplace").decode(enc, "replace"))
+
+
 def authoritative(auditor: Path) -> int:
     with tempfile.TemporaryDirectory(prefix="spec_audit_") as td:
         out = Path(td) / "current.json"
         out_md = Path(td) / "current.md"
-        subprocess.run([sys.executable, str(auditor), "--project", HERE.name,  # nosec B603（审计器路径来自本机探测）
-                        "--json", str(out), "--md", str(out_md)], check=True)
+        # 与 _git() 同口径捕获并解码；同时强制子进程 stdout 为 UTF-8，否则仓外审计器
+        # 向 cp936 控制台 print 报告会在包装脚本外崩溃，连 verdict 都给不出。
+        proc = subprocess.run([sys.executable, str(auditor), "--project", HERE.name,  # nosec B603（审计器路径来自本机探测）
+                               "--json", str(out), "--md", str(out_md)],
+                              capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", check=False,
+                              env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+        if proc.returncode != 0:
+            print(f"family auditor exited {proc.returncode} (no verdict produced)",
+                  file=sys.stderr)
+            tail = "\n".join((proc.stderr or proc.stdout or "").splitlines()[-5:])
+            if tail:
+                _echo(sys.stderr, tail + "\n")
+            return 1
         data = json.loads(out.read_text(encoding="utf-8"))[0]
 
     hard = [f for f in data["findings"] if f["status"] == "PHANTOM" and f["tier"] == "ASSERTIVE"]
@@ -96,9 +119,9 @@ def authoritative(auditor: Path) -> int:
     pc = data["precommit"]["declared_not_configured"]
     print(f"phantom={len(hard)} dead_links={len(dl)} bad_workflow={len(wf)} bad_hook={len(pc)}")
     for x in hard:
-        print(f"  PHANTOM {x['ref']}  in {', '.join(x['specs'])}")
+        _echo(sys.stdout, f"  PHANTOM {x['ref']}  in {', '.join(x['specs'])}\n")
     for d in dl:
-        print(f"  DEAD    {d['spec']}:{d['line']} -> {d['link']}")
+        _echo(sys.stdout, f"  DEAD    {d['spec']}:{d['line']} -> {d['link']}\n")
     return 1 if (hard or dl or wf or pc) else 0
 
 

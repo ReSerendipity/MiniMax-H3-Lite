@@ -9,6 +9,9 @@ release-please 已停用（bbe6996 / dba745e / 37fb127），版本单一事实�
 - FastAPI ``app.version`` 与 ``backend.__version__`` 一致（不再硬编码 0.1.0）
 - ``backend/main.py`` 内不存在硬编码的 ``version="x.y.z"`` 字面量
 - package.json 缺失时回退到 ``-dev`` 后缀，而不是崩溃
+- （2026-09-18 新增，仅本地）AGENTS.md 声明的版本权威源文件真实存在且口径与
+  package.json 一致——外部引用审计（check_spec_refs）不识别根级文件名，Rules 层
+  失效声明由本断言兜底
 
 注：AGENTS.md / docs/ 属 .gitignore 忽略的本地文档，文件不存在时跳过对应断言，
 保证在干净 CI checkout 中依然可运行。
@@ -118,3 +121,35 @@ def test_coverage_gate_matches_pytest_ini():
 def test_local_agents_md_announces_release_version():
     src = (PROJECT_ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert project_version() in src
+
+
+# 「版本单一事实来源：`<文件名>`」/「单一事实源为 `<文件名>`」声明形态；
+# 只允许标签与反引号路径间出现少量中文间隔字，不跨行。
+VERSION_AUTHORITY_DECL = re.compile(r"(?:版本单一事实来源|单一事实源)[^\n`]{0,16}`([^`]+)`")
+
+
+@pytest.mark.skipif(
+    not (PROJECT_ROOT / "AGENTS.md").exists(),
+    reason="AGENTS.md 为 .gitignore 忽略的本地文档，CI checkout 中不存在",
+)
+def test_local_agents_md_version_authority_source_exists_and_matches():
+    """Rules 层门禁：AGENTS.md 声明的每个版本权威源文件必须真实存在且口径一致。
+
+    背景（2026-09-18 harness 修复）：check_spec_refs 家族审计器的引用识别要求
+    token 含路径分隔符，根级文件名（如已删除的 manifest）失效不会被它发现；
+    本断言是该盲区在本地唯一可执行的兜底核对。
+    """
+    src = (PROJECT_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    declared = sorted(set(VERSION_AUTHORITY_DECL.findall(src)))
+    assert declared, "AGENTS.md 中未找到反引号声明的版本权威源文件名"
+    for name in declared:
+        authority = PROJECT_ROOT / name
+        assert authority.is_file(), f"AGENTS.md 声明的版本权威源不存在: {name}"
+        if authority.suffix.lower() == ".json":
+            data = json.loads(authority.read_text(encoding="utf-8"))
+            assert str(data.get(VERSION_KEY)) == project_version(), (
+                f"AGENTS.md 声明的权威源 {name} 的 version 与 package.json 口径不一致"
+            )
+        assert name == PACKAGE_JSON_NAME, (
+            f"版本权威源应为 {PACKAGE_JSON_NAME}（ADR-0004 修订注记），实际声明为 {name}"
+        )

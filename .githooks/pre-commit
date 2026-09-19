@@ -9,8 +9,14 @@ if [ -f scripts/check_no_hardcoded_paths.py ]; then
         command -v "$c" >/dev/null 2>&1 && PY_BIN="$c" && break
     done
     if [ -n "$PY_BIN" ]; then
-        if ! "$PY_BIN" scripts/check_no_hardcoded_paths.py; then
-            echo "[pre-commit] 检测到本机绝对路径（C:\Users\... 等），提交已拒绝。绕过：git commit --no-verify" >&2
+        "$PY_BIN" scripts/check_no_hardcoded_paths.py
+        PATHPORT_RC=$?
+        if [ "$PATHPORT_RC" -ne 0 ]; then
+            if [ "$PATHPORT_RC" -eq 1 ]; then
+                echo "[pre-commit] 检测到本机绝对路径（C:\Users\... 等），提交已拒绝。绕过：git commit --no-verify" >&2
+            else
+                echo "[pre-commit] 路径可移植性检查脚本自身异常（退出码 $PATHPORT_RC，非检测到硬编码路径），提交已拒绝。请修复脚本或 git commit --no-verify 绕过" >&2
+            fi
             exit 1
         fi
     fi

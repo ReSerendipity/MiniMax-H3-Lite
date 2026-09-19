@@ -40,7 +40,7 @@ def clean_container(yes: bool) -> None:
     r = subprocess.run(  # nosec
         ["docker", "ps", "-a", "--filter", f"name={CONTAINER_NAME}",
          "--format", "{{.Names}}\t{{.State}}"],
-        capture_output=True, text=True, check=False,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     )
     if CONTAINER_NAME not in r.stdout:
         print(f"\n[容器清理] {CONTAINER_NAME} 容器不存在，跳过")

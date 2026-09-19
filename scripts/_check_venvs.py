@@ -32,7 +32,9 @@ for proj, mods in projects.items():
     cmd = ("import importlib.util;"
            "mods=%r;"
            "[print(('OK  ' if importlib.util.find_spec(m) else 'MISS'), m) for m in mods]" % mods)
-    r = subprocess.run([py, "-c", cmd], capture_output=True, text=True)  # nosec B603
+    r = subprocess.run([py, "-c", cmd], capture_output=True, text=True,
+                       encoding="utf-8", errors="replace",  # nosec B603
+                       env={**os.environ, "PYTHONIOENCODING": "utf-8"})  # 子进程 stdout 强制 UTF-8，与父解码同口径
     print(r.stdout, end="")
     if r.stderr.strip():
         print("  stderr:", r.stderr.strip().splitlines()[-1])

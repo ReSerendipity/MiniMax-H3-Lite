@@ -48,7 +48,7 @@ def _probe_duration(path: Path) -> float | None:
         out = subprocess.run(  # nosec
             ["ffprobe", "-v", "error", "-show_entries", "format=duration",
              "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15,
         )
         if out.returncode == 0 and out.stdout.strip():
             return float(out.stdout.strip())

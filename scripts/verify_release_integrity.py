@@ -155,14 +155,14 @@ def step_docker() -> tuple[bool, str]:
     # docker 固定参数、list 形参无 shell；B603 对显式 ID nosec 不响应（bandit 1.7.7），故用无 ID
     build = subprocess.run(  # nosec
         ["docker", "build", "-t", "mmh3-release-check", "."],
-        capture_output=True, text=True, timeout=600)
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
     if build.returncode != 0:
         return False, f"docker build 失败: {build.stderr.strip()[-300:]}"
     # docker 固定参数、list 形参无 shell；B603 对显式 ID nosec 不响应（bandit 1.7.7），故用无 ID
     run = subprocess.run(  # nosec
         ["docker", "run", "--rm", "--entrypoint", "python", "mmh3-release-check",
          "scripts/diag_integrity.py", "--quick"],
-        capture_output=True, text=True, timeout=300,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300,
     )
     if run.returncode != 0:
         return False, f"容器内诊断失败: {(run.stdout or run.stderr).strip()[-300:]}"

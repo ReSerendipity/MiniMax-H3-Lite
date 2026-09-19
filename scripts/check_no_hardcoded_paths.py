@@ -25,7 +25,7 @@ _REPO_HINT = SCRIPT_DIR.parent
 def _repo_root():
     out = subprocess.run(  # nosec B603, B607（固定参数列表 git rev-parse，无 shell=True）
         ["git", "-C", str(_REPO_HINT), "rev-parse", "--show-toplevel"],
-        capture_output=True, text=True)
+        capture_output=True, text=True, encoding="utf-8", errors="replace")
     return Path(out.stdout.strip())
 
 
@@ -56,7 +56,8 @@ ALLOWLIST = [
 
 
 def _files_from(cmd):
-    out = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT))  # nosec B603, B607（git 只读命令）
+    out = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT),  # nosec B603, B607（git 只读命令）
+                         encoding="utf-8", errors="replace")
     return [p for p in out.stdout.split("\0") if p]
 
 

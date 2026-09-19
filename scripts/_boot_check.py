@@ -21,7 +21,9 @@ for proj, extra in checks.items():
     if extra:
         for m, desc in extra:
             cmd = "import importlib.util;print('PRESENT' if importlib.util.find_spec('%s') else 'MISSING')" % m
-            r = subprocess.run([py, "-c", cmd], capture_output=True, text=True)  # nosec B603
+            r = subprocess.run([py, "-c", cmd], capture_output=True, text=True,
+                               encoding="utf-8", errors="replace",  # nosec B603
+                               env={**os.environ, "PYTHONIOENCODING": "utf-8"})  # 子进程输出强制 UTF-8，与父解码同口径
             print("  ", m, "->", r.stdout.strip(), "|", desc)
 
 # 整体启动 smoke：尝试 import 各自 app 入口，捕获首个 ImportError
@@ -33,6 +35,7 @@ boots = {
 for proj, mod in boots.items():
     py = os.path.join(proj, ".venv", "Scripts", "python.exe")
     r = subprocess.run([py, "-c", "import %s; print('BOOT_OK')" % mod],  # nosec B603
-                       capture_output=True, text=True, cwd=proj)
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=proj,
+                       env={**os.environ, "PYTHONIOENCODING": "utf-8"})  # 子进程输出强制 UTF-8，与父解码同口径
     line = "BOOT_OK" if r.returncode == 0 else ("FAIL: " + (r.stderr.strip().splitlines()[-1] if r.stderr.strip() else r.stdout.strip().splitlines()[-1]))
     print(" ", os.path.basename(proj), "import", mod, "->", line)

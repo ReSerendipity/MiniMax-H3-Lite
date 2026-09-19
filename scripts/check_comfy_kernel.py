@@ -37,6 +37,7 @@ MiniMax-H3-lite 移植 ComfyUI 内核进程内复用的可行性判断。
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess  # nosec B404
 import sys
@@ -130,7 +131,8 @@ def _try_import(repo: Path) -> tuple[bool, str]:
     try:
         r = subprocess.run(  # nosec B603
             [sys.executable, "-c", code],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},  # 子进程输出强制 UTF-8，与父解码同口径
         )
         ok = r.returncode == 0 and "OK" in (r.stdout or "")
         msg = (r.stdout or "").strip() or (r.stderr or "").strip()[:500]

@@ -7,3 +7,6 @@
 # (verified: `git check-ignore -v -- nosuchdir/` attributes it to .gitignore:178).
 # eol=lf stops the re-normalization and keeps every ignore rule byte-exact.
 /.gitignore text eol=lf
+
+# Markdown: lock LF to avoid CRLF churn in cross-platform diffs.
+*.md text eol=lf

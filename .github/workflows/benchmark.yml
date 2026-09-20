@@ -39,7 +39,7 @@ jobs:
           cache: 'pip'
 
       - name: Restore baseline from cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .benchmarks
           key: bench-baseline-${{ github.run_id }}

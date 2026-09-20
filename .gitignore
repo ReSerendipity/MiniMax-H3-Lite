@@ -187,3 +187,7 @@ scripts/safe-clean.bat
 scripts/safe-clean.sh
 # 仓库复查/学习计划书（本地备忘，不入库）
 学习仓库复查后续任务执行计划书.md
+# 根目录健康文件由组织级仓库提供（self-purify 检查②），本地不入库
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SUPPORT.md

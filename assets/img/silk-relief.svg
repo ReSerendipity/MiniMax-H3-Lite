@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 640" width="480" height="640">
+  <!-- 剧场壳帷幔的丝绸浮光。以 #808080 为基色：soft-light 混合下，中性灰≈不改变
+       底色，亮部成高光、暗部成褶皱阴影，因此整幅必须围绕 50% 明度对称铺开，
+       否则会把卡片整体提亮或压暗。低频横向 + 高频纵向噪声，得到垂坠的竖向褶裥。
+
+       两处实测坑（改坏了会整屏发白，别顺手删）：
+       1) filter 必须显式 color-interpolation-filters="sRGB"。默认是 linearRGB，
+          feTurbulence 经线性光空间往返后整体偏亮——实测把均值从 129 抬到 163/255，
+          在 soft-light 下就是一层洗白。
+       2) sheen 的白/黑 stop 强度必须配平。初版白 0.55/0.42 对黑 0.30/0.26，
+          净偏白；现 0.34/0.30 对 0.34/0.30。
+       判据：渲染后取像素均值应落在 127.5±5（实测 129.0，明度范围 85-174，σ=14）。
+       复测法：把本图 drawImage 到 canvas，按 0.2126R+0.7152G+0.0722B 求均值。 -->
+  <defs>
+    <filter id="silk" x="0" y="0" width="100%" height="100%"
+            color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.042"
+                    numOctaves="4" seed="17" result="n"/>
+      <feColorMatrix in="n" type="matrix"
+                     values="0.33 0.33 0.33 0 0
+                             0.33 0.33 0.33 0 0
+                             0.33 0.33 0.33 0 0
+                             0    0    0    0 1"/>
+    </filter>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.24" stop-color="#ffffff" stop-opacity="0.34"/>
+      <stop offset="0.42" stop-color="#000000" stop-opacity="0.34"/>
+      <stop offset="0.63" stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="0.82" stop-color="#000000" stop-opacity="0.30"/>
+      <stop offset="1"    stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="640" fill="#808080"/>
+  <rect width="480" height="640" filter="url(#silk)" opacity="0.55"/>
+  <rect width="480" height="640" fill="url(#sheen)" opacity="0.45"/>
+</svg>

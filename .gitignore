@@ -8,6 +8,7 @@ uploads/
 assets/*
 !assets/css/
 !assets/js/
+!assets/img/
 !assets/favicon.svg
 !assets/favicon-32.png
 !assets/apple-touch-icon.png

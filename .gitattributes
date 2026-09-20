@@ -1,12 +1,57 @@
-# Pin .gitignore to LF in the working tree.
-#
-# Git for Windows ships core.autocrlf=true system-wide, so every checkout/clone
-# materializes the LF .gitignore blob as a CRLF working copy. git's ignore parser
-# does not strip the lone CR left on the blank line (.gitignore:178); that line
-# becomes a catch-all pattern matching any missing path with a trailing slash
-# (verified: `git check-ignore -v -- nosuchdir/` attributes it to .gitignore:178).
-# eol=lf stops the re-normalization and keeps every ignore rule byte-exact.
+# 统一 UTF-8 + LF 行尾，防止跨平台编码损坏（与家族仓库口径一致，2026-09-18 补全）
+* text=auto
+
+# 源码与文本文件强制 UTF-8 + LF
+*.py    text eol=lf
+*.js    text eol=lf
+*.mjs   text eol=lf
+*.ts    text eol=lf
+*.json  text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.toml  text eol=lf
+*.md    text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.svg   text eol=lf
+*.xml   text eol=lf
+*.cfg   text eol=lf
+*.ini   text eol=lf
+*.txt   text eol=lf
+*.sh    text eol=lf
+*.bat   text eol=crlf
+*.ps1   text eol=crlf
+
+# 二进制文件不转换
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary
+*.zip  binary
+*.gz   binary
+*.tar  binary
+*.mp3  binary
+*.wav  binary
+*.mp4  binary
+*.db   binary
+*.sqlite binary
+
+# 治理文件自身固定 LF：防止 Windows checkout 转 CRLF 影响规则解析（2026-09-18）
+/.gitattributes text eol=lf
+/.mailmap text eol=lf
+# .gitignore 必须 byte-exact：Git for Windows 的 core.autocrlf=true 会把 LF blob
+# 物化成 CRLF 工作副本，而 git 的 ignore 解析器不会剥掉空行残留的裸 CR——那行会
+# 退化成匹配任意带尾斜杠路径的 catch-all 规则（已验证：
+# `git check-ignore -v -- nosuchdir/` 归因到 .gitignore:178）。eol=lf 阻止再归一化，
+# 使每条 ignore 规则保持字节精确。删除本行会静默恢复该 bug，勿当作冗余注释清理。
 /.gitignore text eol=lf
 
-# Markdown: lock LF to avoid CRLF churn in cross-platform diffs.
-*.md text eol=lf
+# 无扩展名构建/清单文件固定 LF
+Dockerfile text eol=lf
+Makefile text eol=lf

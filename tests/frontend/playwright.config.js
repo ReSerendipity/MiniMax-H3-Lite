@@ -23,7 +23,7 @@ module.exports = defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 18080',
+    command: `python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port ${PORT}`,
     url: `http://127.0.0.1:${PORT}/api/health`,
     reuseExistingServer: !process.env.CI,
     timeout: 60000,

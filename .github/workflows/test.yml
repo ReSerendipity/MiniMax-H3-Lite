@@ -108,7 +108,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install Python deps (template render + uvicorn web server)
@@ -195,9 +195,10 @@ jobs:
           python-version: '3.12'
 
       - name: Set up Node.js
+        # Node 20 已过 EOL（GH 自身也在弃用其 actions 运行时的 Node 20），统一升到 22 LTS。
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: |

@@ -66,6 +66,23 @@ python scripts/check_no_hardcoded_paths.py --all    # 全库
 
 - `.gitattributes` 统一 `text eol=lf`；`.mailmap` 用于历史身份归并（新增身份先加映射）。
 - 合并 PR 后删除源分支；恢复期保护分支（backup / pre-recovery-* 等）由所有者确认后删除，不擅自清理。
+- 提交层钩子会自动跑 flake8 / bandit / detect-secrets / gitleaks；**失败请改代码，禁止 `git commit --no-verify` 绕过**。
+
+### 2.1 本地验证循环
+
+| 场景 | 命令 |
+|---|---|
+| Lint（flake8） | `flake8 backend` |
+| 安全扫描（bandit） | `bandit -r backend` |
+| 后端单测 | `pytest -q` |
+| 版本一致性自检 | `pytest tests/test_version_consistency.py -q` |
+
+### 2.2 红线
+
+- `comfy_kernel/` 是 vendored 上游 ComfyUI 源码，**禁止修改**（保留与上游 diff 的可追溯性）；因 GPL-3.0 不随镜像分发，见 `docs/GPL_COMPLIANCE.md`。
+- 版本号唯一事实来源是 `package.json`，**禁止硬编码版本号**（`backend/version.py` 从其读取），见 `docs/adr/0004-release-version-governance.md`。
+- MiniMax H3 Community License 有营收/地域限制，见 `docs/MODEL_LICENSE.md`。
+- 贡献流程与 DCO 要求以组织级贡献指南为准：<https://github.com/ReSerendipity/.github/blob/main/CONTRIBUTING.md>（本仓不再放根级 `CONTRIBUTING.md`，社区健康文件由 org 默认仓提供）。
 
 ## 3. 仓库自包含（强制）
 

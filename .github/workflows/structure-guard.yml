@@ -19,9 +19,11 @@ jobs:
       - name: Check repository root layout
         run: python .github/scripts/check_layout.py
       - name: Check spec references (if present)
+        # 干净 checkout 上家族审计器缺席，显式降级为自包含死链审计（与 docs-consistency.yml 同口径）；
+        # 不带 --minimal 时脚本会因门禁无法执行而非零退出（不再静默绿灯）。
         run: |
           if [ -f scripts/check_spec_refs.py ]; then
-            python scripts/check_spec_refs.py
+            python scripts/check_spec_refs.py --minimal
           else
             echo "scripts/check_spec_refs.py not present; skipping"
           fi

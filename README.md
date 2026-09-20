@@ -100,11 +100,12 @@ MiniMax-H3-lite/
 ├── model/              # 模型权重目录（model/vae/ 等子目录按「模型下载」说明下载后生成，当前仅 README.md）
 ├── tests/  scripts/  docs/  _archive/
 ├── start.bat  config.yaml
-└── docs/               # adr/ / agents/ / ci/ / repo-analysis/ + GPL_COMPLIANCE / version-baseline 等
+└── docs/               # adr/ / ci/ / repo-analysis/ + GPL_COMPLIANCE / ai-dev-contract / version-baseline 等（agents/ 仅本机，不入库）
 ```
 
 ## 文档索引
 
+- **AI 开发契约入口（跟踪 stub）**：[`docs/ai-dev-contract.md`](docs/ai-dev-contract.md) —— 本项目对 AI/agent 的工作契约（社区约定名 `AGENTS.md` 及其 `docs/agents/*` 细化文档）依本地治理约定**仅保留在所有者本机、不入库**；该 stub 声明其位置、路由与本地属性，并指明干净检出/CI 环境下的行为依据。干净检出中这些本机路径不存在，属预期状态。
 - 产品需求文档（权威 spec）：`docs/PRD.md`（规划中，待补；当前以 README 与 `workflows/` 官方模板为能力真源）
 - 能力补齐实施指南：`docs/IMPLEMENTATION_GAPS.md`（规划中，待补）
 - 设计计划：`.design.json`（本地文档，不在公开仓库）

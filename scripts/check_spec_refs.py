@@ -7,12 +7,15 @@ authoritative.  Its console output is captured and decoded UTF-8 (same
 convention as _git()) with the child forced via PYTHONIOENCODING, so a
 cp936-locale Windows console no longer crashes the run before a verdict is
 printed (2026-09-18 harness re-check).  In a fresh CI
-checkout it is absent: with ``--minimal`` (used by docs-consistency.yml) a
-self-contained dead-link audit runs over tracked Markdown instead of silently
-skipping — any relative Markdown link whose target is missing on disk AND not
-gitignored fails the build (gitignored targets are allowed by family
-convention: local-only governance docs may be referenced).  Without the flag
-the legacy behaviour (skip, exit 0) is preserved.
+checkout it is absent: with ``--minimal`` (passed explicitly by both
+docs-consistency.yml and structure-guard.yml) a self-contained dead-link audit
+runs over tracked Markdown instead of silently skipping — any relative Markdown
+link whose target is missing on disk AND not gitignored fails the build
+(gitignored targets are allowed by family convention: local-only governance
+docs may be referenced).  Without the flag the missing auditor is a gate that
+could not run at all, so the wrapper no longer reports a silent "CI green": it
+prints an explicit error and exits 2 (2026-09-19 harness fix: anti empty-run
+green light).
 """
 from __future__ import annotations
 
@@ -44,7 +47,9 @@ def _git(*args: str, check: bool = True) -> subprocess.CompletedProcess:
 
 
 def _is_ignored(rel: str) -> bool:
-    return subprocess.run([GIT, "-C", str(HERE), "check-ignore", "-q", rel]).returncode == 0  # nosec B603 B607（同上）
+    # check=False：git check-ignore 以退出码 1 表达「未被忽略」，属正常判定而非失败。
+    return subprocess.run([GIT, "-C", str(HERE), "check-ignore", "-q", rel],
+                          check=False).returncode == 0  # nosec B603 B607（同上）
 
 
 def minimal_audit() -> int:
@@ -131,9 +136,12 @@ def main() -> int:
         return authoritative(auditor)  # 开发机：外部家族审计器存在时仍走权威审计
     if "--minimal" in sys.argv:
         return minimal_audit()  # CI/干净 checkout：降级为自包含死链审计，不再静默跳过
-    print("family auditor not found; skipping (CI green) — "
-          "docs-consistency.yml passes --minimal to run the fallback audit", file=sys.stderr)
-    return 0
+    # 审计器缺失且未显式选择降级：门禁实际未执行，不得伪装成绿灯（exit 2 = 无法产出判定）。
+    print("ERROR: family auditor not found and --minimal not passed; the spec-ref "
+          "gate could not run — no verdict, failing loudly instead of CI green.\n"
+          "       Run with --minimal for the self-contained dead-link audit "
+          "(CI path), or provide the family .spec_audit auditor.", file=sys.stderr)
+    return 2
 
 
 if __name__ == "__main__":

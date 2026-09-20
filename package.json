@@ -9,7 +9,7 @@
     "test:e2e": "cd tests && npx playwright test --config frontend/playwright.config.js"
   },
   "devDependencies": {
-    "eslint": "^9.39.4",
+    "eslint": "^10.10.0",
     "jsdom": "^24.1.0"
   }
 }

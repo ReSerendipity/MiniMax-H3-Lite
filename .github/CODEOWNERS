@@ -1,0 +1,73 @@
+# ==========================================================
+# CODEOWNERS — 代码审查负责人机制
+# 安全相关代码指定专人审查，确保任何改动都经过安全把关。
+# 格式：<路径> <审查者>（GitHub 用户名或团队）
+# ==========================================================
+
+# 注意：本仓为单人维护，且 main 的 required_pull_request_reviews 目前为 null，
+# 因此以下条目只影响 PR 的 review 指派，不会阻断合并。若日后启用
+# 「Require review from Code Owners」，`*` 这条会让所有者无法自批自己的 PR
+# 需先把 `*` 收窄，否则单人仓会自锁。
+
+# 全局默认 — 所有 PR 默认指派
+* @ReSerendipity
+
+# 完整性清单 / 自检 / 密钥配套（enforce 拒启路径）
+backend/security/ @ReSerendipity
+
+# 来源标识嵌入与提取（签名密钥消费方）
+backend/watermark.py @ReSerendipity
+
+# 安全开关事实来源（INTEGRITY_ENFORCE / 端口 / 暴露面默认）
+backend/config.py @ReSerendipity
+
+# 清单签名与公钥一致性闸门
+scripts/sign_integrity_manifest.py @ReSerendipity
+
+# 清单生成与新鲜度 --check 闸门
+scripts/generate_integrity_manifest.py @ReSerendipity
+
+# 发布门禁五步
+scripts/verify_release_integrity.py @ReSerendipity
+
+# 构建与锁文件固化
+scripts/build_and_pin.sh @ReSerendipity
+
+# 依赖声明
+requirements.txt @ReSerendipity
+
+# 供应链：锁内版本冲突会让全新装直接失败
+requirements-lock.txt @ReSerendipity
+
+# 环境变量样例（真实 .env 不入库）
+.env.example @ReSerendipity
+
+# 镜像构建上下文（.dockerignore 联动）
+Dockerfile @ReSerendipity
+
+# 端口绑定与 bind-mount 暴露面
+docker-compose.yml @ReSerendipity
+
+# CI 门禁本体
+.github/workflows/ @ReSerendipity
+
+# 本文件
+.github/CODEOWNERS @ReSerendipity
+
+# 安全策略
+.github/SECURITY.md @ReSerendipity
+
+# 防线矩阵与告警 triage 结论
+.github/SECURITY_MATRIX.md @ReSerendipity
+
+# 根级安全入口指针
+SECURITY.md @ReSerendipity
+
+# vendored 内核许可边界
+docs/GPL_COMPLIANCE.md @ReSerendipity
+
+# 模型许可（营收/地域限制）
+docs/MODEL_LICENSE.md @ReSerendipity
+
+# 提交层门禁（gitleaks pre-push 等）
+.githooks/ @ReSerendipity

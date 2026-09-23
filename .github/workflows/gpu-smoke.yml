@@ -25,6 +25,8 @@
 #   5. 仓库 Secrets 配置 REPO_ADMIN_TOKEN（具备 actions:read / admin 权限），
 #      供 runner-precheck 查询 runner 在线状态。
 # 无 gpu runner 在线时，周更作业经 runner-precheck 优雅跳过（available=false），不会长期飘红。
+# 但"跳过"不得被读成"已验证"：smoke-status job 会把结论写进 checks 列表的 job 名
+# （NO REAL INFERENCE - SKIPPED (<reason>)）与 run 摘要，故整条工作流绿色时仍可自行分辨。
 
 name: GPU Smoke (real inference, self-hosted)
 
@@ -46,6 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       available: ${{ steps.check.outputs.available }}
+      reason: ${{ steps.check.outputs.reason }}
     steps:
       - name: Check for an online self-hosted GPU runner
         id: check
@@ -53,8 +56,10 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "::notice::REPO_ADMIN_TOKEN secret not configured - cannot query runner status, skipping smoke"
+            # warning 而非 notice：notice 不在 checks 页显眼出现，正是"被读成已验证"的成因之一
+            echo "::warning::REPO_ADMIN_TOKEN secret not configured - cannot query runner status; REAL INFERENCE WILL NOT RUN"
             echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no-repo-admin-token-secret" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           # runners 列表 API 需要管理员级 token（GITHUB_TOKEN 即使 actions:read 也 403）
@@ -63,9 +68,11 @@ jobs:
           echo "online gpu-labelled runners: ${COUNT}"
           if [ "${COUNT}" -gt 0 ]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "reason=runner-available" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::no online self-hosted runner with label 'gpu'; weekly smoke skipped"
+            echo "::warning::no online self-hosted runner with label 'gpu'; REAL INFERENCE WILL NOT RUN"
             echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no-online-gpu-labelled-runner" >> "$GITHUB_OUTPUT"
           fi
 
   gpu-smoke:
@@ -179,3 +186,36 @@ jobs:
             repo/outputs/smoke_real.mp4
           if-no-files-found: ignore
           retention-days: 7
+
+  # 状态显式化：本 job 的名字会原样出现在 checks 列表里。
+  # 修的问题——原先"没有 gpu runner"时整条工作流呈现全绿（gpu-smoke 只是 skipped），
+  # 与"真推理跑过了"在 UI 上无法区分；这正是本仓刚清理过的那类静默失效。
+  # 刻意不把跳过判成 failure：本文件头部既定设计就是"无 runner 时优雅跳过、不长期飘红"，
+  # 周更环境依赖作业长期红会淹没真实性能/推理回归。
+  smoke-status:
+    needs: [runner-precheck, gpu-smoke]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    name: ${{ needs.runner-precheck.outputs.available == 'true' && format('REAL INFERENCE RAN (gpu-smoke={0})', needs.gpu-smoke.result) || format('NO REAL INFERENCE - SKIPPED ({0})', needs.runner-precheck.outputs.reason) }}
+    steps:
+      - name: Write verdict to run summary
+        env:
+          AVAILABLE: ${{ needs.runner-precheck.outputs.available }}
+          REASON: ${{ needs.runner-precheck.outputs.reason }}
+          RESULT: ${{ needs.gpu-smoke.result }}
+        run: |
+          {
+            if [ "$AVAILABLE" = "true" ]; then
+              echo "## GPU 真机推理冒烟：已执行"
+              echo ""
+              echo "- \`gpu-smoke\` 结论：\`$RESULT\`"
+            else
+              echo "## GPU 真机推理冒烟：未执行任何真实推理"
+              echo ""
+              echo "- 跳过原因：\`$REASON\`"
+              echo "- 本次工作流的绿色仅代表托管 runner 上的前置检查通过，**不代表 H3 权重推理链路可用**。"
+              echo "- 恢复条件见本文件头部「运行前提」：注册带 \`gpu\` label 的 self-hosted runner，并配置 \`REPO_ADMIN_TOKEN\`。"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

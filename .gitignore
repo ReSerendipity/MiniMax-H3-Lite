@@ -56,7 +56,27 @@ capture-screenshots.bat
 skills-learning/
 # 归档旧原型
 _archive/
-# 项目内部文档（本地保留）
+# 项目内部文档（本地保留）——整目录排除，只按需放行必须随仓库分发的文件。
+#
+# 为什么要这么定：docs/ 下多数是本机治理/审计/运维文档，不对外发布；
+# 而许可证与合规必需的几份（GPL_COMPLIANCE.md、MODEL_LICENSE.md、
+# LICENSE_COMPLIANCE.md、CODING_STANDARDS.md、adr/、ci/、repo-analysis/、
+# MiniMax-H3-Community-License.txt、ai-dev-contract.md 等）已入库——它们在
+# 这条规则之前就已跟踪，或由维护者用 git add -f 显式加入。
+#
+# ⚠ 由此产生一个反复咬人的后果：**新建任何 docs/ 下的文件都不会被 git 看见**，
+#   `git status` 不报、`git add docs/foo.md` 会直接被拒并提示 ignored。
+#   要入库必须显式 `git add -f docs/<文件>`（本仓既有入库文档都是这么进来的）。
+#   漏掉 -f 的结果是"本地写了文档、仓库和干净检出里没有"，且不会有任何报错。
+#
+# 刻意保持本机-only、不要 -f 入库的文档（含内部主机名/运维细节/未公开审计结论）：
+#   docs/SECURITY_AUDIT_MiniMax-H3-lite.md   安全审计报告全文
+#   docs/SECURITY_REMEDIATION_TRACKER.md     整改进度台账
+#   docs/SRE_RUNBOOK.md                      运维手册
+#   docs/agents/                             AI 开发契约细化子文档（另有条目排除）
+#   以及 docs/PRD.md、docs/IMPLEMENTATION_GAPS.md 等标注"规划中"的内部稿。
+# 判据：面向使用者/合规必需 → -f 入库；面向内部运维或未公开结论 → 留本机。
+# 本条只作说明，不改动任何匹配规则。
 docs/
 
 # 内容来源标识签名密钥（仅本机，严禁入库）

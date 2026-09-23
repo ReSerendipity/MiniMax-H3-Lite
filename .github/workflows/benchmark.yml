@@ -55,8 +55,12 @@ jobs:
       - name: Run benchmarks (autosave, full suite)
         env:
           MMH3_INFERENCE_BACKEND: diffusers
+        # --no-cov 必需：pytest.ini 的 addopts 带 --cov=backend --cov-fail-under=60，
+        # 任何 pytest 调用都继承它。本步只跑 tests/test_performance.py 这一子集，
+        # 覆盖率必然远低于 60（实测 28%），于是 8 个基准用例全过仍 exit 1——
+        # 基准作业被一个与它无关的覆盖率门禁判死。覆盖率门禁归 test.yml 的 python-test。
         run: |
-          pytest tests/test_performance.py --benchmark-autosave \
+          pytest tests/test_performance.py --no-cov --benchmark-autosave \
             --benchmark-json=benchmark_report.json
 
       - name: Ratchet compare on API latency subset (if baseline exists)
@@ -67,7 +71,7 @@ jobs:
         # 的 run-to-run 噪声即 >30%，百分比回归检查会常态误报（本地实测已证）。
         # 基线由上周同 runner 类的全量 run 滚动而来，周对周同环境比较。
         run: |
-          pytest tests/test_performance.py --benchmark-only -k latency -q \
+          pytest tests/test_performance.py --no-cov --benchmark-only -k latency -q \
             --benchmark-compare=baseline --benchmark-compare-fail=mean:30%
 
       - name: Roll baseline forward (last green becomes new baseline)

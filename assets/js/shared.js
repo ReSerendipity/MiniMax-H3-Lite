@@ -138,6 +138,10 @@ var segs=[];
 var pollTimer=null,ctxTimer=null;
 
 var promptInput=$('promptInput'),charCount=$('charCount');
+/* 提示词长度上限。必须与 backend/routers/generations.py 的
+ * `if len(body.prompt) > settings.MAX_PROMPT_CHARS: raise HTTPException(422)` 同源同值；
+ * 口径为**原始字符数**（后端 len() 不剔空白），模板 textarea 的 maxlength 亦取此值。 */
+var MAX_PROMPT_CHARS=7000;
 var stageScene=$('stageScene'),previewShell=$('previewShell');
 var genStatus=$('genStatus'),playbar=$('playbar'),pbScrub=document.querySelector('.pb-scrub i');
 var refBlock=document.querySelector('.ref-block'),refNote=refBlock?refBlock.querySelector('.bridge-note'):null;
@@ -546,8 +550,12 @@ function insertTag(tag){
 /* ============ 提示词 / 生成 ============ */
 function updateCount(){
   var n=promptInput.value.replace(/\s/g,'').length;
-  charCount.textContent=n+' 字符 · ≈'+Math.max(1,Math.round(n*1.4))+' token · 上限 7000';
-  charCount.classList.toggle('over',n>7000);
+  var raw=promptInput.value.length;
+  charCount.textContent=n+' 字符 · ≈'+Math.max(1,Math.round(n*1.4))+' token · 上限 '+MAX_PROMPT_CHARS;
+  /* 标红改用原始长度：与后端 422 及提交守卫同一口径。
+   * 原先按剔空白后的 n 判定，会出现"显示没超限、后端已 422"的错位
+   * （含空白的提示词 stripped 长度 < 原始长度）。 */
+  charCount.classList.toggle('over',raw>MAX_PROMPT_CHARS);
 }
 function runContextIR(){
   var base=promptInput.value.trim()||'黄昏的海岸线，海浪缓缓拍打礁石，落日余晖洒在海面上，电影级调色，镜头缓慢推近';
@@ -649,6 +657,14 @@ function getActiveParams(){
   return p;
 }
 function submitGeneration(){
+  /* 超长硬拦：maxlength 只钳制键入/粘贴，不钳制程序化赋值
+   * （insertTag 插入标签、runContextIR 拼接优化文案、点击提示词库 .preset 回填
+   * 都可能把值顶过上限），故提交口再判一次，口径与后端 422 一致。 */
+  if(promptInput.value.length>MAX_PROMPT_CHARS){
+    window.alert('提示词 '+promptInput.value.length+' 字符，超出 '+MAX_PROMPT_CHARS+' 字符上限，已阻止提交（后端同样会以 422 拒绝）。');
+    updateCount();
+    return;
+  }
   var seg=document.querySelector('.seg.active');
   if(!seg||!seg.dataset.id){window.alert('请先在项目中选择镜头');return;}
   var sid=seg.dataset.id;

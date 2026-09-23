@@ -58,7 +58,7 @@ function boot(pageId, opts) {
     runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/',
     beforeParse(w) {
       w.fetch = mockFetch(pageId, opts.captured);
-      w.alert = (m) => { if (opts.logAlerts) console.log('  [alert]', m); };
+      w.alert = (m) => { if (opts.logAlerts) console.log('  [alert]', m); if (opts.alerts) opts.alerts.push(String(m)); };
       w.confirm = () => true; w.prompt = () => null;
       w.addEventListener('error', (e) => errors.push(String((e.error && e.error.message) || e.message)));
       if (opts.storage) {
@@ -203,6 +203,66 @@ const click = (d, sel) => d.querySelector(sel).dispatchEvent(new d.defaultView.M
     assert(d.querySelectorAll('#shellModal .sm-card').length === 2 && [...d.querySelectorAll('#shellModal .sm-card')].every(c => c.tagName === 'BUTTON'), 'shell cards are buttons');
     click(d, '#shellModal .sm-card.theater');
     assert(d.querySelectorAll('.app-opt').length >= 5 && [...d.querySelectorAll('.app-opt')].every(o => o.type === 'button'), 'appearance options are buttons');
+  }
+
+  /* ============ 提示词超长：maxlength + 提交硬拦（与后端 422 同阈值同口径） ============ */
+  console.log('[prompt-length guard]');
+  {
+    for (const pid of ['t2v', 'i2v', 'r2v']) {
+      const { dom } = boot(pid);
+      await sleep(300);
+      const ml = dom.window.document.querySelector('#promptInput').getAttribute('maxlength');
+      assert(ml === '7000', pid + ': #promptInput maxlength=7000（got ' + ml + '）');
+    }
+  }
+  {
+    const captured = [], alerts = [];
+    const { dom } = boot('t2v', { captured, alerts });
+    const d = dom.window.document;
+    await sleep(350);
+    const ta = d.querySelector('#promptInput');
+    const cc = d.querySelector('#charCount');
+    const seg = d.querySelector('#tlSegments .seg[data-id]');
+    assert(!!seg, 'guard test: found a timeline seg with data-id');
+    seg.classList.add('active');
+
+    const fire = async (text) => {
+      const before = captured.length;
+      ta.value = text;
+      ta.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+      d.querySelector('#genBtn').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+      await sleep(300);
+      return captured.length > before;
+    };
+
+    // 恰好 7000（无空白）：不标红，且必须真的提交出去
+    const sent7000 = await fire('x'.repeat(7000));
+    assert(!cc.classList.contains('over'), '7000 chars: no .over flag');
+    assert(sent7000 === true, '7000 chars: POST /api/generations WAS issued');
+    assert(captured[captured.length - 1].prompt.length === 7000, '7000 chars: submitted prompt length is exactly 7000');
+
+    // 7001：标红 + 必须被拦下（不再新增提交），且给出可读原因
+    const sent7001 = await fire('x'.repeat(7001));
+    assert(cc.classList.contains('over'), '7001 chars: .over flag raised');
+    assert(sent7001 === false, '7001 chars: submission BLOCKED (no POST /api/generations)');
+    assert(alerts.length === 1 && /7001/.test(alerts[0]) && /7000/.test(alerts[0]),
+      '7001 chars: alert names both actual and limit -> ' + JSON.stringify(alerts[0] || ''));
+
+    // 口径修正证据：含空白时 stripped<7000 但 raw>7000，旧逻辑不会标红、后端会 422。
+    // 现在以 raw（=后端 len()）为准：必须拦截。
+    const ws = ' '.repeat(200) + 'x'.repeat(6900);
+    assert(ws.length === 7100 && ws.replace(/\s/g, '').length === 6900, 'whitespace fixture: raw 7100 / stripped 6900');
+    const sentWs = await fire(ws);
+    assert(cc.classList.contains('over'), 'raw 7100 / stripped 6900: .over raised on raw length (was missed before)');
+    assert(sentWs === false, 'raw 7100 / stripped 6900: submission BLOCKED on raw length');
+
+    // 边界另一侧：raw 恰为 7000 且含空白 → 未超，允许提交
+    const okWs = ' '.repeat(100) + 'x'.repeat(6900);
+    assert(okWs.length === 7000, 'boundary fixture: raw exactly 7000 with whitespace');
+    const sentOkWs = await fire(okWs);
+    assert(!cc.classList.contains('over'), 'raw 7000 with whitespace: no .over flag');
+    assert(sentOkWs === true, 'raw 7000 with whitespace: submission allowed');
+    assert(captured.length === 2, 'only the 2 within-limit cases submitted (4 fired, got ' + captured.length + ')');
   }
 
   console.log('\nRESULT: pass=' + pass + ' fail=' + fail);

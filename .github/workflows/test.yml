@@ -347,9 +347,53 @@ jobs:
           fi
 
       - uses: actions/setup-python@v7
-        if: steps.kernel.outputs.present == 'true'
+        # 原先带 `if: present == 'true'`；下方的合成内核守卫验证步不依赖真实内核、
+        # 需要 python，故改为无条件准备（ubuntu-latest 不保证 PATH 上有 `python`）。
         with:
           python-version: '3.12'
+
+      # 合成内核上真跑两道守卫。此前基线比对与 --listen 棘轮都挂在
+      # `if: present == 'true'` 下，而 comfy_kernel/ 属 vendored 不入库 →
+      # 托管 runner 上恒 false → 守卫逻辑本身从未被 CI 验证过（只被
+      # tests/test_comfy_kernel_baseline.py 以 import 方式验证，CLI 与棘轮模式未覆盖）。
+      # 本步不依赖真实内核，因此带正/反向对照，防止退化成空跑。
+      - name: 合成内核上验证守卫有效性（托管 runner 可执行）
+        run: |
+          set -euo pipefail
+          W=$(mktemp -d)
+          T="$W/comfy_kernel"
+          mkdir -p "$T/comfy" "$T/custom_nodes"
+          printf '[project]\nname = "comfyui"\nversion = "0.33.0"\n' > "$T/pyproject.toml"
+          printf '# nodes\n' > "$T/nodes.py"
+          printf '# sd\n' > "$T/comfy/sd.py"
+          # 与真实内核 comfy/cli_args.py:63 同形态的 --listen 回退行
+          printf '%s\n' 'parser.add_argument("--listen", type=str, default="127.0.0.1", metavar="IP", nargs="?", const="0.0.0.0,::", help="listen")' > "$T/comfy/cli_args.py"
+          B="$W/baseline.json"
+          python scripts/comfy_kernel_baseline.py --generate --root "$T" --out "$B"
+          python scripts/comfy_kernel_baseline.py --check --root "$T" --out "$B"
+          echo "PASS: 合成内核基线 --generate/--check 一致"
+          # 反向对照：篡改后 --check 必须变红，否则基线守卫是空跑
+          printf '# sd TAMPERED\n' > "$T/comfy/sd.py"
+          if python scripts/comfy_kernel_baseline.py --check --root "$T" --out "$B" > /dev/null 2>&1; then
+            echo "::error::篡改合成内核后 --check 仍判通过 —— 基线守卫无效"
+            exit 1
+          fi
+          echo "PASS: 篡改被 --check 检出"
+          # --listen 回退行棘轮：正向（模式必须命中未改动的行）
+          R=$(grep -c 'const="0.0.0.0,::"' "$T/comfy/cli_args.py" || true)
+          if [ "$R" != "1" ]; then
+            echo "::error::棘轮模式在应命成的合成行上匹配 $R 次（期望 1）—— 模式已失效"
+            exit 1
+          fi
+          # 反向对照：移除回退值后棘轮必须为 0，否则模式过宽抓不到真实回归
+          sed -i 's/const="0.0.0.0,::"/const=""/' "$T/comfy/cli_args.py"
+          R2=$(grep -c 'const="0.0.0.0,::"' "$T/comfy/cli_args.py" || true)
+          if [ "$R2" != "0" ]; then
+            echo "::error::篡改后棘轮仍匹配 $R2 次 —— 模式过宽，无法检出 --listen 回退丢失"
+            exit 1
+          fi
+          echo "PASS: --listen 回退行棘轮正/反向均符合预期"
+          rm -rf "$W"
 
       # 原步骤跑 scripts/check_comfy_kernel.py（移植期 PoC 报告），其 main() 除目录
       # 缺失外恒 return 0 → 在 CI 里永不可能变红，属装饰性门禁。换成有判定能力的

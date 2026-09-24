@@ -78,12 +78,68 @@ def test_inject_duration_into_primitive_float():
     assert 6.0 in pf, pf
 
 
-def test_clip_name_pinned_to_existing():
-    """所有任务 clip 名应统一为项目实际存在的 abliterated 权重。
+# 官方工作流里写死的 clip 名（backend/workflows/api/*.api.json 的 CLIPLoader 输入）
+_OFFICIAL_CLIP = "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"
+# 项目实际分发的 clip 文件名。取自 model/README.md 的 text_encoders 行；
+# model/ 被 .gitignore 整体排除（README 也不入库），故在此内联为常量并注明出处。
+_PROJECT_CLIP = "qwen3vl_32b_minimax_h3_abliterated_nvfp4.safetensors"
 
-    使用项目 model/ 目录（而非硬编码的 aki 安装路径），
-    确保测试可在任何环境运行。若 model 目录无权重文件则跳过。
+
+@pytest.fixture
+def fake_project_root(tmp_path):
+    """合成一个"项目根"，只含 model/text_encoders/<0 字节占位文件>。
+
+    为什么把树造在 tmp 而不是提交到 tests/fixtures/：
+      - `_scan_project_models()` 写死读 `_BASE_DIR / "model"`，目录名 `model` 不可改；
+      - `.gitignore:166` 的 `model/` 按目录名匹配**任意层级**，`tests/fixtures/model/`
+        同样被排除；`.gitignore:114` 另有全局 `*.safetensors`。
+        实测 `git check-ignore -v tests/fixtures/model/text_encoders/probe.safetensors`
+        → `.gitignore:166:model/`。要提交就得加 3 条形如
+        `!tests/fixtures/model/**` 的反向规则，而那会削弱"权重永不入库"这条不变量。
+    所以这里在 tmp 里造同名结构：托管 runner 与本地行为一致，仓库里没有任何
+    .safetensors，也不需要动忽略规则。
     """
+    d = tmp_path / "model" / "text_encoders"
+    d.mkdir(parents=True)
+    (d / _PROJECT_CLIP).write_bytes(b"")  # 占位：只需要文件名可被扫到
+    old_base, old_cache = ce._BASE_DIR, ce._model_scan_cache
+    ce._BASE_DIR = tmp_path
+    ce._model_scan_cache = None           # 缓存必须清，否则读到真实项目的空扫描结果
+    try:
+        yield tmp_path
+    finally:
+        ce._BASE_DIR = old_base
+        ce._model_scan_cache = old_cache
+
+
+def test_scan_project_models_reads_project_root(fake_project_root):
+    """真实扫描路径：应扫出 text_encoders 下的文件名（不需要权重内容）。"""
+    imports = ce._scan_project_models()
+    assert imports["text_encoders"] == [_PROJECT_CLIP], imports["text_encoders"]
+    assert imports["diffusion_models"] == []
+    assert imports["vae"] == []
+
+
+def test_clip_name_pinned_to_existing(fake_project_root):
+    """三个任务的 clip 名都应被改写为项目里确实存在的文件。
+
+    原实现在 model/ 无权重时 pytest.skip —— 而 CI 与任何干净检出都没有权重，
+    所以这条断言在托管 runner 上从未真正执行过。改为对合成项目根跑，
+    三任务 × 真实工作流 JSON × 真实注入逻辑，全程不碰 model/。
+    """
+    for task in (h3.T2VA, h3.FL2VA, h3.REF2VA):
+        api = ce._load_api(task)
+        cl = ce._find(api, "CLIPLoader")
+        assert api[cl]["inputs"]["clip_name"] == _OFFICIAL_CLIP, \
+            f"{task}: 工作流里的 clip 名已变更，请同步 _OFFICIAL_CLIP 与本用例断言"
+        ce._inject_common(api, {"task_type": task, "prompt": "x", "width": 768,
+                                "height": 768, "duration": 4, "seed": 1, "steps": 8})
+        name = api[cl]["inputs"]["clip_name"]
+        assert name == _PROJECT_CLIP, f"{task}: 注入结果 {name} 不是项目实际存在的文件"
+
+
+def test_clip_name_matches_real_weights_if_present():
+    """若本机 model/ 真有权重，则注入结果必须落在真实文件集合里（保留原强度）。"""
     project_model_dir = Path(__file__).resolve().parent.parent / "model"
     clip_files = _scan_for(project_model_dir)
     if not clip_files:
@@ -94,7 +150,6 @@ def test_clip_name_pinned_to_existing():
                                 "height": 768, "duration": 4, "seed": 1, "steps": 8})
         cl = ce._find(api, "CLIPLoader")
         name = api[cl]["inputs"]["clip_name"]
-        # clip 名应被 _inject_models 改写为项目实际存在的文件名
         assert name in clip_files, f"{task}: clip {name} 不在项目 model/ 里"
 
 

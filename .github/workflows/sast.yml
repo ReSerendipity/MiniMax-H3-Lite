@@ -10,6 +10,12 @@ on:
 
 permissions:
   contents: read
+  # upload-sarif 写 code scanning 结果必须有 security-events: write。缺它时该步以
+  # `##[error]Resource not accessible by integration` 失败——历史上一直被下面的
+  # continue-on-error 吞掉（见 Upload SARIF 步骤注释），PR #71 摘掉兜底后首次在
+  # main push 暴露（run 36017276151 / job 107692925254）。同仓另两个触达 code
+  # scanning 的 workflow（codeql.yml、trivy.yml）本就声明了本权限，此处补齐口径。
+  security-events: write
 
 # 同 workflow + 同触发事件 + 同 ref 去重，取消被取代的排队作业。
 # 带上 event_name 是必要的：这些作业同时有 schedule / workflow_dispatch / push 多种触发，
@@ -47,8 +53,15 @@ jobs:
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         # 【F-5 2026-09-24】去掉 continue-on-error: true。它原先把「扫描结果根本没进
-        # code scanning」这一类失败咽掉，仍呈现全绿。当前该步在 main 实测 success
-        # （run 35989187748 / step 6），摘掉兜底不会引入新红。
+        # code scanning」这一类失败咽掉，仍呈现全绿。
+        # 【订正】我当初写的是"当前该步在 main 实测 success（run 35989187748 / step 6），
+        # 摘掉兜底不会引入新红"——**该结论无效**。带 continue-on-error 的步骤即使内部
+        # 报错，steps API 的 conclusion 仍被改写为 success，所以"步骤绿"在这个场景下
+        # 根本不是证据。查日志原文可见同一个 `##[error]Resource not accessible by
+        # integration` 早在修复前就在报（run 35989187748，10:47:44）。⇒ 摘兜底没有
+        # 制造缺陷，只是把一个长期存在的缺权限缺陷第一次露出来；缺陷本身由
+        # 顶部 permissions 的 security-events: write 补修。
+        # 口径：判断这类步骤是否真的成功，只能读日志的 ##[error]，不能读 step conclusion。
         # ⚠ 上面两处 `|| true` 是设计而非遗漏，勿顺手删：semgrep 只要**有命中**即以
         # 非零退出，而 .ci/semgrep_baseline.json 基线 error=1（shots.py 已确认可接受项）
         # ——当前每个 run 都在命中这 1 条，删掉 `|| true` 会让本 job 每 run 必红，并绕过

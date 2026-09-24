@@ -105,6 +105,12 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'HIGH,CRITICAL'
+          # trivy-action 在 sarif 格式下默认 unset TRIVY_SEVERITY（entrypoint.sh
+          # 打印 "Building SARIF report with all severities"），导致 exit-code 对
+          # UNKNOWN/LOW 等任意级别也触发——2026-09-24 main 因基础镜 tzdata 的
+          # DLA-4792-1（note 级）连红 7 个 run 即此因。置 true 让 SARIF 与退出码
+          # 都受上面 severity 白名单约束，与文件头声明的阻断口径一致。
+          limit-severities-for-sarif: true
           ignore-unfixed: true
           exit-code: '1'        # 有 HIGH/CRITICAL 漏洞就 fail
           vuln-type: 'os,library'

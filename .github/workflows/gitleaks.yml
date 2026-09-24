@@ -17,6 +17,13 @@ env:
   # gitleaks 版本升级维护：只改这一处（与本地 gitleaks --version 保持一致）
   GITLEAKS_VERSION: '8.30.1'
 
+# 同 workflow + 同触发事件 + 同 ref 去重，取消被取代的排队作业。
+# 带上 event_name 是必要的：这些作业同时有 schedule / workflow_dispatch / push 多种触发，
+# 只用 workflow-ref 会让定时任务与推送任务互相取消。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gitleaks:
     name: Secret Scan (gitleaks, full history)

@@ -1,0 +1,28 @@
+# requirements.txt 有意不入 requirements-lock.txt 的直接依赖豁免名单。
+#
+# 由 scripts/check_lock_coverage.py 双向校验：本名单必须与「实际缺失集」严格相等，
+# 多一条（已补进锁却忘了回删）与少一条（新增缺失却没登记）都判失败。
+#
+# 共同理由：这 17 个是 Comfy 内核（comfy_kernel/，GPL-3.0 vendored、按边界不入库）
+# 的运行集。2026-09-24 实测：全仓排除 comfy_kernel 后扫这些包的 import 命中 0 处，
+# 而在未入库的 comfy_kernel/ 内命中 974 个 .py —— 即 CI 测试环境不需要、也不应装它们。
+# 部署/有内核环境走的是 requirements.txt（见 Dockerfile:60），不受本豁免影响。
+
+# ── comfy_kernel 运行时依赖 ──────────────────────────────
+aiohttp
+yarl
+einops
+kornia
+spandrel
+scipy
+sentencepiece
+psutil
+blake3
+simpleeval
+alembic
+sqlalchemy
+pydantic-settings
+pyopengl
+torchsde
+comfy-kitchen
+comfy-aimdo

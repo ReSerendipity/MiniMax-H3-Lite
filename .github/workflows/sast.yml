@@ -46,6 +46,13 @@ jobs:
       - name: Upload SARIF results
         if: always()
         uses: github/codeql-action/upload-sarif@v3
-        continue-on-error: true
+        # 【F-5 2026-09-24】去掉 continue-on-error: true。它原先把「扫描结果根本没进
+        # code scanning」这一类失败咽掉，仍呈现全绿。当前该步在 main 实测 success
+        # （run 35989187748 / step 6），摘掉兜底不会引入新红。
+        # ⚠ 上面两处 `|| true` 是设计而非遗漏，勿顺手删：semgrep 只要**有命中**即以
+        # 非零退出，而 .ci/semgrep_baseline.json 基线 error=1（shots.py 已确认可接受项）
+        # ——当前每个 run 都在命中这 1 条，删掉 `|| true` 会让本 job 每 run 必红，并绕过
+        # scripts/sast_gate.py 的棘轮仲裁。真正的判定分离口径见 sast_gate.py 的
+        # load_report()：报告缺失/非 JSON/缺 results 字段一律 exit 1，不做首次自动放行。
         with:
           sarif_file: semgrep.sarif

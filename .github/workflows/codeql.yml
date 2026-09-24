@@ -21,8 +21,17 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    # Dependabot PR 只改依赖版本声明、不改第一方源码；main push 与每周 schedule 仍完整覆盖。
-    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
+    # 【F-6 2026-09-24】删掉原 job 级
+    # `if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'`。
+    # 它让 dependabot PR 上的 Analyze (python)/(javascript) 呈现 skipped，与"真扫过且干净"
+    # 在 checks 页无法区分——与 #68 之前的 DCO 是同一失效模式，原注释"依赖 bump 不改第一方
+    # 源码"是取舍不是判据。
+    # 未改成"按提交作者邮箱豁免"（#68 的 DCO 写法），理由：DCO 能那样平移是因为它有一条
+    # 可按单条提交判定的规则（Signed-off-by 尾注），豁免该规则后 job 仍在跑真检查；CodeQL
+    # 唯一的"规则"就是分析代码本身，按邮箱豁免只会把同一个 skipped 用更绕的写法重造一遍，
+    # 达不到"让 dependabot PR 上 CodeQL 真跑"。
+    # 额度依据：仓库实测 public ⇒ code scanning 不计费；本仓 CodeQL 全量墙钟 1.4 min
+    # （run 35989187876，python+javascript 并行）。
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

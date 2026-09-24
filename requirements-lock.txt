@@ -4,9 +4,10 @@
 #
 #    pip-compile --no-annotate --output-file=requirements-lock.txt requirements.txt
 #
-cffi==2.1.1
+# 【手工维护说明 2026-09-24】本锁非纯 pip-compile 产物：顶部曾有一组人工追加的
+# cryptography 依赖，其中 cffi / pycparser 与下方字母序条目各重复一次（pip 静默
+# 去重，故不影响安装行为）。已删重复行、仅保留字母序位置那一份。
 cryptography==50.0.1
-pycparser==3.0
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1

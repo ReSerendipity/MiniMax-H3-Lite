@@ -54,9 +54,46 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
+          # 本仓有多份清单（requirements.txt / requirements-lock.txt /
+          # requirements-frozen-20260913.txt），缓存键须显式列文件而非靠默认探测：
+          # 本 job 只安装 requirements.txt（requirements-lock.txt 是 python-test 的路径），
+          # 因此只按它建键——把无关清单纳入键会让本 job 缓存被无关提交频繁击穿。
+          cache-dependency-path: requirements.txt
 
       - name: Install deps
-        run: pip install -r requirements.txt
+        # 【F-1 2026-09-24】requirements.txt 不 pin torch，但第 28 行 torchsde 声明
+        # torch>=1.6.0 ⇒ 解析器从 PyPI 默认索引拿 **CUDA 构建**，连带 cuda-toolkit==13.0.3
+        # 的 12 个 nvidia_* extra 与 triton 一起进图。
+        # run 35977211825 step "Install deps" 日志实测：下载 130 个 wheel / 共 3.18 GB，
+        # 其中 CUDA-GPU 相关 2.93 GB（92.2%）——最大三件 torch 554.6 MB、
+        # nvidia_cudnn_cu13 553.1 MB、nvidia_cublas 423.1 MB。而本 job 是发布完整性静态
+        # 门禁 + docker build 校验，一次都不 import torch，这 2.93 GB 纯属白拿。
+        # 指 CPU 索引后 pip 取 2.14.0+cpu：本地版本标签按 PEP 440 排在 2.14.0 之上，
+        # 故 --extra-index-url 足以让 CPU 轮胜出；且 +cpu 轮不声明 nvidia 依赖，CUDA 轮
+        # 直接不进解析图。
+        # ⚠ 不改 Dockerfile：镜像里 cu130 是有意的（GPU 工作台本就该带 CUDA），
+        #   本步只修托管 runner 上这道 CPU-only 门禁的环境。
+        run: |
+          set -euo pipefail
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+          # 自证 A：出现任何 CUDA/GPU 分发即说明 torch 被静默解析成了 CUDA 构建。
+          # 注意分发名含连字符（nvidia-cudnn-cu13 / cuda-toolkit），字符类必须带 -，
+          # 否则 [a-z0-9]+ 会在 cudnn 处截断、要求紧跟 == 而永不匹配。
+          GPU=$(pip list --format=freeze | grep -oE '^(nvidia-[a-z0-9-]+|cuda-[a-z0-9-]+|triton)==[^ ]*' || true)
+          if [ -n "$GPU" ]; then
+            echo "::error::CPU-only 门禁环境出现 GPU/CUDA 轮，torch 被静默解析为 CUDA 构建："
+            printf '%s\n' "$GPU"
+            exit 1
+          fi
+          # 自证 B：torch 若在场，必须是 +cpu 本地标签；无标签即 PyPI 默认（CUDA）构建。
+          # 不把 torch 缺席当错误——本 job 本就不 import 它，缺席是合法的。
+          TORCH=$(pip list --format=freeze | grep -oE '^torch==[^ ]*' || true)
+          if [ -n "$TORCH" ] && ! printf '%s' "$TORCH" | grep -qF '+cpu'; then
+            echo "::error::torch 非 CPU 构建：$TORCH"
+            exit 1
+          fi
+          echo "OK：未出现任何 CUDA/GPU 轮；torch = ${TORCH:-未安装（本 job 不需要）}"
 
       - name: Run five-step gate (docker)
         run: python scripts/verify_release_integrity.py --docker

@@ -33,6 +33,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install --dry-run -r requirements-lock.txt
 
+      - name: 锁覆盖对账（requirements.txt 直接依赖须入锁或显式豁免）
+        # 【F-3 2026-09-24】补上一步 dry-run 结构上看不到的另一半：dry-run 只证明
+        # 「锁自身可解析」，证明不了「两份清单同源」。2026-09-24 实测有 17 个直接依赖
+        # 不在锁里而本 job 照样绿。本步做成双向棘轮（新增缺失、豁免失效都判红），
+        # 豁免理由与被否证的「不影响测试覆盖」实测见脚本 docstring。
+        # 纯标准库、无需装依赖，故仍留在 python-test 之前秒级返回。
+        run: python scripts/check_lock_coverage.py
+
   # ── 完整性清单新鲜度门禁（防改了 backend 代码却忘了重算重签清单）──────────
   # 漂移的后果不是"红线"而已：INTEGRITY_ENFORCE 默认 True 且 fail-closed，
   # 从这种 main 全新装出去的工作台会在启动自检处直接拒启（2026-09-17~09-19 实况）。
@@ -100,7 +108,11 @@ jobs:
       - name: Set up Python
         # render_pages.py 需要 jinja2；E2E webServer 需要 fastapi/uvicorn/pydantic。
         # 全部为轻量纯 Python 依赖（torch/diffusers 仅推理执行时函数内延迟导入，
-        # 浏览器冒烟不触发）—— 不能装全量 requirements-lock（含 torch，数 GB）。
+        # 浏览器冒烟不触发）。
+        # 【订正 2026-09-24】原注释写作"不能装全量 requirements-lock（含 torch，数 GB）"，
+        # 与事实不符：requirements-lock.txt 实测 78 个唯一条目、torch 条目数 = 0。
+        # 不装全量锁的真实理由只是墙钟（多装 70 余个包），不是 torch 体积。
+        # 这条假注释是"锁里钉着 torch、该加 +cpu 断言"错判的来源，故按实测改直。
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'

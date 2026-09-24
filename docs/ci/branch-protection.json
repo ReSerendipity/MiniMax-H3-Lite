@@ -1,25 +1,31 @@
 {
-  "_comment": "分支保护单一来源。改这里 → 跑 scripts/apply_branch_protection.py --apply。",
+  "_comment": "分支保护单一来源（字段口径对齐 GitHub REST API）。改这里 -> 先跑 python scripts/apply_branch_protection.py 看漂移，确认后再跑 --apply --yes 写入。required_signatures 是独立子资源，由脚本自动走 /required_signatures 端点；allow_auto_merge 是仓库级设置，走 PATCH /repos。",
   "owner": "ReSerendipity",
   "repo": "MiniMax-H3-lite",
   "branch": "main",
-  "policy": {
-    "required_approving_review_count": 0,
-    "dismiss_stale_reviews": true,
-    "require_code_owner_reviews": false,
-    "require_last_push_approval": false,
+  "required_status_checks": {
     "strict": false,
-    "enforce_admins": true,
-    "allow_auto_merge": true,
-    "required_signatures": false,
-    "required_linear_history": false,
-    "allow_force_pushes": false,
-    "allow_deletions": false,
-    "block_creations": false,
-    "lock_branch": false,
-    "allow_fork_syncing": false,
-    "restrictions": null
+    "contexts": [
+      "lock-consistency",
+      "integrity-freshness",
+      "python-test (ubuntu-latest)",
+      "python-test (windows-latest)",
+      "Typecheck (mypy ratchet) / Typecheck (mypy ratchet)",
+      "frontend-smoke",
+      "security-scan",
+      "lint"
+    ]
   },
-  "contexts": [],
-  "required_conversation_resolution": false
+  "required_pull_request_reviews": null,
+  "required_signatures": false,
+  "enforce_admins": true,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "block_creations": false,
+  "required_conversation_resolution": false,
+  "lock_branch": false,
+  "allow_fork_syncing": false,
+  "restrictions": null,
+  "allow_auto_merge": true
 }

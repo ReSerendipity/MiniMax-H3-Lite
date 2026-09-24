@@ -122,6 +122,17 @@ backup/
 *.log
 .env.*
 secrets/
+
+# 基准产物：benchmark.yml 每次 run 在仓库根写 benchmark_report.json 并上传为 artifact。
+# 此前未忽略，导致它出现在 git status 里、可能被误提交。
+/benchmark_report.json
+# 关于 logs：不要在此加 `/logs/`——它是一条**不起作用的假修复**。
+# logs/.gitkeep 受跟踪（保证干净检出有该目录），而 git 对"内含受跟踪文件的目录"
+# 不判为忽略：`git check-ignore logs` 返回假（加 --no-index 才匹配）。
+# .github/scripts/check_layout.py 正是用不带 --no-index 的 `git check-ignore --stdin`
+# 判定，所以 layout-rules 的 `gitignored_expect: logs` 与"跟踪 .gitkeep"互斥，
+# 只能二选一（去跟踪 .gitkeep / 改检查器口径 / 撤下该期望项），不由 .gitignore 解决。
+# 上方 logs/* 已足以让日志内容本身不入库。
 .ruff_cache/
 .mypy_cache/
 .pyright/

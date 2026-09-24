@@ -326,6 +326,9 @@ jobs:
   comfy-kernel-guard:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      present: ${{ steps.kernel.outputs.present }}
+      reason: ${{ steps.kernel.outputs.reason }}
     steps:
       - uses: actions/checkout@v4
 
@@ -334,9 +337,13 @@ jobs:
         run: |
           if [ -f comfy_kernel/comfy/cli_args.py ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "reason=comfy_kernel-present" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "SKIP: comfy_kernel/ 未随 checkout 提供（vendored、不入库）——B 方案内核守卫本跑跳过"
+            echo "reason=comfy_kernel-absent-vendored-not-in-repo" >> "$GITHUB_OUTPUT"
+            # warning 而非仅 echo：让"三个守卫本次没执行"在 checks 页可见，
+            # 不再与"守卫跑过且通过"共用一个绿色 job 结论。
+            echo "::warning::comfy_kernel/ 未随 checkout 提供（vendored、GPL、不入库）——内核漂移基线 / --listen 回退棘轮 / comfy 适配器单测 三项守卫本次未执行"
           fi
 
       - uses: actions/setup-python@v7
@@ -368,4 +375,43 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
-          pytest tests/test_comfy_engine.py tests/test_comfy_engine_integration.py -q
+          # --no-cov 必需：pytest.ini 的 addopts 带 --cov-fail-under=60，本步只跑 2 个
+          # 文件的子集，覆盖率必然不达标 → 内核在场时（自托管/本地带 vendored 内核）
+          # 这一步会以与被测代码无关的理由失败。同 #62 对 benchmark 的处理。
+          pytest tests/test_comfy_engine.py tests/test_comfy_engine_integration.py --no-cov -q
+
+  # 状态显式化（与 #63 对 gpu-smoke 的处理同款）：本 job 的名字会原样出现在 checks 列表。
+  # 修的问题——comfy_kernel/ 是 vendored、GPL、不入库，托管 runner 上 present 恒 false，
+  # 于是"内核漂移基线 / --listen 回退棘轮 / comfy 适配器单测"三项守卫**从未执行**，
+  # 而 comfy-kernel-guard job 仍报 success，与"守卫跑过且通过"在 UI 上无法区分。
+  # 刻意不改 `if: steps.kernel.outputs.present == 'true'` 的闸门语义，也不把缺失判红：
+  # 内核不入库是有意为之的许可边界（见 docs/GPL_COMPLIANCE.md），改红会让每个 PR 恒红。
+  kernel-guard-status:
+    needs: comfy-kernel-guard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    name: ${{ needs.comfy-kernel-guard.outputs.present == 'true' && 'KERNEL GUARDS RAN (comfy_kernel present)' || format('NO KERNEL GUARDS RAN - SKIPPED ({0})', needs.comfy-kernel-guard.outputs.reason) }}
+    steps:
+      - name: Write verdict to run summary
+        env:
+          PRESENT: ${{ needs.comfy-kernel-guard.outputs.present }}
+          REASON: ${{ needs.comfy-kernel-guard.outputs.reason }}
+          RESULT: ${{ needs.comfy-kernel-guard.result }}
+        run: |
+          {
+            if [ "$PRESENT" = "true" ]; then
+              echo "## comfy_kernel 守卫：已执行"
+              echo ""
+              echo "- \`comfy-kernel-guard\` 结论：\`$RESULT\`（内核在场，基线/棘轮/适配器单测均已运行）"
+            else
+              echo "## comfy_kernel 守卫：本次未执行任何内核检查"
+              echo ""
+              echo "- 原因：\`$REASON\`；job 结论 \`$RESULT\`。"
+              echo "- 以下三项**本次没有运行**：\`comfy_kernel_baseline.py --check\`（内核漂移）、\`--listen\` 回退行棘轮、comfy 适配器单测。"
+              echo "- 本 workflow 的绿色不代表内核面被守卫过。真正执行需在有 vendored \`comfy_kernel/\` 的环境（自托管 runner 或本地）跑。"
+              echo "- 内核不入库是既定许可边界（GPL-3.0，见 \`docs/GPL_COMPLIANCE.md\`），故此处只显式标注、不判红。"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

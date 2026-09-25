@@ -48,13 +48,22 @@ jobs:
           [ -n "$TAG" ] || { echo "::error::no release found to sign"; exit 1; }
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           mkdir -p assets/
-          if ! gh release download "$TAG" --dir assets/; then
-            echo "::error::Release '$TAG' has no downloadable assets to sign"
-            exit 1
+          if gh release download "$TAG" --dir assets/; then
+            echo "has_assets=true" >> $GITHUB_OUTPUT
+          else
+            # 【降级口径统一 2026-09-25】原先这里是 ::error:: + exit 1，与文件头
+            # "无 GPG_PRIVATE_KEY 时以 notice 跳过"的口径不一致，且踩中一个真实的坑：
+            # 本仓 v0.1.0/v2.3.0/v2.3.1/v2.4.0/v2.4.1/v2.5.0 六个 Release **全部零资产**
+            # （gh release view v2.5.0 --json assets 实测 assetNames=[]）。
+            # ⇒ 只要有人配上 GPG_PRIVATE_KEY 再 publish，这条尾巴会直接红而不是签出名。
+            # "本次没有可签发的东西"属正常态，改 notice 跳过；真正的异常（找不到 Release）
+            # 仍保留 ::error::。历史零资产形状由新的 release.yml 负责终结。
+            echo "has_assets=false" >> $GITHUB_OUTPUT
+            echo "::notice::Release '$TAG' 无可下载资产——跳过签名（正常态，见 release.yml 产资产）"
           fi
 
       - name: Generate SHA256SUMS and sign
-        if: env.GPG_PRIVATE_KEY != ''
+        if: env.GPG_PRIVATE_KEY != '' && steps.download.outputs.has_assets == 'true'
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
@@ -67,7 +76,7 @@ jobs:
           gpg --verify SHA256SUMS.gpg SHA256SUMS.txt
 
       - name: Upload signature
-        if: env.GPG_PRIVATE_KEY != ''
+        if: env.GPG_PRIVATE_KEY != '' && steps.download.outputs.has_assets == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

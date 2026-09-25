@@ -1,0 +1,275 @@
+# MiniMax-H3-lite 发版工作流（人工 tag 驱动，兑现 bbe6996 的承诺）
+#
+# 【为什么是这个形状】第 3 阶段审计实测：本仓发版链在 09-16 被拆掉后一直没接上——
+#   · bbe6996 删除 release-please.yml（−24 行），提交信息写"改人工 tag 驱动 release.yml"，
+#     但 release.yml **在任何 ref 上从未存在**（git log --all 空）。
+#   · 全仓无 git tag / gh release create / docker push ⇒ gpg-signed-release.yml
+#     是一条没有上游的尾巴（on: release: [published] 永远不会被本仓触发）。
+#   · 六个历史 Release（v0.1.0…v2.5.0）**全部零资产**。
+# 曾考虑恢复 release-please（姊妹仓 TTS 已实证可用，v2.3.0 于 2026-09-25 真发布），
+# 但它开的 release PR 拿不到任何 CI（GITHUB_TOKEN 提交不级联触发 workflow），
+# 而本仓分支保护登记了 9 条必需 context ⇒ release PR 会因必需 context 永不回报而不可合并，
+# 除非改分支保护。故走本方案：入口是人推 tag，不推就零执行，v2.5.1 挂起由结构保证。
+#
+# 【安全边界】workflow_dispatch **永远是 dry-run**：只构建产物并上传为 workflow artifact
+# （staging），既不建 Release 也不推 tag。真要发版必须由人推 v* tag，且 tag 版本必须等于
+# package.json 的 version，否则本流程在动手前就红。
+
+name: Release (tag-driven)
+
+on:
+  push:
+    tags: ["v*"]
+  # 仅为 build-assets 的干跑证据而加：本仓 release.yml 无 pull_request 触发时，
+  # PR 档完全不会执行发版链（而 workflow_dispatch 又要求文件先在默认分支存在，
+  # 合并前拿不到 run id —— 实测 HTTP 404 "workflow not found on the default branch"）。
+  # 加了它也只能验证 read-only 的构建侧：publish-release 由 dry_run 门控，PR 永不到达。
+  pull_request:
+    paths:
+      - '.github/workflows/release.yml'
+      - '.github/workflows/gpg-signed-release.yml'
+      - 'scripts/verify_release_integrity.py'
+      - 'CHANGELOG.md'
+      - 'package.json'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "dry-run 用版本号（留空 = 取 package.json 当前值；dispatch 不会真发版）"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-assets:
+    name: Build release artifacts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # 整个 build 阶段只需读代码；写权限刻意留给 publish-release。
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.prep.outputs.version }}
+      tag: ${{ steps.prep.outputs.tag }}
+      dry_run: ${{ steps.prep.outputs.dry_run }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # tag 定位与"tag 是否指向本次 HEAD"判定都要历史
+          fetch-depth: 0
+
+      - name: 版本口径判定与前置校验
+        id: prep
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          EVENT: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          test -f package.json || { echo "::error::缺 package.json —— ADR-0004 定的版本单一事实来源"; exit 1; }
+          # 必须显式 encoding='utf-8'：package.json 内含非 ASCII（本仓实测 position 123 = 0xa2），
+          # 不写 encoding 时 Python 按 locale 默认解码，本地 Windows(cp936) 下直接
+          # UnicodeDecodeError。写死编码可让此步与 runner 的 locale 无关。
+          pkg=$(python3 -c "import json;print(json.load(open('package.json',encoding='utf-8'))['version'])")
+          echo "package.json version = $pkg"
+
+          # 【模式判定：默认干跑，只有"push 一个 v<数字> 的 tag"才是真发版】
+          # 刻意写成"白名单才是 real"而不是"非 dispatch 即 real"：本 workflow 现在也有
+          # pull_request 触发（只为构建侧证据），若按"非 dispatch 即 real"来判，
+          # PR 事件会直接落进真发版分支（REF_NAME 形如 123/merge），语义上等于
+          # "开个 PR 就可能发版" —— 必须结构性杜绝。
+          REF_KIND="${REF_TYPE:-}"
+          dry=true
+          if [ "$EVENT" = "push" ] && [ "$REF_KIND" = "tag" ]; then
+            case "$REF_NAME" in
+              v[0-9]*) dry=false ;;
+              *) echo "::warning::tag '$REF_NAME' 不是 v<数字> 形状，按 dry-run 处理（不发版）" ;;
+            esac
+          fi
+
+          if [ "$dry" = "true" ]; then
+            ver="${INPUT_VERSION:-$pkg}"
+            echo "dry-run 模式（event=$EVENT ref=$REF_NAME）：版本=$ver，只构建产物，不建 Release、不推 tag"
+          else
+            ver="${REF_NAME#v}"
+            echo "真发版模式：tag=$REF_NAME"
+            # 唯一的同步位就是 package.json（backend/version.py 运行时读它），
+            # 所以这一条比对就足以拦下"忘了同步版本号"。
+            if [ "$ver" != "$pkg" ]; then
+              echo "::error::tag 版本 v$ver 与 package.json 的 $pkg 不一致 —— 先改 package.json 再打 tag"
+              exit 1
+            fi
+          fi
+
+          case "$ver" in
+            [0-9]*.[0-9]*.[0-9]*) : ;;
+            *) echo "::error::版本号形状非法：$ver（应为 x.y.z）"; exit 1 ;;
+          esac
+
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          echo "tag=v$ver"   >> "$GITHUB_OUTPUT"
+          echo "dry_run=$dry" >> "$GITHUB_OUTPUT"
+
+          # CHANGELOG 小节存在性提醒。本仓是 GitHub 释放式标题 `## [2.5.0](compare/…)`，
+          # 版本号在方括号内且不带 v ⇒ 匹配 "版本数字出现在二级标题行里"即可，
+          # 且必须锚定 `^## ` 二级标题（^## + 不会误匹配 ### 子标题）。
+          if [ -f CHANGELOG.md ] && ! grep -qE "^## +.*$ver" CHANGELOG.md; then
+            echo "::warning::CHANGELOG.md 里没有 $ver 的二级标题小节 —— 发版说明会退化成自动生成"
+          fi
+
+      - name: 组装发布产物（四件套）
+        env:
+          VER: ${{ steps.prep.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          # 源码包：git archive 只含已跟踪文件，天然避开 .gitignore 里的权重/缓存
+          git archive --format=tar.gz --prefix="MiniMax-H3-lite-$VER/" -o "dist/MiniMax-H3-lite-$VER.tar.gz" HEAD
+          git archive --format=zip     --prefix="MiniMax-H3-lite-$VER/" -o "dist/MiniMax-H3-lite-$VER.zip"     HEAD
+
+          # ⚠ 刻意不产 wheel/sdist：本仓无 pyproject.toml 也无 setup.py
+          #   （backend/version.py 开头即声明"本仓无 pyproject.toml，依赖走 requirements.txt"，
+          #   ADR-0004 亦以 package.json 为版本权威源）。这是个应用不是库，
+          #   要出 wheel 得先做打包层设计决策，不在发版链修复范围内顺手引入。
+          #   姊妹仓 TTS 能出 .whl 正是因为它有 pyproject。
+
+          ( cd dist && sha256sum MiniMax-H3-lite-*.tar.gz MiniMax-H3-lite-*.zip > SHA256SUMS )
+
+          # 关键入口清单（对齐 TTS 的 SHA256SUMS.scripts 语义）：
+          # 用户直接执行的入口 + 容器构建输入 + 依赖清单，单独出一份校验，
+          # 避免被整包哈希掩盖。⚠ 路径相对**仓库根**，校验时不能 cd 进 dist。
+          # 清单不含 start.sh —— 本仓只有 start.bat（实测无 start.sh）。
+          : > dist/SHA256SUMS.scripts
+          for f in backend/main.py backend/version.py backend/config.py \
+                   scripts/clean_launch.py scripts/verify_release_integrity.py \
+                   start.bat Dockerfile requirements.txt requirements-lock.txt; do
+            if [ -f "$f" ]; then
+              sha256sum "$f" >> dist/SHA256SUMS.scripts
+            else
+              echo "::error::入口清单里的 $f 不存在 —— 发版入口形状变了，请同步本文件"
+              exit 1
+            fi
+          done
+
+          echo "=== 产物 ==="
+          ls -l dist/
+          echo "=== SHA256SUMS ==="; cat dist/SHA256SUMS
+          echo "=== SHA256SUMS.scripts ==="; cat dist/SHA256SUMS.scripts
+
+      - name: 校验产物完整性（本地自证，不依赖下游）
+        env:
+          VER: ${{ steps.prep.outputs.version }}
+        run: |
+          set -euo pipefail
+          # 两份清单的寻址基准不同，刻意分开跑：
+          #   SHA256SUMS        记录 dist/ 内的归档 ⇒ 必须 cd dist 校验
+          #   SHA256SUMS.scripts 记录仓库根相对路径 ⇒ 必须在根目录校验
+          # （合成一步在 dist/ 里跑会全部 "No such file"，本地实测踩过）
+          ( cd dist && sha256sum -c SHA256SUMS )
+          sha256sum -c dist/SHA256SUMS.scripts
+          # ⚠ 这里刻意不用 `| head -N`：在 set -o pipefail 下 head 提前关管道会让 tar
+          #   收 SIGPIPE，整个 step 以 rc=141 失败（本地实测踩过，CI 里每次必红）。
+          #   wc -l 会读完全部输入，因此安全。
+          n=$(tar -tzf "dist/MiniMax-H3-lite-$VER.tar.gz" | wc -l)
+          test "$n" -gt 0
+          z=$(unzip -Z1 "dist/MiniMax-H3-lite-$VER.zip" | wc -l)
+          test "$z" -gt 0
+          echo "[OK] 四件套齐、两份清单均校验通过、tar($n 条目) 与 zip($z 条目) 均可读"
+
+      - name: 上传到 staging（workflow artifact；dispatch 与 push 都留一份）
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ steps.prep.outputs.tag }}${{ steps.prep.outputs.dry_run == 'true' && '-DRYRUN' || '' }}
+          path: dist/
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 写运行摘要（别让 dry-run 与真发版在 UI 上长得一样）
+        env:
+          VER: ${{ steps.prep.outputs.version }}
+          TAG: ${{ steps.prep.outputs.tag }}
+          DRY: ${{ steps.prep.outputs.dry_run }}
+        run: |
+          {
+            echo "## release"
+            echo
+            echo "- 版本：\`$VER\`（tag \`$TAG\`）"
+            echo "- 模式：**$([ "$DRY" = "true" ] && echo 'DRY-RUN（未建 Release、未推 tag）' || echo '真发版')**"
+            echo "- 产物：源码 tar.gz + zip + SHA256SUMS + SHA256SUMS.scripts"
+            echo "- 不产 wheel/sdist：本仓无 pyproject.toml/setup.py（应用非库，见文件头说明）"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish-release:
+    name: Create GitHub Release
+    needs: build-assets
+    # dispatch 恒为 dry-run ⇒ 这道写权限 job 永不执行；真发版只能由人推 v* tag 走到这里
+    if: needs.build-assets.outputs.dry_run == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 取回产物
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets-${{ needs.build-assets.outputs.tag }}
+          path: dist/
+
+      - name: 建 Release（带真资产，终结零资产历史形状）
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build-assets.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # 幂等：重复触发时不炸（tag 已存在 Release 的情况）
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::Release $TAG 已存在，改为补齐/覆盖资产"
+            gh release upload "$TAG" dist/* --clobber
+          else
+            # 抽取 CHANGELOG 对应版本节作为发版说明。
+            # ⚠ 三条实测踩出来的约束：
+            #   1) 边界只认二级标题 ^## ：写成 ^#+ + 会在 ### Features 等子标题处提前 exit，
+            #      抽出一律为空。
+            #   2) **不能拿版本号做子串匹配**：本仓标题是
+            #      `## [2.5.0](…/compare/v2.4.1...v2.5.0) (2026-09-15)`，
+            #      里面含有*上一个* tag，子串匹配会让查 2.4.1 也命中 2.5.0 那节
+            #      —— 实测两者抽出完全相同的 3547 字符，会把上一版的说明挂到本版上。
+            #      故改为从标题里**截出版本 token 做等值比较**。
+            #   3) 标题里版本号在方括号内且不带 v，但也要兼容 `## v2.4.1` 朴素写法。
+            ver_only="${TAG#v}"
+            notes=""
+            if [ -f CHANGELOG.md ]; then
+              notes=$(awk -v t="$ver_only" '
+                BEGIN { p = 0 }
+                /^## +/ {
+                  if (p) exit
+                  v = $0
+                  sub(/^## +\[?v?/, "", v)
+                  sub(/[\])(].*$/, "", v)
+                  if (v == t) p = 1
+                  next
+                }
+                p { print }
+              ' CHANGELOG.md)
+            fi
+            if [ -n "$notes" ]; then
+              printf '%s\n' "$notes" > /tmp/notes.md
+              gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md --verify-tag dist/*
+            else
+              gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag dist/*
+            fi
+          fi
+          echo "=== 该 Release 的资产 ==="
+          gh release view "$TAG" --json assets --jq '.assets[].name'

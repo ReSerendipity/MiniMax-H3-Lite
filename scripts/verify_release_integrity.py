@@ -153,9 +153,17 @@ def step_docker() -> tuple[bool, str]:
     if shutil.which("docker") is None:
         return True, "SKIP：本机无 docker CLI——门禁走本地降级路径（对照表已留痕）"
     # docker 固定参数、list 形参无 shell；B603 对显式 ID nosec 不响应（bandit 1.7.7），故用无 ID
+    # ⚠ 600 秒曾是硬编码上限，实测正好卡在边界上：
+    #   · run 36131887569（main bbdc39f，成功）本步 188 秒
+    #   · run 36017275962（main f715999，失败）本步 601 秒 → TimeoutExpired，job 红
+    # 托管 runner 无 buildx 层缓存，而 Dockerfile:60 要拉 cu130 torch（数 GB），
+    # build 时长由网络决定 ⇒ 600 秒是"有时够有时不够"的形状。
+    # 提到 1800 秒：是观测成功值 188 秒的 ~9.6 倍余量，又远小于 docker-gate 的
+    # job 预算 90 分钟，超时仍能真报错而不是挂满预算。
     build = subprocess.run(  # nosec
         ["docker", "build", "-t", "mmh3-release-check", "."],
-        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=1800)
     if build.returncode != 0:
         return False, f"docker build 失败: {build.stderr.strip()[-300:]}"
     # docker 固定参数、list 形参无 shell；B603 对显式 ID nosec 不响应（bandit 1.7.7），故用无 ID

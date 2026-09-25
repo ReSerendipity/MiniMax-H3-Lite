@@ -10,7 +10,8 @@ permissions:
 jobs:
   dco:
     name: DCO Check
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4

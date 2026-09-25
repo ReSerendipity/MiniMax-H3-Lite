@@ -27,7 +27,8 @@ concurrency:
 jobs:
   semgrep:
     name: Semgrep SAST
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     # 定位声明（测试体系评估报告 P3-⑦ 落地）：本 job 不再是纯 report-only ——
     # 扫描产出 semgrep.json 报告（扫描工具自身非零退出不在此处阻断），

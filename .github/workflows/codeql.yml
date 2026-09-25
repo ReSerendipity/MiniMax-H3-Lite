@@ -32,7 +32,9 @@ jobs:
     # 达不到"让 dependabot PR 上 CodeQL 真跑"。
     # 额度依据：仓库实测 public ⇒ code scanning 不计费；本仓 CodeQL 全量墙钟 1.4 min
     # （run 35989187876，python+javascript 并行）。
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26。
+    # matrix 只含 language 一维（python/javascript），check 名不受本次改动影响。
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:

@@ -17,7 +17,8 @@ jobs:
 
   # ── 依赖锁一致性门禁（防 Dependabot 分组升级破坏 requirements-lock.txt）──
   lock-consistency:
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -46,7 +47,8 @@ jobs:
   # 从这种 main 全新装出去的工作台会在启动自检处直接拒启（2026-09-17~09-19 实况）。
   # 纯标准库脚本，无需装依赖，故排在 python-test 之前秒级返回。
   integrity-freshness:
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Checkout
@@ -60,11 +62,23 @@ jobs:
 
   # ── Python 后端测试 ──────────────────────────────────────
   python-test:
+    # ⚠ check 名逐字冻结：分支保护把 `python-test (ubuntu-latest)` 与
+    #   `python-test (windows-latest)` 两条登记为**必需 context**，名字按整串精确匹配。
+    #   matrix job 的默认 check 名会把所有 matrix 值拼进括号（加了 label 键就变成
+    #   `python-test (ubuntu-latest, ubuntu-24.04)`），一旦漂移→必需 context 永不回报→
+    #   所有 PR 不可合并。故此处显式声明 name，只取 os 这一维。
+    name: python-test (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+        # os    = 显示/上下文维度，冻结不动（它决定必需 context 的名字）
+        # label = 实际跑的 runner 镜像标签，要钉的是这个
+        include:
+          - os: ubuntu-latest
+            label: ubuntu-24.04   # 钉死：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+          - os: windows-latest
+            label: windows-latest # 刻意不钉：见 PR 描述，Windows 侧无已公布的切换日期
+    runs-on: ${{ matrix.label }}
     timeout-minutes: 20
 
     steps:
@@ -98,7 +112,8 @@ jobs:
 
   # ── 前端冒烟测试 + Playwright E2E ──────────────────────
   frontend-smoke:
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -146,7 +161,8 @@ jobs:
 
   # ── 代码质量检查 ──────────────────────────────────────
   lint:
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     if: always()
 
@@ -194,7 +210,8 @@ jobs:
 
   # ── 安全扫描 ──────────────────────────────────────
   security-scan:
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:

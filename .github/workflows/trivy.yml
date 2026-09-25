@@ -44,7 +44,9 @@ concurrency:
 jobs:
   build-and-scan:
     name: Build & scan image
-    runs-on: ubuntu-latest
+    # 钉死镜像标签：ubuntu-latest 自 2026-10-19 起改指 Ubuntu 26
+    # （本仓唯一反复把 main 染红的工作流，基础镜 Debian 版本随 OS 变，读数需可复现）
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout

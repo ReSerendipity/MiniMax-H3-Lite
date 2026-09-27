@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.5.1](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.5.0...v2.5.1) (2026-09-26)
+
+
+### CI/CD
+
+* **ci:** SAST 的 upload-sarif 补 `security-events: write`——缺它时该步长期以 `##[error]Resource not accessible by integration` 失败却被 `continue-on-error` 咽掉；摘兜底后按日志（非步骤色）证实 main 上真跑通 ([#72](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/72)) ([689dc8c](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/689dc8c6c514bc34bca5c658c4bb185bc8c5aeb1))
+* **ci:** 必经路径 job 钉 `ubuntu-24.04`（2026-10-19 起 `ubuntu-latest` 改指 Ubuntu 26）；`python-test` 拆 os/label 并显式声明 `name:` 冻结 check 名，防必需 context 漂移 ([#73](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/73)) ([bbdc39f](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/bbdc39f66b9d9792830a16ea1644d7311655e45d))
+* **ci:** 补上 bbe6996 承诺却从未存在的 `release.yml`——人工 tag 驱动、`workflow_dispatch` 恒 dry-run、产 tar.gz/zip/SHA256SUMS/SHA256SUMS.scripts 四件套终结零资产 Release 形状；同 PR 统一 gpg 尾巴「无资产即跳过」降级口径，并把 docker 发布门禁内部 600 秒硬超时提到 1800 秒 ([#74](https://github.com/ReSerendipity/MiniMax-H3-lite/issues/74)) ([e862bdc](https://github.com/ReSerendipity/MiniMax-H3-lite/commit/e862bdcc9bf5326c89756738c2889e6ea60b97c9))
+
+
 ## [2.5.0](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.4.1...v2.5.0) (2026-09-15)
 
 

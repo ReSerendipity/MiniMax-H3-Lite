@@ -62,6 +62,6 @@
 
 release-please 于 2026-09-16 停用：工作流 `release-please.yml` 删除（bbe6996），发布改为人工 tag 驱动；`.release-please-manifest.json`（dba745e）与 `release-please-config.json`（37fb127）残留一并清理。据此对本文决策做如下修订：
 
-- **D1 版本单一事实来源**：由 `.release-please-manifest.json` 改为仓库根 `package.json` 的 `version` 字段（当前 `2.5.0`）。`backend/version.py`（`read_project_version`）、`trivy.yml` 的 VERSION build-arg、`tests/test_version_consistency.py` 已同步切换；文件缺失/损坏时仍回退 `0.0.0-dev`。
+- **D1 版本单一事实来源**：由 `.release-please-manifest.json` 改为仓库根 `package.json` 的 `version` 字段（当前 `2.5.1`）。`backend/version.py`（`read_project_version`）、`trivy.yml` 的 VERSION build-arg、`tests/test_version_consistency.py` 已同步切换；文件缺失/损坏时仍回退 `0.0.0-dev`。
 - **D2 发布门禁**：release PR 审查机制随 release-please 一并取消，改为「人工 bump `package.json` → 本地全量验证 → 打 tag」的人工门禁；`test.yml` 侧的 continue-on-error / `|| true` 禁令保持不变。
 - 本文其余内容（背景、D3、D4 及当时实现细节）按当时决策存档保留。

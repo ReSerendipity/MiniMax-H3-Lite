@@ -1,8 +1,9 @@
 #!/bin/sh
 # 通用 pre-push（无机器特定路径，可随仓库分发）。
 #   1) 先执行 gitleaks 待推送提交扫描（密钥防线，最高优先）
-#   2) 仓库提供 precheck.ps1 -> 执行它（家族既有门禁口径）
-#   3) 否则 -> 退回根目录守卫 structure-guard
+#   2) 分支保护只读漂移检测（scripts/apply_branch_protection.py，仅提示不阻断）
+#   3) 仓库提供 precheck.ps1 -> 执行它（家族既有门禁口径）
+#   4) 否则 -> 退回根目录守卫 structure-guard
 # gitleaks v8.30.1 无 `git pre-push` 子命令，改用 detect --log-opts 扫描 remote..local 范围。
 # 紧急绕过：git push --no-verify（仅限用户明确要求时）
 failed=0
@@ -31,7 +32,39 @@ else
     echo "[pre-push] gitleaks 未安装，跳过推送前密钥扫描" >&2
 fi
 
-# 2) precheck.ps1（家族既有门禁）
+# 2) 分支保护只读漂移检测（依赖本机已登录的 gh CLI；仅提示，不计入 failed，
+#    漂移不是本次推送造成的，阻断会把钩子变成环境依赖门禁）。
+#    写入路径 --apply --yes 属人工运维入口，禁止挂进本钩子。
+if [ ! -f scripts/apply_branch_protection.py ]; then
+    echo "[pre-push] 无 scripts/apply_branch_protection.py，跳过分支保护漂移检测" >&2
+elif [ ! -f docs/ci/branch-protection.json ]; then
+    # 单一来源配置缺失（如手工裁剪检出）：优雅跳过并说明原因
+    echo "[pre-push] 缺 docs/ci/branch-protection.json（分支保护单一来源），跳过漂移检测" >&2
+elif ! command -v gh >/dev/null 2>&1; then
+    echo "[pre-push] gh CLI 未安装，跳过分支保护漂移检测（需已登录的 gh 才能读线上保护）" >&2
+else
+    BP_PY=""
+    for cand in ".venv/Scripts/python.exe" ".venv/bin/python"; do
+        [ -x "$cand" ] && BP_PY="$cand" && break
+    done
+    if [ -z "$BP_PY" ]; then
+        for c in python python3; do
+            command -v "$c" >/dev/null 2>&1 && BP_PY="$c" && break
+        done
+    fi
+    if [ -z "$BP_PY" ]; then
+        echo "[pre-push] 未找到 python，跳过分支保护漂移检测" >&2
+    else
+        "$BP_PY" scripts/apply_branch_protection.py
+        case $? in
+            0) : ;;  # 无漂移
+            1) echo "[pre-push] ⚠ 分支保护与 docs/ci/branch-protection.json 存在漂移（不阻断推送）；人工核对后可跑 scripts/apply_branch_protection.py --apply --yes 收敛" >&2 ;;
+            *) echo "[pre-push] 分支保护读取失败（gh 未登录/无管理员权限/网络），本项跳过" >&2 ;;
+        esac
+    fi
+fi
+
+# 3) precheck.ps1（家族既有门禁）
 if [ -f ./precheck.ps1 ]; then
     echo "[pre-push] 运行本地预检 precheck.ps1 ..."
     if command -v powershell.exe >/dev/null 2>&1; then
@@ -45,7 +78,7 @@ if [ -f ./precheck.ps1 ]; then
         exit 1
     fi
 else
-    # 3) structure-guard 根目录守卫
+    # 4) structure-guard 根目录守卫
     PY=""
     for cand in ".venv/Scripts/python.exe" ".venv/bin/python"; do
         [ -x "$cand" ] && PY="$cand" && break

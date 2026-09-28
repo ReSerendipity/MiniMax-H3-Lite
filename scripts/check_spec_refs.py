@@ -12,10 +12,15 @@ docs-consistency.yml and structure-guard.yml) a self-contained dead-link audit
 runs over tracked Markdown instead of silently skipping — any relative Markdown
 link whose target is missing on disk AND not gitignored fails the build
 (gitignored targets are allowed by family convention: local-only governance
-docs may be referenced).  Without the flag the missing auditor is a gate that
-could not run at all, so the wrapper no longer reports a silent "CI green": it
-prints an explicit error and exits 2 (2026-09-19 harness fix: anti empty-run
-green light).
+docs may be referenced).  Beyond tracked Markdown the audit also reads
+``AGENTS.md`` at the repo root and any ``docs/agents/*.md`` from disk, so the
+self-evolution contract itself is checked even though those files are
+.gitignored and therefore invisible to ``git ls-files``; on a clean CI
+checkout those paths simply do not exist on disk and contribute zero files
+(2026-09-25 harness fix: 铁律#6 在 CI/干净检出下对契约本身同样可复现).  Without
+the flag the missing auditor is a gate that could not run at all, so the
+wrapper no longer reports a silent "CI green": it prints an explicit error and
+exits 2 (2026-09-19 harness fix: anti empty-run green light).
 """
 from __future__ import annotations
 
@@ -52,41 +57,96 @@ def _is_ignored(rel: str) -> bool:
                           check=False).returncode == 0  # nosec B603 B607（同上）
 
 
+def _audit_one(rel: str, findings: list[str]) -> int:
+    """Audit relative Markdown links in one file; return number of links checked.
+
+    ``rel`` is a repo-root-relative POSIX path.  Same rules apply to tracked
+    Markdown and to the on-disk-only governance docs (AGENTS.md / docs/agents/):
+    a missing target that is gitignored is treated as an allowed local-only
+    reference, not a dead link (family convention).
+    """
+    src = HERE / rel
+    try:
+        text = src.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return 0
+    checked = 0
+    for m in MD_LINK.finditer(text):
+        target = m.group(1).strip().strip("<>").replace("\\", "/")
+        if not target or ABS.match(target):
+            continue
+        target = target.split("#", 1)[0]
+        if not target:
+            continue
+        try:
+            dest = (src.parent / target).resolve()
+            rel_dest = dest.relative_to(HERE.resolve()).as_posix()
+        except ValueError:
+            continue  # 指向仓库外的链接不在最小审计范围
+        checked += 1
+        if dest.exists():
+            continue
+        if _is_ignored(rel_dest):
+            continue  # gitignored 本地文档允许被引用（家族约定）
+        findings.append(f"DEAD {rel} -> {target}")
+    return checked
+
+
+def _local_governance_md(tracked: set[str]) -> list[str]:
+    """Return repo-relative paths of AGENTS.md and docs/agents/*.md present on
+    disk but not already in the tracked set.  On a clean CI checkout these
+    paths are gitignored and do not exist, so the list is empty there — the
+    audit degrades gracefully rather than failing on missing files.
+    """
+    candidates: list[Path] = []
+    root_agents = HERE / "AGENTS.md"
+    if root_agents.is_file():
+        candidates.append(root_agents)
+    agents_dir = HERE / "docs" / "agents"
+    if agents_dir.is_dir():
+        candidates.extend(sorted(agents_dir.glob("*.md")))
+    extras: list[str] = []
+    seen: set[str] = set()
+    for p in candidates:
+        try:
+            rel = p.resolve().relative_to(HERE.resolve()).as_posix()
+        except ValueError:
+            continue
+        if rel in tracked or rel in seen:
+            continue
+        seen.add(rel)
+        extras.append(rel)
+    return extras
+
+
 def minimal_audit() -> int:
-    """Self-contained dead-link audit over tracked Markdown (no family auditor)."""
+    """Self-contained dead-link audit over tracked Markdown plus the on-disk
+    AI-development contract (AGENTS.md / docs/agents/) so 铁律#6 证据绑定 复核
+    在干净检出/无外部审计器环境下仍对契约本身可复现；gitignored 目标不计为死链。
+    """
     try:
         listed = _git("ls-files", "--", "*.md").stdout
     except subprocess.CalledProcessError as exc:
         print(f"git ls-files failed: {exc.stderr}", file=sys.stderr)
         return 2
     md_files = [f for f in listed.splitlines() if f.strip()]
+    extra_files = _local_governance_md(set(md_files))
     findings: list[str] = []
     checked = 0
     for rel in md_files:
-        src = HERE / rel
-        try:
-            text = src.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
-            continue
-        for m in MD_LINK.finditer(text):
-            target = m.group(1).strip().strip("<>").replace("\\", "/")
-            if not target or ABS.match(target):
-                continue
-            target = target.split("#", 1)[0]
-            if not target:
-                continue
-            try:
-                dest = (src.parent / target).resolve()
-                rel_dest = dest.relative_to(HERE.resolve()).as_posix()
-            except ValueError:
-                continue  # 指向仓库外的链接不在最小审计范围
-            checked += 1
-            if dest.exists():
-                continue
-            if _is_ignored(rel_dest):
-                continue  # gitignored 本地文档允许被引用（家族约定）
-            findings.append(f"DEAD {rel} -> {target}")
-    print(f"minimal dead-link audit: {len(md_files)} tracked md / {checked} relative links / {len(findings)} findings")
+        checked += _audit_one(rel, findings)
+    for rel in extra_files:
+        checked += _audit_one(rel, findings)
+    print(
+        f"minimal dead-link audit: {len(md_files)} tracked md"
+        f" + {len(extra_files)} local-only governance md"
+        f" (AGENTS.md / docs/agents/*)"
+        f" / {checked} relative links / {len(findings)} findings"
+    )
+    if extra_files:
+        print("  governance files audited from disk:")
+        for rel in extra_files:
+            print(f"    {rel}")
     for f in findings:
         print(f"  {f}")
     return 1 if findings else 0

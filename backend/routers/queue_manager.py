@@ -242,17 +242,22 @@ def _run_task(task_id: str):
         try:
             # 调用推理（带 INFERENCE_TIMEOUT 超时强制）
             result = _run_with_timeout(task_id)
-        except _InferenceTimeout:
+        except _InferenceTimeout as e:
+            reason = (
+                f"推理超时（超过 INFERENCE_TIMEOUT={settings.INFERENCE_TIMEOUT}s）"
+                "，任务已标记失败；若 GPU 线程仍占用，请重启服务，"
+                "启动会自动 resume 未完成任务"
+            )
+            # 落盘完整 traceback（经 root 的 RotatingFileHandler 写 logs/backend.log），
+            # 消息内嵌 task_id 前缀便于回放关联；不改全局 formatter，控制台输出不受影响。
+            logger.error(
+                "task_id=%s 推理超时终态失败：%s（_INFERENCE_TIMEOUT 由 _run_with_timeout 抛出，"
+                "推理线程内原始 traceback 已随 print_exc 打到控制台）",
+                task_id, reason, exc_info=e,
+            )
             db.execute(
                 "UPDATE generation_tasks SET status=?, error=?, finished_at=? WHERE id=?",
-                (
-                    STATUS_FAILED,
-                    f"推理超时（超过 INFERENCE_TIMEOUT={settings.INFERENCE_TIMEOUT}s）"
-                    "，任务已标记失败；若 GPU 线程仍占用，请重启服务，"
-                    "启动会自动 resume 未完成任务",
-                    now_iso(),
-                    task_id,
-                ),
+                (STATUS_FAILED, reason, now_iso(), task_id),
             )
             db.execute("UPDATE shots SET status='failed' WHERE id=?", (row["shot_id"],))
             db.commit()
@@ -265,6 +270,11 @@ def _run_task(task_id: str):
             traceback.print_exc()
             retry_count += 1
             if retry_count <= settings.TASK_RETRY_MAX:
+                # 落盘本 Worker 线程的完整 traceback，携 task_id 前缀供 logs/backend.log 回放
+                logger.exception(
+                    "task_id=%s 推理失败，重试 %s/%s：%s",
+                    task_id, retry_count, settings.TASK_RETRY_MAX, err_msg,
+                )
                 db.execute(
                     "UPDATE generation_tasks SET error=? WHERE id=?",
                     (f"重试 {retry_count}/{settings.TASK_RETRY_MAX}: {err_msg}", task_id),
@@ -272,7 +282,11 @@ def _run_task(task_id: str):
                 db.commit()
                 time.sleep(1)
             else:
-                # 最终失败
+                # 最终失败：末次重试的完整 traceback 同样落盘，关联 task_id
+                logger.exception(
+                    "task_id=%s 推理最终失败（已重试 %s 次）：%s",
+                    task_id, settings.TASK_RETRY_MAX, err_msg,
+                )
                 db.execute(
                     "UPDATE generation_tasks SET status=?, error=?, finished_at=? WHERE id=?",
                     (STATUS_FAILED, err_msg, now_iso(), task_id),

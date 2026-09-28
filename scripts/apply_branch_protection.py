@@ -2,8 +2,12 @@
 """分支保护漂移检测 / 幂等应用（单一来源 docs/ci/branch-protection.json）。
 
 用法：
-    python scripts/apply_branch_protection.py              # 只读漂移检测（CI 用）
-    python scripts/apply_branch_protection.py --apply --yes  # 幂等写入远端（需二次确认）
+    python scripts/apply_branch_protection.py              # 只读漂移检测（由 .githooks/pre-push 自动触发，也可手动跑）
+    python scripts/apply_branch_protection.py --apply --yes  # 幂等写入远端（仅人工运维入口，需二次确认）
+
+触发点说明：本仓库无任何 workflow 调用本脚本；只读检测的唯一自动触发点是
+.githooks/pre-push（依赖本机已登录的 gh CLI，缺配置/缺 gh 时优雅跳过）。
+--apply --yes 会写远端保护设置，禁止挂进任何自动触发，只在人工确认后来跑。
 
 退出码：
     0  无漂移，或 --apply 写入并复验无漂移

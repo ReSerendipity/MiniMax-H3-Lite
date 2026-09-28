@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T16:14:13.265970+00:00",
+  "generated_at": "2026-09-25T00:56:13.106846+00:00",
   "generator": "scripts/generate_integrity_manifest.py",
   "description": "backend 核心模块 + comfy_kernel 关键入口 SHA256 完整性清单（行尾归一化）",
   "public_key_sha256": "c3a09cb118828137bfc32bb8671b93302dc2c82bfe6aa6fc15a0065304103da6",
@@ -19,7 +19,7 @@
     "backend/routers/history.py": "79060ac7b811fb6dda2a7bf2c3d5d5bd05ee2031f9c0c87d7df57170e1000a51",
     "backend/routers/inference.py": "ca49f81fc6720b57dc9d64211150be0e2bca562ef4089b339b52bac0ac15153a",
     "backend/routers/projects.py": "025e250a048d2aef6125dcb85b208b48d1602eb9dc6fe3e1067d0a371caa2174",
-    "backend/routers/queue_manager.py": "756bd5d183933b00a88ab263a47708f677e6c6b052a58913ae8eebdc9df93014",
+    "backend/routers/queue_manager.py": "dd59329fd5f291e2d17f1e478fdfdcd9b0f8b0fe26f0b84bfa16030b3bf88b1b",
     "backend/routers/shots.py": "a3df82b6395d1d9e8fe0de4b87817017d6374061885169be74a64b85066928cd",
     "backend/routers/system.py": "e16e33c1d1484203be654ea6de2e9a16a1ac40abbc312bd196a7c61bc15e99bb",
     "backend/routers/uploads.py": "80eb885ff07f47da1121474a6e95cf77b79d1c9ab4695b9e88d6e405ae3e0cbb",
@@ -30,6 +30,12 @@
     "backend/security/integrity_selfcheck.py": "96d4727e49f126053e72702d25dae53ff021fb19cfe1f422b67a253f5b4697c3",
     "backend/settings_store.py": "0a066d5dcc3b9dc4f1ec856dca7e2b9fdae7b20824cf3d7daf66a537ec60bcbe",
     "backend/version.py": "05788f5b2064b90f0cea26dafd6b55a86351b24823a1b38de6e700eb692c328a",
-    "backend/watermark.py": "53e29bb6917c20ee81536dc5a9b90f8e426d4203355ad289b42c3ca38ae139f1"
+    "backend/watermark.py": "53e29bb6917c20ee81536dc5a9b90f8e426d4203355ad289b42c3ca38ae139f1",
+    "comfy_kernel/main.py": "871f85659908d475ca919b70e6033d150e9a2dc95ca74255df02b952a1b7467a",
+    "comfy_kernel/execution.py": "dcac4074826ac9121624ad113f6027684650579da626e24a4011617aae5f3fc0",
+    "comfy_kernel/nodes.py": "78e389192e46f6699e71658976c6350bd9999c0e5aa121133a686b8e4715bd90",
+    "comfy_kernel/server.py": "74573b10465505b88b618da86059878e3a56418f84c7dae4073c8824aee35a6c",
+    "comfy_kernel/folder_paths.py": "b748be5d1e068ad673f6c4de069fb6b7b723405c40ae3c3c44465d416f7df2db",
+    "comfy_kernel/comfy/cli_args.py": "139324c0ed7d0f70431a097032fec6fbe34e8b26f42d896e5364704b139defe8"
   }
 }

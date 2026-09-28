@@ -23,6 +23,36 @@ from backend.main import app
 from backend.database import init_db
 
 
+# ---------------------------------------------------------------------------
+# 测试副产物滚动回收（2026-09-25）：pytest 9 对显式 --basetemp 目录不在会话结束
+# 清理（下一会话虽会 rm_rf 全清，但 Windows 下 worker 持锁时部分删除静默失败，
+# 实测跨会话堆积至 223 个旧副本进入检索面；--benchmark-autosave 则只增不减），
+# 在 sessionfinish 里按 keep-N 回收到最近 3 份——此时持锁 worker 已退出，成功率
+# 高。契约：任何异常（含 scripts/prune_test_artifacts.py 缺失）都不得影响 pytest
+# 退出码——--basetemp 固定在仓库内的原始理由就是「保证失败信号可信」
+# （TEST_COMMANDS.md）。应急开关：设 MMH3_KEEP_TEST_TMP=1 跳过自动回收。
+# ---------------------------------------------------------------------------
+
+def pytest_sessionfinish(session, exitstatus):
+    import importlib.util
+    import os
+
+    if os.environ.get("MMH3_KEEP_TEST_TMP") == "1":
+        return
+    try:
+        script = PROJECT_ROOT / "scripts" / "prune_test_artifacts.py"
+        spec = importlib.util.spec_from_file_location("prune_test_artifacts", script)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        basetemp = Path(str(session.config.option.basetemp)) if session.config.option.basetemp else None
+        mod.prune_path(basetemp, 3)
+        # .benchmarks 的 autosave 实测在平台子目录第二层（Windows-CPython-3.12-64bit/），
+        # 留档价值高于 tmp 残留，keep 放宽到 5（与脚本 --bench-keep 默认一致）
+        mod.prune_path(PROJECT_ROOT / ".benchmarks", 5, mode="child-files")
+    except Exception:  # noqa: BLE001, S110 — 契约：副产物回收绝不得影响退出码，静默是设计
+        pass
+
+
 @pytest.fixture(scope="session")
 def project_root():
     """返回项目根目录路径"""

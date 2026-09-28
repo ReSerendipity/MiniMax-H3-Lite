@@ -27,5 +27,11 @@
   "lock_branch": false,
   "allow_fork_syncing": false,
   "restrictions": null,
-  "allow_auto_merge": true
+  "allow_auto_merge": true,
+  "policy": {
+    "enforce_admins": false,
+    "bypass_note": "admin（ReSerendipity，仓库 owner）可绕过 PR 要求直推 main；其他协作者必须走 PR + 1 审批。个人账号仓库不支持用户级 bypass，以 enforce_admins=false 实现。"
+  },
+  "_measured_at": "2026-09-28T10:25Z（gh api repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection，启用 PR 要求 + enforce_admins=false）",
+  "_meets_reality": "live 已改为：require PR(1 approval) + enforce_admins=false；owner/admin 直推 main 免 PR，其余账号强制 PR。"
 }

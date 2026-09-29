@@ -299,7 +299,7 @@ jobs:
         # 安全评估 M1 根因门禁：MMH3_* 环境变量覆盖的 Settings 字段必须被代码真实
         # 应用，否则判失败（声明即生效的假安全感）。纯标准库，无需安装依赖。
         run: |
-          python scripts/check_config_refs.py
+          python scripts/check_config_refs.py --minimal
       - name: comfy_kernel 暴露面棘轮 + 调用面断言
         # 安全合规评估报告（2026-09-05）P1：vendored cli_args.py 裸 --listen 回退
         # 0.0.0.0,:: 的写法（const=）不被上方 0.0.0.0 断言的 grep 模式匹配，

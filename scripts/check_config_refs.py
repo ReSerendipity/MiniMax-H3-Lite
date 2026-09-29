@@ -22,7 +22,11 @@ MiniMax 适配：
 任一缺失以非零退出码终止，作为 CI 门禁。
 
 用法：
-    python scripts/check_config_refs.py
+    python scripts/check_config_refs.py            # 全量输出（开发机交互）
+    python scripts/check_config_refs.py --minimal   # 精简输出（CI / 可预测模式）
+
+``--minimal`` 模式（2026-09-28 稳定化）：抑制逐字段 [INFO]/[WARN] 行，
+只输出摘要计数与 [FAIL] 明细，保证 CI 输出不因 allowlist 增删而整体变动。
 """
 
 from __future__ import annotations
@@ -281,27 +285,34 @@ def is_env_read_in_scripts(env_key: str, files: list[Path]) -> bool:
 
 
 def main() -> int:
+    minimal = "--minimal" in sys.argv
     if not CONFIG_PY.exists():
         print(f"[FAIL] 找不到 {CONFIG_PY}")
         return 1
     fields = collect_settings_fields()
     env_map = collect_env_map()
-    print(f"[INFO] Settings 字段 {len(fields)} 个；可由环境变量覆盖的字段 {len(env_map)} 个")
-    if not env_map:
-        print("[WARN] 未从 from_env() 解析到任何 MMH3_* 环境变量映射，请检查脚本逻辑")
 
     backend_files = _py_files(BACKEND_DIR)
     script_files = _py_files(SCRIPTS_DIR)
 
+    # 计数器：无论 minimal 与否都累积，摘要行始终输出
+    n_applied = 0
+    n_allowlist = 0
+    n_non_env_reserved = 0
     unconsumed: list[str] = []
+
     for env_key, attr in sorted(env_map.items()):
         applied_backend = is_read_as_settings_attr(attr, backend_files)
         applied_launch = is_env_read_in_scripts(env_key, script_files)
         if applied_backend or applied_launch:
-            where = "backend" if applied_backend else "scripts(启动层)"
-            print(f"[INFO] {env_key} -> settings.{attr} 已应用（{where}）")
+            n_applied += 1
+            if not minimal:
+                where = "backend" if applied_backend else "scripts(启动层)"
+                print(f"[INFO] {env_key} -> settings.{attr} 已应用（{where}）")
         elif attr in _ALLOWLIST:
-            print(f"[WARN] {env_key} -> settings.{attr} 未应用，但属保留字段（allowlist），跳过")
+            n_allowlist += 1
+            if not minimal:
+                print(f"[WARN] {env_key} -> settings.{attr} 未应用，但属保留字段（allowlist），跳过")
         else:
             unconsumed.append(f"{env_key} -> settings.{attr}")
 
@@ -312,15 +323,15 @@ def main() -> int:
         )
 
     # ── 非 env 覆盖字段的死配置检测（扩面：覆盖全部 Settings 字段）──────
-    # 不经 from_env() 的字段若既无 settings.<attr> 消费点、又不在显式保留表
-    # _RESERVED_NON_ENV 中，同样视为幽灵控制（评估报告 P2-⑤）。
     env_covered = set(env_map.values())
     non_env_unconsumed: list[str] = []
     for field in sorted(fields - env_covered):
         if is_read_as_settings_attr(field, backend_files) or is_read_as_settings_attr(field, script_files):
             continue
         if field in _RESERVED_NON_ENV:
-            print(f"[WARN] settings.{field} 当前无消费点，属显式保留字段（non-env allowlist），跳过")
+            n_non_env_reserved += 1
+            if not minimal:
+                print(f"[WARN] settings.{field} 当前无消费点，属显式保留字段（non-env allowlist），跳过")
             continue
         non_env_unconsumed.append(field)
     for field in non_env_unconsumed:
@@ -328,6 +339,16 @@ def main() -> int:
             f"settings.{field} 声明后全仓无消费点、也无环境变量覆盖（非 env 幽灵字段）；"
             f"若为预留请在 _RESERVED_NON_ENV 显式登记，否则补消费点或删除声明"
         )
+
+    # ── 摘要行（始终输出，格式稳定）──────────────────────
+    print(
+        f"config-refs audit: {len(fields)} settings fields"
+        f" / {len(env_map)} env-overridable"
+        f" / {n_applied} applied"
+        f" / {n_allowlist} env-allowlist"
+        f" / {n_non_env_reserved} non-env-reserved"
+        f" / {len(errors)} failures"
+    )
 
     if errors:
         print("\n[FAIL] 配置-实现一致性门禁未通过：")

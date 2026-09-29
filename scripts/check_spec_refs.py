@@ -1,26 +1,27 @@
 #!/usr/bin/env python3
-"""Thin wrapper -> shared family auditor; --minimal fallback for CI.
+"""Thin wrapper -> shared family auditor; --minimal for deterministic self-contained audit.
 
 The auditor lives OUTSIDE this repo (a sibling .spec_audit directory next to
 the project).  On a developer machine where it is found the check is
-authoritative.  Its console output is captured and decoded UTF-8 (same
-convention as _git()) with the child forced via PYTHONIOENCODING, so a
-cp936-locale Windows console no longer crashes the run before a verdict is
-printed (2026-09-18 harness re-check).  In a fresh CI
-checkout it is absent: with ``--minimal`` (passed explicitly by both
-docs-consistency.yml and structure-guard.yml) a self-contained dead-link audit
-runs over tracked Markdown instead of silently skipping — any relative Markdown
-link whose target is missing on disk AND not gitignored fails the build
-(gitignored targets are allowed by family convention: local-only governance
-docs may be referenced).  Beyond tracked Markdown the audit also reads
-``AGENTS.md`` at the repo root and any ``docs/agents/*.md`` from disk, so the
-self-evolution contract itself is checked even though those files are
-.gitignored and therefore invisible to ``git ls-files``; on a clean CI
-checkout those paths simply do not exist on disk and contribute zero files
-(2026-09-25 harness fix: 铁律#6 在 CI/干净检出下对契约本身同样可复现).  Without
-the flag the missing auditor is a gate that could not run at all, so the
-wrapper no longer reports a silent "CI green": it prints an explicit error and
-exits 2 (2026-09-19 harness fix: anti empty-run green light).
+authoritative — but ONLY when ``--minimal`` is not passed.  Its console output
+is captured and decoded UTF-8 (same convention as _git()) with the child
+forced via PYTHONIOENCODING, so a cp936-locale Windows console no longer
+crashes the run before a verdict is printed (2026-09-18 harness re-check).
+
+``--minimal`` is a **deterministic mode selector** (2026-09-28 stabilisation):
+when present the self-contained dead-link audit ALWAYS runs, regardless of
+whether the family auditor exists on disk.  This guarantees identical output
+on dev machines and CI — the core predictability requirement.  The audit
+scans tracked Markdown plus ``AGENTS.md`` / ``docs/agents/*.md`` from disk
+(any relative Markdown link whose target is missing on disk AND not
+gitignored fails the build; gitignored targets are allowed by family
+convention).  On a clean CI checkout those governance paths simply do not
+exist on disk and contribute zero files (2026-09-25 harness fix: 铁律#6 在
+CI/干净检出下对契约本身同样可复现).
+
+Without ``--minimal`` the missing auditor is a gate that could not run at
+all, so the wrapper prints an explicit error and exits 2 (2026-09-19 harness
+fix: anti empty-run green light).
 """
 from __future__ import annotations
 
@@ -191,11 +192,14 @@ def authoritative(auditor: Path) -> int:
 
 
 def main() -> int:
+    # --minimal is a deterministic mode selector: always run self-contained
+    # audit regardless of family auditor presence (2026-09-28 stabilisation).
+    # This guarantees identical output on dev machines and CI.
+    if "--minimal" in sys.argv:
+        return minimal_audit()
     auditor = next((p for p in AUDITORS if p.is_file()), None)
     if auditor is not None:
         return authoritative(auditor)  # 开发机：外部家族审计器存在时仍走权威审计
-    if "--minimal" in sys.argv:
-        return minimal_audit()  # CI/干净 checkout：降级为自包含死链审计，不再静默跳过
     # 审计器缺失且未显式选择降级：门禁实际未执行，不得伪装成绿灯（exit 2 = 无法产出判定）。
     print("ERROR: family auditor not found and --minimal not passed; the spec-ref "
           "gate could not run — no verdict, failing loudly instead of CI green.\n"

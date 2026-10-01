@@ -83,7 +83,7 @@ pycparser==3.0
 pydantic==2.13.5
 pydantic-settings==2.15.0
 pydantic_core==2.49.0
-pyflakes==3.4.0
+pyflakes==4.0.0
 Pygments==2.21.0
 PyOpenGL==3.1.10
 pyparsing==3.3.2

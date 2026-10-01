@@ -1,6 +1,6 @@
 # MM·H3 工作台后端依赖
 fastapi>=0.104.0
-uvicorn[standard]>=0.53.0
+uvicorn[standard]>=0.54.0
 pydantic>=2.13.5
 python-multipart>=0.0.6
 jinja2>=3.1.0
@@ -21,14 +21,14 @@ einops>=0.7.0
 aiohttp>=3.11.8
 psutil>=5.9.0
 alembic>=1.20.0
-SQLAlchemy>=2.0.54
+SQLAlchemy>=2.1.1
 blake3>=1.0.9
 simpleeval>=1.0.8
 yarl>=1.25.1
 torchsde>=0.2.6
 scipy>=1.18.1
 sentencepiece>=0.1.99
-comfy-kitchen==0.2.34
+comfy-kitchen==0.2.35
 comfy-aimdo==0.5.5
 PyOpenGL>=3.1.8
 kornia>=0.7.1

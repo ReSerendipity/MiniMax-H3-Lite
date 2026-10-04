@@ -5,10 +5,7 @@ tests/test_minimal_verify.py — 最小验证脚本的映射逻辑测试（2026-
 不实际执行 pytest 命令，只测试命令构建逻辑。
 """
 
-import sys
 from pathlib import Path
-
-import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"

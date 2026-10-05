@@ -7,7 +7,8 @@
 #   ├─ version.json             {version, built_at} 发版核验用
 #   ├─ backend\ workflows\ assets\ scripts\   git archive HEAD 装跟踪路径
 #   ├─ comfy_kernel\            属 .gitignore 的 vendored 目录，从磁盘 robocopy
-#   ├─ requirements*.txt start.bat LICENSE NOTICE THIRD_PARTY_NOTICES.md README.md
+#   ├─ requirements*.txt package.json start.bat LICENSE NOTICE THIRD_PARTY_NOTICES.md README.md
+#   │                         （package.json=版本单一事实源，backend/version.py 随包读取，缺它回退 0.0.0-dev）
 #   ├─ runtime\                 便携 Python 运行时（-RuntimeDir 指定；无则必须 -SkipRuntime）
 #   ├─ model\                   四类别的真实空目录（权重不打包，用户按指引自行下载）
 #   └─ data\ logs\ uploads\     空占位目录（运行期生成物落这里）
@@ -83,6 +84,7 @@ Write-Host "[OK] MMH3Workbench.exe"
 # data/model/assets/comfy_kernel 全部在根下），与壳 resolve_app_dir 的 flat 分支一致。
 $archivePaths = @(
     "backend", "workflows", "assets", "scripts",
+    "package.json",
     "requirements.txt", "requirements-lock.txt",
     "start.bat", "LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "README.md"
 )

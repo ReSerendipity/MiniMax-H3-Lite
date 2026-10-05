@@ -74,6 +74,7 @@
 <div class="shell-modal" id="shellModal"></div>
 
 {% block page_config %}{% endblock %}
-<script src="/assets/js/shared.js"></script>
+{# 版本化 cache-busting：发布升级后浏览器不会拿旧缓存的 shared.js（2026-10-05 阶段1 实测踩坑） #}
+<script src="/assets/js/shared.js?v={{ app_version }}"></script>
 </body>
 </html>

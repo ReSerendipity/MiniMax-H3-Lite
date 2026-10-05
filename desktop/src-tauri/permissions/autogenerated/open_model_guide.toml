@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-open-model-guide"
+description = "Enables the open_model_guide command without any pre-configured scope."
+commands.allow = ["open_model_guide"]
+
+[[permission]]
+identifier = "deny-open-model-guide"
+description = "Denies the open_model_guide command without any pre-configured scope."
+commands.deny = ["open_model_guide"]

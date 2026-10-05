@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "MM·H3 桌面壳主能力：事件与最小命令集，放行本机后端页面的 IPC",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "allow-retry-start",
+    "allow-open-model-guide",
+    "allow-get-model-status"
+  ],
+  "remote": {
+    "urls": [
+      "http://127.0.0.1:*",
+      "http://localhost:*"
+    ]
+  }
+}

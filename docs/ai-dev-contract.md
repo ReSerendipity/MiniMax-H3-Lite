@@ -11,7 +11,7 @@
 | 本机路径 | 角色 | 跟踪状态 |
 |---|---|---|
 | `AGENTS.md` | AI 辅助开发指南 · 自进化协议主文档（6 条铁律、自检清单入口、文档优先级） | ❌ 本地（`.gitignore` §「AI 规范」） |
-| `docs/agents/` | 契约细化子文档 8 件：`ARCH_MAP.md`（模块地图）、`CODE_STYLE.md`（代码风格）、`CONFIG.md`（启动命令与环境变量）、`TEST_COMMANDS.md`（测试约定）、`GOTCHAS.md`（坑点台账）、`SOPS.md`（典型开发 SOP + 自进化自检清单）、`QUALITY_CONTRACT.md`（质量执行契约）、`REVISION_LOG.md`（修订记录表） | ❌ 本地（`.gitignore` §「自进化协议细化文档」） |
+| `docs/agents/` | 契约细化子文档 9 件：`ARCH_MAP.md`（模块地图）、`CODE_STYLE.md`（代码风格）、`CONFIG.md`（启动命令与环境变量）、`TEST_COMMANDS.md`（测试约定）、`GOTCHAS.md`（坑点台账）、`SOPS.md`（典型开发 SOP + 自进化自检清单）、`QUALITY_CONTRACT.md`（质量执行契约）、`REVISION_LOG.md`（修订记录表）、`RELEASE_PROFILE.md`（发版周期项目档案） | ❌ 本地（`.gitignore` §「自进化协议细化文档」） |
 | `LOCAL_RULES.md` | 所有者本地管理规则 | ❌ 本地（`.gitignore` §「本地管理规则」） |
 
 路由约定（以本机 `AGENTS.md` 为唯一入口）：项目概览/技术栈 → `docs/agents/ARCH_MAP.md`、`CONFIG.md`；

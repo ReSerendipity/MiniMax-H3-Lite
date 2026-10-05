@@ -81,10 +81,12 @@ VIAddVersionKey "LegalCopyright" "Apache-2.0（代码）；模型权重归 MiniM
   Sleep 800
 !macroend
 
-; ── 安装前告知（发版周期阶段 3 断言点：必须点确定才能继续）──────
+; ── 安装前告知（发版周期阶段 3 断言点：GUI 向导必须点确定才能继续）──
+; /S 静默模式跳过告知框（否则无人值守安装会挂死等待点击——2026-10-05 实测踩坑）
 Function .onInit
+  IfSilent +2 0
   MessageBox MB_OK|MB_ICONINFORMATION \
-    "安装前请知悉：$\r$\n$\r$\n1. 本安装包不含模型权重（官方模型约 90.2GB）。安装完成后，请按安装目录下的《模型下载与放置指引》(MODEL_SETUP_GUIDE.md) 从魔搭社区下载并放入 model\ 对应子目录；$\r$\n$\r$\n2. 程序将安装到当前用户目录（无需管理员权限）；$\r$\n$\r$\n3. 视频生成需要 NVIDIA CUDA GPU 支持；$\r$\n$\r$\n4. 代码遵循 Apache-2.0；模型权重受 MiniMax H3 Community License 约束（详见 NOTICE）。"
+    "安装前请知悉：$\r$\n$\r$\n1. 本安装包不含模型权重（官方模型 9 个文件约 77.7GB）。安装完成后，请按安装目录下的《模型下载与放置指引》(MODEL_SETUP_GUIDE.md) 从魔搭社区下载并放入 model\ 对应子目录；$\r$\n$\r$\n2. 程序将安装到当前用户目录（无需管理员权限）；$\r$\n$\r$\n3. 视频生成需要 NVIDIA CUDA GPU 支持；$\r$\n$\r$\n4. 代码遵循 Apache-2.0；模型权重受 MiniMax H3 Community License 约束（详见 NOTICE）。"
   ReadRegStr $R0 HKCU "${UNINST_KEY}" ""
   StrCmp $R0 "" +2
   StrCpy $INSTDIR $R0
@@ -149,17 +151,33 @@ SectionEnd
 
 Section "Uninstall"
   !insertmacro KillRunning
+  ; /S 静默卸载默认走「保留数据」分支（安全侧），不弹询问框
+  IfSilent uninst_prog
   MessageBox MB_YESNO|MB_ICONQUESTION \
-    "是否同时删除模型权重与生成数据？$\r$\n$\r$\n【否】仅卸载程序，保留 model\（约 90GB 权重）、data\、uploads\、assets\ 中你的数据；$\r$\n【是】删除整个安装目录，全部数据不可恢复。" \
+    "是否同时删除模型权重与生成数据？$\r$\n$\r$\n【否】仅卸载程序，保留 model\（约 77.7GB 权重）、data\、uploads\、assets\ 中你的数据；$\r$\n【是】删除整个安装目录，全部数据不可恢复。" \
     IDYES uninst_all IDNO uninst_prog
 uninst_all:
   RMDir /r "$INSTDIR"
   Goto uninst_keys
 uninst_prog:
-  ; 仅卸载程序本体（扁平布局下 code/data 同根，「保留」= 其余文件全部留在原地）
+  ; 仅卸载程序本体：删除代码/运行时目录与根级程序文件，保留 model/data/uploads/assets/logs
+  ; （用户数据与 77.7GB 权重不动；代码目录重装即恢复）
+  RMDir /r "$INSTDIR\backend"
+  RMDir /r "$INSTDIR\comfy_kernel"
+  RMDir /r "$INSTDIR\workflows"
+  RMDir /r "$INSTDIR\scripts"
+  RMDir /r "$INSTDIR\runtime"
   Delete "$INSTDIR\${APP_NAME}.exe"
   Delete "$INSTDIR\MODEL_SETUP_GUIDE.md"
   Delete "$INSTDIR\version.json"
+  Delete "$INSTDIR\package.json"
+  Delete "$INSTDIR\requirements.txt"
+  Delete "$INSTDIR\requirements-lock.txt"
+  Delete "$INSTDIR\start.bat"
+  Delete "$INSTDIR\LICENSE"
+  Delete "$INSTDIR\NOTICE"
+  Delete "$INSTDIR\README.md"
+  Delete "$INSTDIR\THIRD_PARTY_NOTICES.md"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 uninst_keys:

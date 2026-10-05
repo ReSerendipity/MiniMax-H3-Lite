@@ -54,24 +54,26 @@ $volumes = Get-ChildItem $OutputDir -Filter "MMH3Workbench-Data.7z.*" -File |
 if (-not $volumes) { throw "未找到分卷文件（先跑一次不带 -RefreshChecksums 的打卷）" }
 if (-not $RefreshChecksums) { Write-Host "[OK] 回读验证通过：$($volumes.Count) 卷" }
 
-# ── SHA256SUMS（覆盖全部分卷；Setup exe 存在时一并纳入）────────
+# ── SHA256SUMS.desktop（覆盖全部分卷；Setup exe 存在时一并纳入）──
+# 命名避让：release.yml 已占用根级 SHA256SUMS（源码归档），桌面校验和用
+# .desktop 后缀（对齐仓内 SHA256SUMS.scripts 惯例），上传不互相覆盖。
 $hashTargets = @($volumes)
 $setup = Get-ChildItem $OutputDir -Filter "Setup-MMH3Workbench-*.exe" -File |
     Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if ($setup) { $hashTargets += $setup }
 
-$sumsFile = Join-Path $OutputDir "SHA256SUMS"
+$sumsFile = Join-Path $OutputDir "SHA256SUMS.desktop"
 $lines = foreach ($f in $hashTargets) {
     $h = (Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLower()
     "$h  $($f.Name)"
 }
 $lines | Set-Content $sumsFile -Encoding ASCII
-Write-Host "[OK] SHA256SUMS（$($hashTargets.Count) 项）"
+Write-Host "[OK] SHA256SUMS.desktop（$($hashTargets.Count) 项）"
 
 # ── upload-list（阶段 4 逐文件上传循环用）──────────────────────
 $uploadNames = @($volumes.Name)
 if ($setup) { $uploadNames += $setup.Name }
-$uploadNames += "SHA256SUMS"
+$uploadNames += "SHA256SUMS.desktop"
 $uploadNames | Set-Content (Join-Path $OutputDir "upload-list.txt") -Encoding ASCII
 
 $totalGB = [math]::Round((($hashTargets | Measure-Object Length -Sum).Sum) / 1GB, 2)

@@ -223,3 +223,13 @@ scripts/safe-clean.sh
 CONTRIBUTING.md
 CODE_OF_CONDUCT.md
 SUPPORT.md
+
+# 桌面壳（Tauri）构建产物与本地依赖（2026-10-05 桌面壳前置工程）
+desktop/node_modules/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+
+# 安装器本地工具（7za 控制台版 + dll，装配时放置，不入库）
+scripts/installer/7za.exe
+scripts/installer/7za.dll
+scripts/installer/7z.dll

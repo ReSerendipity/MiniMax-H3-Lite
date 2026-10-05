@@ -24,7 +24,7 @@ artifact_root_patterns:
   - 'tmp_.*'
   - '.*~$'
 gitignored_expect:
-  - 学习仓库复查后续任务执行计划书.md"
+  - 学习仓库复查后续任务执行计划书.md
   - .benchmarks
   - .canvas-meta.json
   - .coverage
@@ -70,6 +70,7 @@ root_allowlist:
   - USER_AGREEMENT.md
   - assets
   - backend
+  - desktop
   - docker-compose.pinned.yml.example
   - docker-compose.yml
   - docs

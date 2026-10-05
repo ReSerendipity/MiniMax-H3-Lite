@@ -1,0 +1,14 @@
+{
+  "name": "mmh3-desktop",
+  "version": "2.5.1",
+  "private": true,
+  "description": "MM·H3 工作台桌面应用壳（Tauri v2，拉起本仓 FastAPI 后端）",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4"
+  }
+}

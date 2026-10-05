@@ -114,6 +114,31 @@ def test_coverage_gate_matches_pytest_ini():
     assert ci_threshold.group(1) == ini_threshold.group(1)
 
 
+def test_desktop_shell_versions_track_package_json():
+    """桌面壳版本三件套与 package.json 单一事实源同步（2026-10-05 桌面壳前置工程）。
+
+    覆盖：desktop/src-tauri/tauri.conf.json、desktop/package.json、
+    desktop/src-tauri/Cargo.toml（tomllib 解析，Python 3.11+，CI/本地均 3.12）。
+    三件套均为 git 跟踪文件，干净 CI checkout 中必然存在。
+    """
+    import tomllib
+
+    tauri_conf = json.loads(read_text("desktop/src-tauri/tauri.conf.json"))
+    assert tauri_conf["version"] == project_version(), (
+        "tauri.conf.json 的 version 与 package.json 不一致"
+    )
+
+    desktop_pkg = json.loads(read_text("desktop/package.json"))
+    assert desktop_pkg["version"] == project_version(), (
+        "desktop/package.json 的 version 与 package.json 不一致"
+    )
+
+    cargo = tomllib.loads(read_text("desktop/src-tauri/Cargo.toml"))
+    assert cargo["package"]["version"] == project_version(), (
+        "desktop/src-tauri/Cargo.toml 的 version 与 package.json 不一致"
+    )
+
+
 @pytest.mark.skipif(
     not (PROJECT_ROOT / "AGENTS.md").exists(),
     reason="AGENTS.md 为 .gitignore 忽略的本地文档，CI checkout 中不存在",

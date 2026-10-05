@@ -18,6 +18,29 @@ var memStore={};
 function storeGet(k){try{var v=localStorage.getItem(k);return v===null?undefined:v;}catch(e){return memStore[k];}}
 function storeSet(k,v){try{localStorage.setItem(k,v);}catch(e){}memStore[k]=v;}
 
+/* 页面内 toast（替代原生 window.alert：宿主层对话框遮挡自动化且与 UI 风格割裂，
+   2026-10-05 发版阶段 1 用户指出——提示必须在页面内部）。复用请直接调用。 */
+var toastTimer=null;
+function mmh3Toast(msg){
+  var t=document.getElementById('mmh3Toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='mmh3Toast';
+    t.setAttribute('role','status');
+    t.style.cssText='position:fixed;left:50%;bottom:56px;transform:translateX(-50%);'
+      +'z-index:99999;max-width:76vw;padding:10px 20px;border-radius:10px;'
+      +'background:rgba(20,26,25,.92);color:#f2f7f6;font:13px/1.6 "Segoe UI","Microsoft YaHei",sans-serif;'
+      +'box-shadow:0 8px 28px rgba(0,0,0,.35);border:1px solid rgba(42,163,154,.55);'
+      +'opacity:0;transition:opacity .18s ease;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.opacity='1';
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.style.opacity='0';},3200);
+}
+window.mmh3Toast=mmh3Toast;
+
 /* ============ 页面配置与模式映射（与官方工作流一致） ============ */
 var PAGE=window.MMH3_PAGE||{id:'t2v',file:'/',mode:'text'};
 var MODE_PAGES=[
@@ -213,7 +236,7 @@ if(projClear){
     fetch(API_BASE+'/projects/clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keep_uploads:false})})
       .then(function(r){return r.json();})
       .then(function(res){
-        if(res.detail){window.alert('清空失败: '+res.detail);return;}
+        if(res.detail){mmh3Toast('清空失败: '+res.detail);return;}
         currentProjectId=null;
         projNameEl.textContent='未命名项目_01';
         if(projMetaEl)projMetaEl.textContent='0 SHOTS';
@@ -230,9 +253,9 @@ if(projClear){
         segs=[];
         updateTotals();
         loadProjects();
-        window.alert('已清空：'+JSON.stringify(res.cleared)+'，删除文件 '+JSON.stringify(res.removed_files));
+        mmh3Toast('已清空：'+JSON.stringify(res.cleared)+'，删除文件 '+JSON.stringify(res.removed_files));
       })
-      .catch(function(){window.alert('清空失败: 后端连接失败');})
+      .catch(function(){mmh3Toast('清空失败: 后端连接失败');})
       .finally(function(){
         projClear.disabled=false;
         projClear.textContent='⌫ 一键清空全部';
@@ -448,20 +471,20 @@ function uploadFrame(slot){
   var inp=$('fsInput');
   var sid=activeShotId();
   if(!inp)return;
-  if(!currentProjectId||!sid){window.alert('请先选择项目与镜头');return;}
+  if(!currentProjectId||!sid){mmh3Toast('请先选择项目与镜头');return;}
   inp.dataset.slot=slot;
   inp.click();
 }
 function uploadRefs(){
   var inp=$('refInput');
   if(!inp)return;
-  if(!currentProjectId||!activeShotId()){window.alert('请先选择项目与镜头');return;}
+  if(!currentProjectId||!activeShotId()){mmh3Toast('请先选择项目与镜头');return;}
   inp.click();
 }
 function uploadPairedAudio(videoAssetId){
   var inp=$('pairAudioInput');
   if(!inp)return;
-  if(!currentProjectId||!activeShotId()){window.alert('请先选择项目与镜头');return;}
+  if(!currentProjectId||!activeShotId()){mmh3Toast('请先选择项目与镜头');return;}
   inp.dataset.pairedWith=videoAssetId;
   inp.click();
 }
@@ -476,7 +499,7 @@ function doUpload(files,shotId,onDone,pairedWith){
     fetch(API_BASE+'/upload',{method:'POST',body:fd})
       .then(function(r){return r.json();})
       .then(function(a){
-        if(a.detail||!a.id){failed++;window.alert('上传失败: '+(a.detail||'未知错误'));}
+        if(a.detail||!a.id){failed++;mmh3Toast('上传失败: '+(a.detail||'未知错误'));}
         else{
           if(a.path)pathMap[a.id]=a.path;
           if(SHOT_REFS[shotId]){
@@ -661,27 +684,27 @@ function submitGeneration(){
    * （insertTag 插入标签、runContextIR 拼接优化文案、点击提示词库 .preset 回填
    * 都可能把值顶过上限），故提交口再判一次，口径与后端 422 一致。 */
   if(promptInput.value.length>MAX_PROMPT_CHARS){
-    window.alert('提示词 '+promptInput.value.length+' 字符，超出 '+MAX_PROMPT_CHARS+' 字符上限，已阻止提交（后端同样会以 422 拒绝）。');
+    mmh3Toast('提示词 '+promptInput.value.length+' 字符，超出 '+MAX_PROMPT_CHARS+' 字符上限，已阻止提交（后端同样会以 422 拒绝）。');
     updateCount();
     return;
   }
   var seg=document.querySelector('.seg.active');
-  if(!seg||!seg.dataset.id){window.alert('请先在项目中选择镜头');return;}
+  if(!seg||!seg.dataset.id){mmh3Toast('请先在项目中选择镜头');return;}
   var sid=seg.dataset.id;
   var mode=getActiveMode();
   var params=getActiveParams();
   var refIds=[];
   if(PAGE.id==='i2v'){
     var i2v=i2vSlotsFor(sid);
-    if(mode==='first_frame'&&!i2v.first){window.alert('首帧模式需先上传首帧图像');return;}
-    if(mode==='last_frame'&&!i2v.last){window.alert('末帧模式需先上传末帧图像');return;}
-    if(mode==='first_last'&&(!i2v.first||!i2v.last)){window.alert('首尾帧模式需上传首帧与末帧各一张图像');return;}
+    if(mode==='first_frame'&&!i2v.first){mmh3Toast('首帧模式需先上传首帧图像');return;}
+    if(mode==='last_frame'&&!i2v.last){mmh3Toast('末帧模式需先上传末帧图像');return;}
+    if(mode==='first_last'&&(!i2v.first||!i2v.last)){mmh3Toast('首尾帧模式需上传首帧与末帧各一张图像');return;}
     refIds=[i2v.first,i2v.last].filter(Boolean);
   }else if(PAGE.id==='r2v'){
     var refs=SHOT_REFS[sid]||[];
     refIds=refs.map(function(r){return r.id;});
-    if(!refIds.length){window.alert('多模态参考模式需要至少 1 个参考素材');return;}
-    if(refs.every(function(r){return r.kind==='audio';})){window.alert('音频须搭配图像或视频输入');return;}
+    if(!refIds.length){mmh3Toast('多模态参考模式需要至少 1 个参考素材');return;}
+    if(refs.every(function(r){return r.kind==='audio';})){mmh3Toast('音频须搭配图像或视频输入');return;}
   }
   queueItem.textContent='QUEUE 1 · 1';
   queueItem.style.fontWeight='700';
@@ -764,8 +787,10 @@ function loadHistory(pid){
   }).catch(function(){});
 }
 var historyBtn=$('historyBtn'),historyPanel=$('historyPanel');
-if(historyBtn&&historyPanel){
-  historyBtn.addEventListener('click',function(){historyPanel.classList.toggle('open');});
+/* 历史库开合只走 document 级事件委托（.history-btn 分支）——
+   此处不得再加直接 toggle listener：双监听同一次点击 toggle 两次净零，
+   按钮对真实用户失效（2026-10-05 发版阶段 1 实测发现的 P1，#G-24）。 */
+if(historyPanel){
   var hc=$('historyClose');
   if(hc)hc.addEventListener('click',function(){historyPanel.classList.remove('open');});
 }
@@ -800,7 +825,7 @@ function loadEngines(){
           fetch(API_BASE+'/engine/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({backend:e.name})})
             .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
             .then(function(){toggleEngineMenu(false);loadEngines();checkHealth();})
-            .catch(function(){window.alert('引擎切换失败');toggleEngineMenu(false);});
+            .catch(function(){mmh3Toast('引擎切换失败');toggleEngineMenu(false);});
         });
       }
       box.appendChild(it);
@@ -1004,15 +1029,15 @@ var genBtn=$('genBtn');
 if(genBtn)genBtn.addEventListener('click',submitGeneration);
 
 function addShot(){
-  if(!currentProjectId){window.alert('请先新建或选择项目');return;}
+  if(!currentProjectId){mmh3Toast('请先新建或选择项目');return;}
   var body={name:'新镜头 '+(segs.length+1),prompt:promptInput.value||'',mode:getActiveMode(),duration:8,aspect:'16:9',params:{}};
   fetch(API_BASE+'/projects/'+currentProjectId+'/shots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){return r.json();})
     .then(function(s){
-      if(s.detail||!s.id){window.alert('创建镜头失败: '+(s.detail||'未知错误'));return;}
+      if(s.detail||!s.id){mmh3Toast('创建镜头失败: '+(s.detail||'未知错误'));return;}
       loadProjectShots(currentProjectId,s.id);
     })
-    .catch(function(){window.alert('创建镜头失败: 后端连接失败');});
+    .catch(function(){mmh3Toast('创建镜头失败: 后端连接失败');});
 }
 
 /* ============ 初始化 ============ */

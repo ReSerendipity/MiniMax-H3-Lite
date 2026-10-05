@@ -114,6 +114,11 @@ const click = (d, sel) => d.querySelector(sel).dispatchEvent(new d.defaultView.M
     assert(d.querySelector('#appMenu').classList.contains('open'), 'appearance menu opens');
     click(d, '.app-opt[data-app="shell"][data-value="pj"]');
     assert(d.documentElement.getAttribute('data-shell') === 'pj' && dom.window.localStorage.getItem('mmh3_shell') === 'pj', 'menu switches shell (pj) + persists');
+    // 历史库面板回归（G-24：直接+委托双监听曾致一次点击 toggle 两次净零，按钮失效）
+    click(d, '#historyBtn');
+    assert(d.querySelector('#historyPanel').classList.contains('open'), 'history panel opens on one click');
+    click(d, '#historyBtn');
+    assert(!d.querySelector('#historyPanel').classList.contains('open'), 'history panel closes on second click');
     const segs = [...d.querySelectorAll('#tlSegments .seg[data-shot]')];
     assert(segs.length === 2 && segs[0].querySelector('.seg-mode').textContent === 'T2V', 'timeline segs + mode badge');
   }
@@ -245,8 +250,11 @@ const click = (d, sel) => d.querySelector(sel).dispatchEvent(new d.defaultView.M
     const sent7001 = await fire('x'.repeat(7001));
     assert(cc.classList.contains('over'), '7001 chars: .over flag raised');
     assert(sent7001 === false, '7001 chars: submission BLOCKED (no POST /api/generations)');
-    assert(alerts.length === 1 && /7001/.test(alerts[0]) && /7000/.test(alerts[0]),
-      '7001 chars: alert names both actual and limit -> ' + JSON.stringify(alerts[0] || ''));
+    // G-25：提示走页面内 toast（原生 window.alert 已全量替换——宿主层对话框遮挡自动化且风格割裂）
+    const toast = d.getElementById('mmh3Toast');
+    assert(!!toast && /7001/.test(toast.textContent) && /7000/.test(toast.textContent),
+      '7001 chars: in-page toast names both actual and limit -> ' + (toast ? JSON.stringify(String(toast.textContent).slice(0, 44)) : 'missing'));
+    assert(alerts.length === 0, 'no native window.alert calls (all migrated to in-page toast)');
 
     // 口径修正证据：含空白时 stripped<7000 但 raw>7000，旧逻辑不会标红、后端会 422。
     // 现在以 raw（=后端 len()）为准：必须拦截。

@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-05T06:03:50.979332+00:00",
+  "generated_at": "2026-10-05T11:02:40.170192+00:00",
   "generator": "scripts/generate_integrity_manifest.py",
   "description": "backend 核心模块 + comfy_kernel 关键入口 SHA256 完整性清单（行尾归一化）",
   "public_key_sha256": "c3a09cb118828137bfc32bb8671b93302dc2c82bfe6aa6fc15a0065304103da6",
   "files": {
     "backend/__init__.py": "de6acf2c2ceb90dc6699ffe957c6a005d466d58f62e3b3348a2655dd5028f5c0",
     "backend/checkpoint.py": "96eb55b1912c07d5c7dd35b2ead20180c1d3863647ebd33071bd85be5120fc12",
-    "backend/config.py": "7956b75785032dba9ec1b6029d9411aaabb8b668b28aa232c3079e1b955f3fc0",
+    "backend/config.py": "c02e4926d49d240581e31c8064ad90cf263bf173e762d45cc68b9d2119f0fb06",
     "backend/database.py": "2bf08bd23950a51e57e0f51e1f65da3d7fe316813345ff37c6cd88b0849538f3",
     "backend/engine_registry.py": "b745cf87653fe8d19bf4cf01704f7fd410d0c7a507c08068dac0db77643d6d74",
     "backend/h3/__init__.py": "a990606938d68dd6b97e4c87c3e4a2e989eec5f8622a1094037cc29ee0c4002b",

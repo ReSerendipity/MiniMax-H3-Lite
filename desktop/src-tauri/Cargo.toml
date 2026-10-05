@@ -1,6 +1,6 @@
 [package]
 name = "mmh3-desktop"
-version = "2.5.1"
+version = "2.6.0"
 description = "MM·H3 工作台桌面应用壳"
 authors = ["MMH3 Workbench"]
 edition = "2021"

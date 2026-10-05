@@ -25,7 +25,8 @@ def main() -> None:
     )
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     for name in PAGES:
-        html = env.get_template(f"{name}.html").render()
+        # app_version 用占位值：冒烟渲染不依赖真实版本（真实值由 FastAPI 路由注入）
+        html = env.get_template(f"{name}.html").render({"app_version": "0.0.0"})
         (OUTPUT_DIR / f"{name}.html").write_text(html, encoding="utf-8")
         print(f"[OK] 渲染 {name}.html -> tests/frontend/_rendered/")
 

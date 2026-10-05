@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.6.0](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.5.1...v2.6.0) (2026-10-05)
+
+
+### Features
+
+* **desktop:** 新增 Tauri v2 桌面壳（MMH3Workbench）——壳以子进程拉起 FastAPI 后端（空闲端口注入 + /api/health 轮询 + 就绪导航），watchdog 自动重启，退出回收进程树；解释器解析链对齐 start.bat/clean_launch（runtime → MMH3_DESKTOP_PYTHON → .venv → WinPython → 兄弟项目 → 系统 CUDA Python）；模型缺失非阻断引导（MODEL_SETUP_GUIDE.md）
+* **desktop:** 桌面发版打包链——staging 扁平布局组装（git archive + comfy_kernel 磁盘复制）、7z -v1900M 数据分卷 + SHA256SUMS、NSIS 向导安装器（currentUser 免管、安装前告知、卸载保留数据分支）；安装包不含模型，用户按指引从魔搭下载官方权重
+* **ui:** 状态栏新增可见版本位（v{{app_version}}，与 package.json 单一事实源同源注入），补齐发版阶段 1 的「页面版本号=目标版本」断言依据
+
+
 ## [2.5.1](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.5.0...v2.5.1) (2026-09-26)
 
 

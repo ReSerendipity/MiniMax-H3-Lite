@@ -55,19 +55,21 @@ app.include_router(system.router, prefix="/api", tags=["system"])
 
 
 # ---- 页面路由（Jinja2 模板，单端口直出） ----
+# 页面上下文统一注入 app_version（状态栏可见版本位，发版阶段 1 断言用；
+# 单一事实源与 app.version 同源，禁止模板内硬编码）
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def page_t2v(request: Request):
-    return templates.TemplateResponse(request, "t2v.html")
+    return templates.TemplateResponse(request, "t2v.html", {"app_version": APP_VERSION})
 
 
 @app.get("/i2v", response_class=HTMLResponse, include_in_schema=False)
 def page_i2v(request: Request):
-    return templates.TemplateResponse(request, "i2v.html")
+    return templates.TemplateResponse(request, "i2v.html", {"app_version": APP_VERSION})
 
 
 @app.get("/r2v", response_class=HTMLResponse, include_in_schema=False)
 def page_r2v(request: Request):
-    return templates.TemplateResponse(request, "r2v.html")
+    return templates.TemplateResponse(request, "r2v.html", {"app_version": APP_VERSION})
 
 
 @app.on_event("startup")

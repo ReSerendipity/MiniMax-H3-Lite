@@ -148,6 +148,10 @@ class Settings:
             s.QUANTIZATION = env["MMH3_QUANTIZATION"]
         if env.get("MMH3_MAX_CONCURRENCY"):
             s.MAX_CONCURRENCY = max(1, int(env["MMH3_MAX_CONCURRENCY"]))
+        # 推理超时可经 env 放宽：消费级笔记本 GPU（12GB 显存）冷加载 H3 级模型
+        # 常超默认 600s（2026-10-05 装后真实推理实测）；默认值不变，仅显式配置时覆盖。
+        if env.get("MMH3_INFERENCE_TIMEOUT"):
+            s.INFERENCE_TIMEOUT = max(60, int(env["MMH3_INFERENCE_TIMEOUT"]))
         for env_key, attr in (
             ("MMH3_MODEL_FL2VA", "MODEL_FL2VA"),
             ("MMH3_MODEL_REF2VA", "MODEL_REF2VA"),

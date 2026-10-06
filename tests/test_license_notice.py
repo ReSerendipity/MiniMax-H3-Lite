@@ -10,6 +10,10 @@ gitignored 的 docs/ 里 —— 干净 checkout 拿不到，任何人都能静�
 import re
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.security  # 安全合规落地 P2-5
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 

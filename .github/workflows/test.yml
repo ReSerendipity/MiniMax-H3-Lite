@@ -252,6 +252,18 @@ jobs:
           npm audit --json > npm-audit-report.json || true
           cat npm-audit-report.json
 
+      - name: Bandit SAST scan (backend/)
+        # 安全合规落地 P2-1：此前 bandit 仅在 pre-commit 本地跑（.github/SECURITY.md:92
+        # 自承"CI 无 bandit job"）。此处接入 CI 报告模式——与 pip-audit/npm audit 同口径：
+        # 扫描结果落 JSON 上传 artifact，不在本步阻断（存量低危如 ffmpeg subprocess/
+        # try-except-pass 已在 pre-commit 注释中说明）；未来可按 security_baseline 同模式
+        # 接入棘轮门禁。仅扫 backend/，不扫 scripts/（与 pre-commit 口径一致）。
+        run: |
+          set -euo pipefail
+          pip install bandit
+          bandit -r backend/ -ll -f json -o bandit-report.json || true
+          python -c "import json; d=json.load(open('bandit-report.json')); print(f'Bandit Medium+ findings: {len(d[\"results\"])}')"
+
       - name: Security ratchet gate（依赖安全基线门禁）
         # 测试体系评估报告 P1-③：scripts/security_gate.py + 全零基线已就绪，
         # 在此接入 —— pip-audit 漏洞数 / npm critical/high 任一高于基线即阻断。
@@ -271,6 +283,7 @@ jobs:
           path: |
             pip-audit-report.json
             npm-audit-report.json
+            bandit-report.json
 
   # ── 安全断言（部署安全红线，2026-08-17 新增） ──────────────────
   security-assertions:

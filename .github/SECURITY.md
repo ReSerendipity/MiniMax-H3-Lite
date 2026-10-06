@@ -65,6 +65,17 @@ ComfyUI-VideoHelperSuite, ComfyUI-WanVideoWrapper, rgthree-comfy
 3. **发布**：修订记录追加一行（描述用泛化语言，不复述敏感细节），版本号按仓内协议递增；
 4. **披露**：由报告者决定是否在修复落地后再公开细节，避免 0-day 窗口扩大。
 
+### 漏洞修复 SLA（AI 评定，2026-10-06 落地）
+
+| 严重度 | Triage 确认 | 修复时限 | 适用示例 |
+|---|---|---|---|
+| **Critical**（RCE、密钥泄露、鉴权绕过） | 24 小时内 | **7 天内**合入 main 并发版 | comfy_kernel 第三方节点 RCE、Ed25519 私钥泄露、CI 凭据泄露 |
+| **High**（路径遍历、任意文件读、CVE 有 fix） | 48 小时内 | **30 天内**合入 main | uploads 路径绕过、依赖 HIGH CVE（pip-audit/Trivy 阻断项） |
+| **Medium**（信息泄露、配置弱点） | 1 周内 | 随下个版本 | 日志泄露敏感路径、Banner 信息泄露 |
+| **Low**（最佳实践改进） | 不承诺时限 | 随版本捎带 | 缺少安全头、警告信息过详 |
+
+> 注：本项目为单人维护的本地单机工具，SLA 为维护者自约束，不构成对外承诺；依赖类漏洞以 Dependabot PR + CI Trivy/pip-audit 棘轮为准（见 `.ci/security_baseline.json`，只降不升）。
+
 ## 七、数据流与存储说明（本地自管）
 
 - 项目运行期间产生的数据全部为**本地文件**：`data/mmh3.db`（SQLite 任务库）、`uploads/`（上传素材）、`outputs/`（生成结果）、`data/checkpoints/`（断点续跑快照）。

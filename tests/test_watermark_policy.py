@@ -10,7 +10,11 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+
+pytestmark = pytest.mark.security  # 安全合规落地 P2-5
 
 import watermark  # noqa: E402
 

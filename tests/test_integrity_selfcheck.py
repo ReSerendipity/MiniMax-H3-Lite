@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 import pytest  # noqa: E402
 
+pytestmark = pytest.mark.security  # 安全合规落地 P2-5
+
 from security.integrity_keys import (  # noqa: E402
     generate_manifest_signing_keypair,
     sign_manifest_ed25519,

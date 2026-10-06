@@ -51,7 +51,7 @@ kornia==0.8.3
 kornia_rs==0.1.14
 librt==0.15.0
 license-expression==30.4.4
-Mako==1.4.1
+Mako==1.4.2
 markdown-it-py==4.2.0
 MarkupSafe==3.0.3
 mccabe==0.7.0

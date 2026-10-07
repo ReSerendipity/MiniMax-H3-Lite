@@ -70,7 +70,7 @@ jobs:
         run: echo "version=$(python3 -c 'import json;print(json.load(open("package.json"))["version"])')" >> "$GITHUB_OUTPUT"
 
       - name: Build image (local only; not pushed)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false

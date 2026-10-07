@@ -52,7 +52,7 @@ jobs:
 
       - name: Upload SARIF results
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         # 【F-5 2026-09-24】去掉 continue-on-error: true。它原先把「扫描结果根本没进
         # code scanning」这一类失败咽掉，仍呈现全绿。
         # 【订正】我当初写的是"当前该步在 main 实测 success（run 35989187748 / step 6），

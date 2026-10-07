@@ -66,10 +66,20 @@ def test_shipped_json_matches_live_eight_contexts(cfg):
     assert cfg["required_status_checks"]["strict"] is False
 
 
-def test_shipped_json_reviews_null_reflects_live(cfg):
-    """线上没有 required_pull_request_reviews 子块，单一来源必须如实写 null。"""
-    assert cfg["required_pull_request_reviews"] is None
-    assert cfg["enforce_admins"] is True
+def test_shipped_json_reviews_and_admins_reflect_live(cfg):
+    """单一来源必须与 live 同口径：require PR(1 approval) + enforce_admins=false。
+
+    2026-10-07 校正：原断言固化的是 2026-09-28 快照（reviews=null、enforce_admins=true），
+    既与本文件 policy.bypass_note / _meets_reality 自述相反，也与 live 不符，
+    导致 .githooks/pre-push 的只读漂移检测每推必报 DRIFT。
+    """
+    assert cfg["required_pull_request_reviews"] == {
+        "dismiss_stale_reviews": False,
+        "require_code_owner_reviews": False,
+        "required_approving_review_count": 1,
+        "require_last_push_approval": False,
+    }
+    assert cfg["enforce_admins"] is False
 
 
 # ---------- desired_put_body ----------
@@ -78,8 +88,9 @@ def test_put_body_excludes_subresources(cfg, mod):
     body = mod.desired_put_body(cfg)
     assert "required_signatures" not in body  # 独立 POST/DELETE 子端点
     assert "allow_auto_merge" not in body  # 仓库级 PATCH 设置
-    assert body["required_pull_request_reviews"] is None
-    assert body["enforce_admins"] is True
+    assert body["required_pull_request_reviews"] == cfg["required_pull_request_reviews"]
+    assert body["enforce_admins"] is cfg["enforce_admins"]
+    assert cfg["enforce_admins"] is False  # owner 直推靠这条，不能倒回 true
     assert body["required_status_checks"]["contexts"] == cfg["required_status_checks"][
         "contexts"
     ]
@@ -116,32 +127,33 @@ def test_strict_drift_detected(cfg, mod):
 
 
 def test_reviews_presence_drift_both_directions(cfg, mod):
-    # 线上有评审块、配置要求 null -> 漂移
+    # 线上评审块与配置不同（这里偷开 code owner 硬闸）-> 漂移
     cur = live_protection_from_cfg(cfg)
     cur["required_pull_request_reviews"] = {
         "dismiss_stale_reviews": False,
-        "require_code_owner_reviews": False,
+        "require_code_owner_reviews": True,
         "required_approving_review_count": 1,
         "require_last_push_approval": False,
     }
     assert "required_pull_request_reviews" in mod.compute_drift(cur, cfg)
 
-    # 配置要求评审块、线上缺失 -> 漂移
-    cfg["required_pull_request_reviews"] = {
-        "dismiss_stale_reviews": False,
-        "require_code_owner_reviews": False,
-        "required_approving_review_count": 1,
-        "require_last_push_approval": False,
-    }
-    cur2 = live_protection_from_cfg(cfg)
-    cur2["required_pull_request_reviews"] = None
-    assert "required_pull_request_reviews" in mod.compute_drift(cur2, cfg)
+    # 线上整体缺失评审块 -> 漂移
+    cur_missing = live_protection_from_cfg(cfg)
+    cur_missing["required_pull_request_reviews"] = None
+    assert "required_pull_request_reviews" in mod.compute_drift(cur_missing, cfg)
+
+    # 配置要求 null（不要求 PR 评审）、线上却有评审块 -> 漂移
+    cfg_null = dict(cfg)
+    cfg_null["required_pull_request_reviews"] = None
+    assert "required_pull_request_reviews" in mod.compute_drift(
+        live_protection_from_cfg(cfg), cfg_null
+    )
 
 
 def test_signatures_and_flags_drift(cfg, mod):
     cur = live_protection_from_cfg(cfg)
     cur["required_signatures"] = {"enabled": True}
-    cur["enforce_admins"] = {"enabled": False}
+    cur["enforce_admins"] = {"enabled": True}  # live 若倒回 true（锁死 owner 直推）必须报漂移
     d = mod.compute_drift(cur, cfg)
     assert "required_signatures" in d
     assert "enforce_admins" in d

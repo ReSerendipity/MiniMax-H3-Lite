@@ -16,9 +16,14 @@
       "lint"
     ]
   },
-  "required_pull_request_reviews": null,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": false,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 1,
+    "require_last_push_approval": false
+  },
   "required_signatures": false,
-  "enforce_admins": true,
+  "enforce_admins": false,
   "required_linear_history": false,
   "allow_force_pushes": false,
   "allow_deletions": false,
@@ -32,6 +37,6 @@
     "enforce_admins": false,
     "bypass_note": "admin（ReSerendipity，仓库 owner）可绕过 PR 要求直推 main；其他协作者必须走 PR + 1 审批。个人账号仓库不支持用户级 bypass，以 enforce_admins=false 实现。"
   },
-  "_measured_at": "2026-09-28T10:25Z（gh api repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection，启用 PR 要求 + enforce_admins=false）",
+  "_measured_at": "2026-09-28T10:25Z 首测；2026-10-07 按 live 复核校正顶层字段（gh api repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection：require PR(1 approval)、require_code_owner_reviews=false、enforce_admins=false）。顶层字段是 apply 脚本实际写入的依据，必须与 policy/bypass_note/_meets_reality 保持同一口径，否则每次 push 都会被 .githooks/pre-push 判成漂移。",
   "_meets_reality": "live 已改为：require PR(1 approval) + enforce_admins=false；owner/admin 直推 main 免 PR，其余账号强制 PR。"
 }

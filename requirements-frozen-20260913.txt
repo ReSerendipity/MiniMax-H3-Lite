@@ -58,7 +58,7 @@ mccabe==0.7.0
 mdurl==0.1.2
 mpmath==1.4.1
 msgpack==1.2.3
-multidict==6.8.0
+multidict==7.0.0
 mypy==2.4.0
 mypy_extensions==1.1.0
 networkx==3.7

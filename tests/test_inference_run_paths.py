@@ -8,6 +8,7 @@
   * _scale_ref_images 的 PIL match / max 两种模式
 所有引擎均以桩替换，不触发真实权重加载。
 """
+import logging
 from pathlib import Path
 
 import pytest
@@ -133,9 +134,61 @@ def test_model_available_locally_true_for_local_dir(monkeypatch, tmp_path):
 
 
 def test_extract_thumbnail_missing_ffmpeg_is_silent(tmp_path):
-    """ffmpeg 缺失时缩略图提取静默失败，不影响主流程。"""
+    """ffmpeg 缺失时缩略图提取不阻断主流程（失败降级，不抛异常）。"""
     missing = tmp_path / "no_such_video.mp4"
     top_inf._extract_thumbnail(str(missing), str(tmp_path / "thumb.jpg"))
+
+
+def test_extract_thumbnail_failure_logged_with_task_id(tmp_path, caplog, monkeypatch):
+    """缩略图提取失败：产生带 task_id 前缀的 ERROR 日志（含 traceback），仍不抛异常。"""
+    def boom(*_a, **_k):
+        raise FileNotFoundError("ffmpeg not found (test inject)")
+
+    monkeypatch.setattr(top_inf.subprocess, "run", boom)
+    with caplog.at_level(logging.ERROR, logger="routers.inference"):
+        top_inf._extract_thumbnail("in.mp4", "out.jpg", task_id="task_thumb")
+    rec = [r for r in caplog.records if "缩略图提取失败" in r.getMessage()]
+    assert rec, "失败分支应产生日志记录"
+    assert "task_thumb" in rec[0].getMessage(), "日志应携带 task_id 前缀"
+    assert rec[0].exc_info is not None, "_log.exception 应附带 traceback"
+
+
+def test_seed_lineage_writeback_failure_logged_with_task_id(inference_env, monkeypatch, caplog):
+    """seed 血缘回写失败：产生带 task_id 前缀的 ERROR 日志，产物仍照常入库（尽力而为）。"""
+    _seed_task()
+    tmp_path = inference_env["tmp_path"]
+    src = tmp_path / "out_seedfail.mp4"
+    src.write_bytes(b"fake-video")
+    monkeypatch.setattr(top_inf, "active_backend", inference_env["set_backend"]("diffusers"))
+    monkeypatch.setattr(top_inf, "_run_diffusers", lambda params: str(src))
+
+    import database
+    real_get_db = database.get_db
+
+    class _BoomUpdateDB:
+        """只对 seed 回写的 UPDATE 抛异常，其余读写透传给真实连接。"""
+
+        def __init__(self, conn):
+            self._conn = conn
+
+        def execute(self, sql, params=()):
+            if "UPDATE generation_tasks" in sql:
+                raise RuntimeError("boom: seed 回写失败（测试注入）")
+            return self._conn.execute(sql, params)
+
+        def __getattr__(self, name):
+            return getattr(self._conn, name)
+
+    monkeypatch.setattr(top_inf, "get_db", lambda: _BoomUpdateDB(real_get_db()))
+
+    with caplog.at_level(logging.ERROR, logger="routers.inference"):
+        result = top_inf.run_inference("task_probe")
+
+    assert result["asset_id"].startswith("ast_"), "尽力而为：回写失败不应阻断产物入库"
+    rec = [r for r in caplog.records if "seed 血缘回写失败" in r.getMessage()]
+    assert rec, "失败分支应产生日志记录"
+    assert "task_probe" in rec[0].getMessage(), "日志应携带 task_id 前缀"
+    assert rec[0].exc_info is not None, "_log.exception 应附带 traceback"
 
 
 def test_scale_ref_images_match_mode(real_png_image, tmp_path):

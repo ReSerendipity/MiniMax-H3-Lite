@@ -103,6 +103,47 @@ def test_generation_rejects_unknown_shot(client):
     assert r.status_code >= 400, r.text
 
 
+def test_generation_duplicate_submit_returns_existing(client, new_shot, mock_inference):
+    """幂等去重（后端服务设计评估 P0-1）：同镜头活跃任务存在时重复提交返回既有任务。"""
+    _, sid = new_shot
+    payload = {
+        "shot_id": sid, "mode": "text", "prompt": "幂等测试",
+        "params": {"aspect": "16:9", "duration": 5},
+    }
+    r1 = client.post("/api/generations", json=payload)
+    assert r1.status_code == 200, r1.text
+    tid1 = r1.json()["id"]
+    r2 = client.post("/api/generations", json=payload)
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["id"] == tid1, "重复提交应返回既有任务 ID"
+
+    from backend.database import get_db
+    conn = get_db()
+    cnt = conn.execute(
+        "SELECT COUNT(*) AS c FROM generation_tasks WHERE shot_id=?", (sid,)
+    ).fetchone()["c"]
+    conn.close()
+    assert cnt == 1, f"应只存在 1 条任务，实际 {cnt}"
+
+
+def test_generation_new_task_after_terminal(client, new_shot, mock_inference):
+    """幂等语义边界：任务终态（completed/failed）后同镜头重新提交应创建新任务。"""
+    import time as _time
+    _, sid = new_shot
+    payload = {"shot_id": sid, "mode": "text", "prompt": "再次生成", "params": {"duration": 5}}
+    r1 = client.post("/api/generations", json=payload)
+    assert r1.status_code == 200, r1.text
+    tid1 = r1.json()["id"]
+    for _ in range(100):
+        st = client.get(f"/api/generations/{tid1}").json()["status"]
+        if st in ("completed", "failed"):
+            break
+        _time.sleep(0.1)
+    r2 = client.post("/api/generations", json=payload)
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["id"] != tid1, "任务终态后重新提交应创建新任务"
+
+
 # ── history（2）─────────────────────────────────────────────
 def test_history_lists_generation(client, new_shot, mock_inference):
     """完成生成后项目历史应包含该任务。"""

@@ -42,8 +42,14 @@ class _FakeResp:
 
 def _install_fake_httpx(monkeypatch, post_resp, get_resp=None, post_exc=None):
     """注入 fake httpx 模块：Client.post 返回 post_resp（或抛 post_exc），
-    第二个 Client（下载用）的 .get 返回 get_resp。记录调用以供断言。"""
+    第二个 Client（下载用）的 .get 返回 get_resp。记录调用以供断言。
+
+    默认 get_resp=200 探测响应：run() 的存活预检（check_health）先发 GET，
+    收到任意 HTTP 响应即判定可达；未显式指定下载响应时按「探测可达」处理。
+    """
     calls = {"post_url": None, "post_payload": None, "get_url": None}
+    if get_resp is None:
+        get_resp = _FakeResp(content=b"probe")
 
     class _FakeClient:
         def __init__(self, *a, **k):
@@ -157,7 +163,8 @@ def test_binary_content_written_directly(monkeypatch, assets_dir):
 
 
 def test_connection_error_wrapped_and_tmp_cleaned(monkeypatch, assets_dir):
-    """网络异常 → RuntimeError 包装 + 临时产物清理。"""
+    """网络异常 → RuntimeError 包装 + 临时产物清理（本用例置重试=0，重试路径见专项用例）。"""
+    monkeypatch.setattr(ve.settings, "VLLM_OMNI_RETRIES", 0)
     _install_fake_httpx(monkeypatch, post_resp=None, post_exc=ConnectionError("refused"))
     with pytest.raises(RuntimeError, match="vllm-omni 推理失败"):
         ve.run(_params())
@@ -221,3 +228,193 @@ def test_refs_and_frame_images_mapped_into_payload(monkeypatch, assets_dir):
     assert payload["first_image"] == "/first.png"
     assert payload["last_image"] == "/last.png"
     assert Path(out).exists()
+
+
+# ── 容错（评估 P0-2：超时/重试/退避/存活探测）────────────────
+
+def test_backoff_delay_bounds():
+    """退避延迟：指数增长、±20% 抖动、抖动后封顶 cap。"""
+    d0 = ve.backoff_delay(0, base=1.0)
+    assert 0.8 <= d0 <= 1.2
+    d1 = ve.backoff_delay(1, base=1.0)
+    assert 1.6 <= d1 <= 2.4
+    d3 = ve.backoff_delay(3, base=1.0)
+    assert 6.4 <= d3 <= 9.6
+    d6 = ve.backoff_delay(6, base=1.0, cap=30.0)
+    assert d6 <= 30.0, "抖动后仍须封顶"
+
+
+def test_retry_recovers_on_transient_failure(monkeypatch, assets_dir):
+    """传输层首次失败、重试成功 → 正常落盘，POST 调用 2 次。"""
+    import types as _types
+    calls = {"post_calls": 0}
+
+    class _FakeResp:
+        status_code = 200
+        headers = {"content-type": "video/mp4"}
+        content = b"retried-video"
+
+        @property
+        def text(self):
+            return ""
+
+        def json(self):
+            raise ValueError("no json")
+
+    class _FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def post(self, url, json=None):
+            calls["post_calls"] += 1
+            if calls["post_calls"] == 1:
+                raise ConnectionError("transient")
+            return _FakeResp()
+
+        def get(self, url):
+            return _FakeResp()
+
+    fake = _types.ModuleType("httpx")
+    fake.Client = _FakeClient
+    monkeypatch.setitem(sys.modules, "httpx", fake)
+    monkeypatch.setattr(ve.settings, "VLLM_OMNI_RETRIES", 2)
+
+    out = ve.run(_params())
+    assert calls["post_calls"] == 2, f"首次失败后应重试 1 次，实际 {calls['post_calls']}"
+    assert Path(out).read_bytes() == b"retried-video"
+
+
+def test_retry_exhausted_raises(monkeypatch, assets_dir):
+    """传输层持续失败 → 重试耗尽后 RuntimeError（含重试次数），绝不假成功。"""
+    _install_fake_httpx(monkeypatch, post_resp=None, post_exc=ConnectionError("down"))
+    monkeypatch.setattr(ve.settings, "VLLM_OMNI_RETRIES", 1)
+    with pytest.raises(RuntimeError, match=r"vllm-omni 推理失败.*重试 1 次后"):
+        ve.run(_params())
+
+
+def test_business_error_not_retried(monkeypatch, assets_dir):
+    """非 200（业务层失败）不重试：POST 仅 1 次即失败，避免触发二次昂贵推理。"""
+    import types as _types
+    calls = {"post_calls": 0}
+
+    class _ProbeResp:
+        status_code = 200
+        headers = {"content-type": "text/plain"}
+        content = b"probe"
+
+        @property
+        def text(self):
+            return "probe"
+
+        def json(self):
+            raise ValueError("no json")
+
+    class _FakeResp:
+        status_code = 500
+        headers = {"content-type": "text/plain"}
+        content = b"boom"
+
+        @property
+        def text(self):
+            return "boom"
+
+        def json(self):
+            raise ValueError("no json")
+
+    class _FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def post(self, url, json=None):
+            calls["post_calls"] += 1
+            return _FakeResp()
+
+        def get(self, url):
+            return _ProbeResp()  # 存活探测可达，业务失败路径才被 POST 触发
+
+    fake = _types.ModuleType("httpx")
+    fake.Client = _FakeClient
+    monkeypatch.setitem(sys.modules, "httpx", fake)
+    monkeypatch.setattr(ve.settings, "VLLM_OMNI_RETRIES", 3)
+
+    with pytest.raises(RuntimeError, match="非 200.*500"):
+        ve.run(_params())
+    assert calls["post_calls"] == 1, "业务层失败不应重试"
+
+
+def test_check_health_any_http_response_is_reachable(monkeypatch, assets_dir):
+    """存活探测：收到任意 HTTP 响应（含 404 路由不存在）即视为可达。"""
+    import types as _types
+
+    class _FakeResp:
+        status_code = 404
+        headers = {"content-type": "text/plain"}
+        content = b"not found"
+
+        @property
+        def text(self):
+            return "not found"
+
+        def json(self):
+            raise ValueError("no json")
+
+    class _FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def post(self, url, json=None):
+            raise AssertionError("探测不应发起 POST")
+
+        def get(self, url):
+            return _FakeResp()
+
+    fake = _types.ModuleType("httpx")
+    fake.Client = _FakeClient
+    monkeypatch.setitem(sys.modules, "httpx", fake)
+
+    h = ve.check_health()
+    assert h["reachable"] is True, h
+
+
+def test_check_health_unreachable_on_transport_error(monkeypatch, assets_dir):
+    """存活探测：传输层错误（连接失败/超时）判为不可达，不抛异常。"""
+    import types as _types
+
+    class _FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def get(self, url):
+            raise ConnectionError("refused")
+
+    fake = _types.ModuleType("httpx")
+    fake.Client = _FakeClient
+    monkeypatch.setitem(sys.modules, "httpx", fake)
+
+    h = ve.check_health()
+    assert h["reachable"] is False, h
+    assert "refused" in h["detail"]

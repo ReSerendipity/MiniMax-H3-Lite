@@ -115,6 +115,52 @@ def test_duration_max_accepted(client, new_shot, mock_inference):
     assert r.status_code == 200
 
 
+# ── aspect / resolution 白名单校验（评估 P1-5：杜绝静默回退）──
+
+def test_invalid_aspect_rejected(client, new_shot, mock_inference):
+    """非法 aspect（如 5:4）→ 422，不再静默兜底为 16:9。"""
+    _, sid = new_shot
+    r = client.post("/api/generations", json={
+        "shot_id": sid, "mode": "text", "prompt": "x",
+        "params": {"duration": 5, "aspect": "5:4"},
+    })
+    assert r.status_code == 422, r.text
+    assert "画面比例" in r.text
+
+
+def test_valid_aspects_accepted(client, new_shot, mock_inference):
+    """全部合法比例接受（含幂等：同镜头重复提交返回既有任务仍 200）。"""
+    _, sid = new_shot
+    for aspect in ("21:9", "16:9", "4:3", "1:1", "3:4", "9:16"):
+        r = client.post("/api/generations", json={
+            "shot_id": sid, "mode": "text", "prompt": f"x-{aspect}",
+            "params": {"duration": 5, "aspect": aspect},
+        })
+        assert r.status_code == 200, f"{aspect}: {r.text}"
+
+
+def test_invalid_resolution_rejected(client, new_shot, mock_inference):
+    """非法清晰度档位（如 4K）→ 422，不再静默归一。"""
+    _, sid = new_shot
+    r = client.post("/api/generations", json={
+        "shot_id": sid, "mode": "text", "prompt": "x",
+        "params": {"duration": 5, "resolution": "4K"},
+    })
+    assert r.status_code == 422, r.text
+    assert "清晰度" in r.text
+
+
+def test_legacy_resolution_aliases_accepted(client, new_shot, mock_inference):
+    """旧别名 768P/2K 显式放行（历史前端载荷兼容）。"""
+    _, sid = new_shot
+    for alias in ("768P", "2K"):
+        r = client.post("/api/generations", json={
+            "shot_id": sid, "mode": "text", "prompt": f"x-{alias}",
+            "params": {"duration": 5, "resolution": alias},
+        })
+        assert r.status_code == 200, f"{alias}: {r.text}"
+
+
 # ── 模式 × 参考素材交叉校验 ────────────────────────────
 
 def test_first_frame_without_ref_rejected(client, new_shot, mock_inference):

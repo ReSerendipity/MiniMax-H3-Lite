@@ -204,8 +204,14 @@ def test_diffusers_falls_back_without_generator_support(inference_env, monkeypat
     assert "generator" not in captured["kwargs"], "回退后不应再传 generator"
 
 
-def test_legacy_task_without_seed_gets_time_based_seed(inference_env, monkeypatch):
-    """存量任务（payload 无 seed）→ _build_params 仍生成 uint32 回退 seed 且回写。"""
+def test_legacy_task_without_seed_gets_deterministic_seed(inference_env, monkeypatch):
+    """存量任务（payload 无 seed）→ _build_params 生成确定性 uint32 回退 seed 且回写。
+
+    AI/ML 评估 P2（2026-10-11）：兜底 seed 由 time-based 改为任务 ID 哈希派生
+    （_deterministic_seed），同任务重跑/续跑复用同一 seed（可复现性）。
+    本测试断言仍成立：返回 uint32 int 且回写 payload；确定性语义由
+    tests/test_build_params.py::test_seed_fallback_is_deterministic 覆盖。
+    """
     _seed_task(params={})
     src = inference_env / "out_legacy.mp4"
     src.write_bytes(b"fake-video")

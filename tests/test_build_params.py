@@ -100,6 +100,36 @@ def test_seed_and_sampling_passthrough(client, new_project, new_shot):
     assert params["ref_image_size"] == "max"
 
 
+def test_seed_fallback_is_deterministic():
+    """AI/ML 评估 P2 · 可复现性：payload 无 seed 时由任务 ID 确定性派生。
+
+    旧实现为 time-based（同任务重跑 seed 漂移）；改为任务 ID 哈希派生后，
+    同任务断点续跑 / 重放复用同一 seed。显式 seed 仍优先。
+    """
+    base = {
+        "id": "task_a",
+        "shot_id": "s",
+        "mode": "text",
+        "payload": json.dumps({"prompt": "p", "params": {"duration": 8, "aspect": "16:9"}, "ref_ids": []}),
+    }
+    p1 = _build_params(dict(base))
+    p2 = _build_params(dict(base))
+    assert p1["seed"] == p2["seed"], "同任务 ID 重跑应得到同一 seed（确定性兜底）"
+    assert isinstance(p1["seed"], int) and 0 <= p1["seed"] < 2**32
+
+    # 不同任务 ID → 不同 seed（来源区分）
+    other = dict(base)
+    other["id"] = "task_b"
+    assert _build_params(other)["seed"] != p1["seed"], "不同任务 ID 应得到不同 seed"
+
+    # 显式 seed 优先于派生
+    explicit = dict(base)
+    explicit["payload"] = json.dumps(
+        {"prompt": "p", "params": {"duration": 8, "aspect": "16:9", "seed": 99}, "ref_ids": []}
+    )
+    assert _build_params(explicit)["seed"] == 99
+
+
 def test_model_missing_preflight(tmp_path, monkeypatch):
     """模型缺失预检：无权重 → 不可用；缺失报错必须给出可操作指引（MMH3_MODEL_PATH / HF_HUB_OFFLINE）。"""
     from routers import inference as inf

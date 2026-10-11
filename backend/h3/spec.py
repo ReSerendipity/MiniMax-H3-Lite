@@ -7,6 +7,14 @@ video_minimax_h3_r2v.json），以及 MiniMax H3 官方模型卡（modelscope.cn
 本模块不依赖 diffusers / ComfyUI / 任何推理框架，供各后端适配器共享同一份参数契约。
 """
 
+# ── 参数契约版本（AI/ML 评估 P2 · 契约变更留痕） ────────
+# 变更规则：任何影响下游消费语义的契约变更（新增/删除/修改常量、改变
+# 白名单取值、改变校验语义）必须 +1 并在此登记变更摘要；纯注释/文档不动版本。
+# 与 database.SCHEMA_VERSION（DB 结构版本）互补：前者管参数契约，后者管存储结构。
+# 修订记录：
+#   1.0.0 (2026-10-11) 初始版本。源自官方三工作流模板 + 模型卡（见模块 docstring）。
+SPEC_VERSION = "1.0.0"
+
 # ── 任务类型 ──────────────────────────────────────
 T2VA = "t2va"
 FL2VA = "fl2va"
@@ -126,6 +134,13 @@ def dims_for_resolution(preset: str | None, aspect: str | None = None, multiple:
 
 
 # ── 官方模型文件名（来自官方模板 + 模型卡） ────────
+# 注意（AI/ML 评估 P2 · 契约/部署事实源对齐）：本契约名来自官方模板引用，
+# 实际部署目录允许存在同模型不同变体文件；comfy_engine._inject_models 按
+# 子串/共同前缀把 API 引用改写为实际文件名。实际迁移部署清单（含多变体
+# 与大小）见 model/README.md《契约对照》。例：clip 契约名
+# qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors，部署机可能仅有
+# qwen3vl_32b_minimax_h3_abliterated_nvfp4.safetensors（16.64GB）——
+# 两者均为官方渠道变体，由 _inject_models 前缀改写容错，契约本身不改。
 MODELS = {
     "fl2va": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
     "ref2va": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",

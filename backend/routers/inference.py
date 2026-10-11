@@ -6,8 +6,8 @@ MM·H3 工作台 — 推理客户端
 import os
 import sys
 import json
+import hashlib
 import logging
-import time
 import subprocess  # nosec B404: 仅用于 ffmpeg 缩略图提取（固定参数，无 shell）
 import uuid
 from pathlib import Path
@@ -45,6 +45,16 @@ def _attach_provenance(dest: Path, task_id: str) -> None:
         raise RuntimeError(f"来源标识嵌入失败（block 档），产出已阻断: {dest.name}") from e
     except Exception as e:  # pragma: no cover
         _log.debug("来源标识附加异常（已忽略）: %s", e)
+
+
+def _deterministic_seed(seed_source: str) -> int:
+    """无 seed 时的确定性兜底：由任务 ID 派生 uint32。
+
+    AI/ML 评估 P2 · 可复现性：旧实现为 time-based（同任务重跑产生不同 seed），
+    改为任务 ID 哈希派生后，同任务重放 / 断点续跑复用同一 seed。
+    与提交层约定一致：显式 seed 原样采用；仅 payload 无 seed 的存量/直调路径走此兜底。
+    """
+    return int.from_bytes(hashlib.sha256(seed_source.encode("utf-8")).digest()[:4], "big")
 
 
 def _build_params(task_row: dict) -> dict:
@@ -137,7 +147,7 @@ def _build_params(task_row: dict) -> dict:
         "refs": refs,
         "first_image": first_image,
         "last_image": last_image,
-        "seed": params.get("seed") or int(time.time() * 1000) % (2 ** 32),
+        "seed": params.get("seed") or _deterministic_seed(str(task_row.get("id") or "")),
         "ref_image_size": params.get("ref_image_size") or resolve_setting("ref_image_size", settings.REF_IMAGE_SIZE),
         "sampler_name": params.get("sampler") or resolve_setting("sampler", settings.SAMPLER_NAME),
         "steps": int(params.get("steps") or resolve_setting("steps", settings.STEPS)),

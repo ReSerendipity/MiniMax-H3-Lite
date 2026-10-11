@@ -103,6 +103,11 @@ class Settings:
     EXPLICIT_AI_LABEL_SUFFIX: str = "_AI"
     MAX_PROMPT_CHARS: int = 7000
 
+    # AI/ML 评估 P2 · 产物配额：保留最近 N 个 result 资产（超出裁剪最旧，
+    # 解除引用 + 删文件 + 删 DB 行；启动时由 cleanup.enforce_result_quota 执行）。
+    # 语义为「裁剪历史成片」的有意取舍，详见 backend/cleanup.py docstring。
+    MAX_RESULT_ASSETS: int = 200
+
     # ── 队列 ──────────────────────────────────────────────
     TASK_RETRY_MAX: int = 1
     # 注意：推理超时由 INFERENCE_TIMEOUT 统一承载（queue_manager._run_with_timeout 消费）。
@@ -166,6 +171,8 @@ class Settings:
             s.QUANTIZATION = env["MMH3_QUANTIZATION"]
         if env.get("MMH3_MAX_CONCURRENCY"):
             s.MAX_CONCURRENCY = max(1, int(env["MMH3_MAX_CONCURRENCY"]))
+        if env.get("MMH3_MAX_RESULT_ASSETS"):
+            s.MAX_RESULT_ASSETS = max(1, int(env["MMH3_MAX_RESULT_ASSETS"]))
         # 推理超时可经 env 放宽：消费级笔记本 GPU（12GB 显存）冷加载 H3 级模型
         # 常超默认 600s（2026-10-05 装后真实推理实测）；默认值不变，仅显式配置时覆盖。
         if env.get("MMH3_INFERENCE_TIMEOUT"):

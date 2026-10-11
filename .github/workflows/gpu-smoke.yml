@@ -144,6 +144,23 @@ jobs:
           }
           if ($rc -ne 0) { throw "GPU real-inference smoke failed (rc=$rc)" }
 
+      - name: Golden compare - structural quality baseline (scripts/golden_compare.py)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          cd repo
+          # AI/ML 评估 P2 · 漂移门禁：对真实推理产物跑结构性质量基线（时长/帧率/分辨率/采样帧哈希）。
+          # 退出码 0=一致 / 1=检出回归 / 2=跳过（无基线、无 ffprobe 或视频不存在）。
+          # 首次运行（无基线）为 SKIP（notice）；基线建立方式见输出提示（record 子命令）。
+          & ${{ steps.py.outputs.python }} scripts/golden_compare.py compare --name gpu_smoke_t2v --video outputs/smoke_real.mp4
+          $rc = $LASTEXITCODE
+          if ($rc -eq 2) {
+            Write-Host "::notice::golden compare skipped (no baseline / no ffprobe / video missing) - establish baseline via: python scripts/golden_compare.py record --name gpu_smoke_t2v --video outputs/smoke_real.mp4"
+            exit 0
+          }
+          if ($rc -ne 0) { throw "Golden compare detected regression (rc=$rc)" }
+
       - name: Container-image inference smoke (build + run in-image)
         shell: pwsh
         env:

@@ -121,6 +121,15 @@ def startup():
     except Exception as e:  # pragma: no cover
         logger.warning("[Checkpoint] 启动恢复扫描失败（不影响启动）: %s", e)
 
+    # 产物配额清理（AI/ML 评估 P2）：保留最近 N 个 result 资产，尽力而为
+    try:
+        from cleanup import enforce_result_quota
+        removed = enforce_result_quota(settings.MAX_RESULT_ASSETS, settings.ASSETS_DIR)
+        if removed:
+            logger.info("[Cleanup] 启动清理 %d 个超出配额的结果资产", removed)
+    except Exception as e:  # pragma: no cover
+        logger.warning("[Cleanup] 启动配额清理失败（不影响启动）: %s", e)
+
 
 @app.get("/api/health")
 def health():

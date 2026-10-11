@@ -16,6 +16,16 @@
 * **generations:** aspect/resolution 参数 API 白名单校验（422 拒绝非法比例/档位，兼容 768P/2K 旧别名）——替代原先静默兜底 16:9/默认档的假成功
 * **config:** ComfyUI HTTP 超时/输入输出目录、checkpoint 目录与频率全部并入 Settings 与 .env.example，删除模块内 env 直读
 
+### AI/ML 工程（第二轮评估 2026-10-11）
+
+* **backend:** 结果资产配额清理（cleanup.enforce_result_quota）——启动时按 created_at 保留最近 N 个 result 资产，超出裁剪最旧（解除引用 + 删文件含缩略图 + 删 DB 行）；仅作用 result 不动用户上传参考素材；`MAX_RESULT_ASSETS=200`（MMH3_MAX_RESULT_ASSETS 可覆盖）
+* **backend:** seed 兜底确定性化——payload 无 seed 时由任务 ID 哈希派生 uint32（_deterministic_seed），同任务断点续跑/重放复用同一 seed，替代原 time-based 漂移（显式 seed 仍优先）
+* **backend:** 参数契约版本化——h3.spec 新增 `SPEC_VERSION="1.0.0"` 与变更规则/修订记录，与 database.SCHEMA_VERSION 互补（前者管参数契约、后者管存储结构）
+* **backend:** 契约/部署事实源对齐——spec.MODELS 注释文档化多变体容错（clip awq 契约名 vs abliterated 部署变体），model/README.md 新增《契约对照》表
+* **docs:** 新增 EVAL.md（质量评估集/主观留档规范）与 PROMPT_GOVERNANCE.md（提示词引导治理）
+* **ci:** gpu-smoke.yml 真实推理冒烟后新增 golden compare 结构基线门禁（时长/帧率/分辨率/采样帧哈希，退出码 0/1/2 语义）
+* **docs:** model/README.md 新增《权重完整性校验》段——verify_model_hashes.py 用法与状态记录（工具已入库、真实基线待权重就位 --generate）
+
 ## [2.6.0](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.5.1...v2.6.0) (2026-10-05)
 
 

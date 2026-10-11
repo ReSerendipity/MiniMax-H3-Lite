@@ -6,6 +6,7 @@ MM·H3 工作台 — 推理客户端
 import os
 import sys
 import json
+import logging
 import time
 import subprocess  # nosec B404: 仅用于 ffmpeg 缩略图提取（固定参数，无 shell）
 import uuid
@@ -18,6 +19,8 @@ from config import settings
 from engine_registry import active_backend
 from h3 import spec as h3
 from settings_store import resolve as resolve_setting
+
+_log = logging.getLogger(__name__)
 
 
 def _attach_provenance(dest: Path, task_id: str) -> None:
@@ -142,8 +145,9 @@ def _build_params(task_row: dict) -> dict:
     }
 
 
-def _extract_thumbnail(video_path: str, output_path: str, time_offset: float = 0.5):
-    """使用 ffmpeg 提取首帧作为缩略图"""
+def _extract_thumbnail(video_path: str, output_path: str, time_offset: float = 0.5,
+                       task_id: str = ""):
+    """使用 ffmpeg 提取首帧作为缩略图（尽力而为：失败仅记日志，不阻断产物）"""
     try:
         subprocess.run(  # nosec B603 B607: ffmpeg 为固定可执行名 + 内部路径参数，无不可信输入
             ["ffmpeg", "-y", "-ss", str(time_offset), "-i", video_path,
@@ -151,7 +155,8 @@ def _extract_thumbnail(video_path: str, output_path: str, time_offset: float = 0
             capture_output=True, timeout=30,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
-        pass
+        _log.exception("[%s] 缩略图提取失败（已忽略，不影响推理产物）: %s -> %s",
+                       task_id, video_path, output_path)
 
 
 def run_inference(task_id: str) -> dict:
@@ -206,13 +211,13 @@ def run_inference(task_id: str) -> dict:
             "UPDATE generation_tasks SET payload=? WHERE id=?",
             (json.dumps(pl, ensure_ascii=False), task_id),
         )
-    except Exception:  # nosec B110: seed 血缘回写尽力而为，失败不影响推理产物
-        pass
+    except Exception:  # 尽力而为：回写失败仅记录带 task_id 的日志，不影响推理产物入库
+        _log.exception("[%s] seed 血缘回写失败（已忽略，不影响推理产物）", task_id)
 
     thumb_name = f"{aid}_thumb.jpg"
     thumb_path = settings.ASSETS_DIR / thumb_name
     if dest.exists() and size > 0:
-        _extract_thumbnail(str(dest), str(thumb_path))
+        _extract_thumbnail(str(dest), str(thumb_path), task_id=task_id)
 
     meta = json.dumps({
         "thumbnail": f"assets/{thumb_name}" if thumb_path.exists() else None,

@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased]
+
+### Features
+
+* **backend:** 任务幂等去重——同镜头已存在活跃任务（pending/processing）时重复提交返回既有任务，前端重复点击/重放不再产生重复推理与重复资产
+* **backend:** 外部依赖容错——vllm-omni 端点/超时/重试次数参数化（MMH3_VLLM_OMNI_*），传输层失败有限重试 + 指数退避 + 抖动（业务层失败不重试，避免二次昂贵推理），推理前存活探测快速失败并给可操作指引；队列重试退避替代固定 sleep(1)
+* **observability:** 请求级追踪——request_id 中间件（响应头 X-Request-ID + 访问日志，消息内嵌 request_id 与既有 task_id 风格一致），文件日志改 JSON 结构化（time/level/logger/message + request_id/task_id），控制台保持人读格式
+* **health:** /api/health 增加依赖存活探测（dependency 字段，对激活引擎短超时主动探测，探测失败不影响应用自身健康）与孤儿推理线程计数（orphan_inference_count）
+* **backend:** 超时孤儿线程治理——推理超时孤儿计入运行时计数，新任务 fail-fast 拒绝启动并提示重启回收（startup resume 兜底），替代静默 GPU 争用
+
+### Bug Fixes
+
+* **uploads:** 上传路由改同步执行 + 流式分块落盘——消除事件循环内 ffprobe/整文件读写的阻塞（此前单次上传最多阻塞事件循环 15s 且 200MB 级文件双份内存）
+* **generations:** aspect/resolution 参数 API 白名单校验（422 拒绝非法比例/档位，兼容 768P/2K 旧别名）——替代原先静默兜底 16:9/默认档的假成功
+* **config:** ComfyUI HTTP 超时/输入输出目录、checkpoint 目录与频率全部并入 Settings 与 .env.example，删除模块内 env 直读
+
 ## [2.6.0](https://github.com/ReSerendipity/MiniMax-H3-lite/compare/v2.5.1...v2.6.0) (2026-10-05)
 
 

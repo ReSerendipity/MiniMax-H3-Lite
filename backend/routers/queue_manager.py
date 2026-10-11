@@ -11,6 +11,7 @@ PRD §4.2: 单机串行/受限并发执行，状态机 pending → processing �
 import sys
 import json
 import logging
+import random
 import threading
 import time
 import traceback
@@ -25,6 +26,19 @@ from routers.inference import run_inference
 import runtime_state
 
 logger = logging.getLogger(__name__)
+
+
+def backoff_delay(attempt: int, base: float = 1.0, cap: float = 30.0) -> float:
+    """指数退避 + 抖动（纯计算，便于单测）：base * 2^attempt，±20% 抖动，封顶 cap（抖动后封顶）。"""
+    delay = base * (2 ** max(attempt, 0))
+    delay *= 1 + (random.random() - 0.5) * 0.4
+    return min(max(delay, 0.05), cap)
+
+
+def _backoff_sleep(attempt: int) -> None:
+    """按指数退避+抖动延迟休眠（attempt 从 0 起），替代固定 sleep(1)。"""
+    time.sleep(backoff_delay(attempt))
+
 
 # ── 队列状态 ──────────────────────────────────────
 STATUS_PENDING = "pending"
@@ -197,6 +211,9 @@ def _run_with_timeout(task_id: str):
         return fut.result(timeout=settings.INFERENCE_TIMEOUT)
     except concurrent.futures.TimeoutError:
         ex.shutdown(wait=False)
+        # 槽位租约（评估 P1-3）：超时线程无法取消，如实计入孤儿计数——
+        # 供 /api/health 暴露，并让后续任务 fail-fast 而非与孤儿静默争用 GPU。
+        runtime_state.mark_orphan_inference()
         raise _InferenceTimeout() from None
     finally:
         if fut.done():
@@ -213,6 +230,27 @@ def _run_task(task_id: str):
 
     retry_count = 0
     while retry_count <= settings.TASK_RETRY_MAX:
+        # 槽位守卫（评估 P1-3）：存在超时孤儿推理线程时不再启动新推理——
+        # 挂死线程仍占用 GPU 槽，继续提交会与孤儿争用显存导致静默 OOM / 二次挂死。
+        # 选择 fail-fast + 可操作指引（重启回收，startup resume 兜底）而非静默排队。
+        orphans = runtime_state.orphan_inference_count()
+        if orphans > 0:
+            reason = (
+                f"检测到 {orphans} 个超时孤儿推理线程仍占用 GPU 槽，已拒绝启动新推理；"
+                "请重启服务回收（启动时自动 resume 未完成任务）"
+            )
+            traceback.print_exc()  # 与既有失败路径一致：控制台留痕
+            logger.error("task_id=%s 槽位守卫拦截：%s", task_id, reason)
+            db.execute(
+                "UPDATE generation_tasks SET status=?, error=?, finished_at=? WHERE id=?",
+                (STATUS_FAILED, reason, now_iso(), task_id),
+            )
+            db.execute("UPDATE shots SET status='failed' WHERE id=?", (row["shot_id"],))
+            db.commit()
+            db.close()
+            # 断点续跑：终态失败 → 删除 checkpoint（不会恢复重跑）
+            _get_checkpoint().remove(task_id)
+            return
         # 标记 processing
         db.execute(
             "UPDATE generation_tasks SET status=?, progress=0, error=NULL WHERE id=?",
@@ -280,7 +318,8 @@ def _run_task(task_id: str):
                     (f"重试 {retry_count}/{settings.TASK_RETRY_MAX}: {err_msg}", task_id),
                 )
                 db.commit()
-                time.sleep(1)
+                # 指数退避 + 抖动（评估 P0-2）：替代固定 sleep(1)，降低重试风暴与撞车概率
+                _backoff_sleep(retry_count - 1)
             else:
                 # 最终失败：末次重试的完整 traceback 同样落盘，关联 task_id
                 logger.exception(

@@ -4,12 +4,35 @@
 崩溃/断电后无事后证据（checkpoint 除外）。本模块在进程启动早期为 root logger 追加一个
 RotatingFileHandler，使关键报错、traceback、checkpoint 恢复等信息可回放。
 
+后端服务设计评估 P1-6（2026-10-11）：文件 handler 改用结构化 JSON 单行格式
+（含 request_id / task_id 等 extra 字段），控制台 StreamHandler 保持人读格式不变。
 幂等：重复调用不会重复添加 handler；保留默认 StreamHandler（控制台仍可用）。
 """
+import json
 import logging
 import logging.handlers
 
 from config import settings
+
+
+class JsonFormatter(logging.Formatter):
+    """结构化 JSON 日志格式（文件专用）：一行一条 JSON，含时间/级别/logger/消息
+    及 extra 字段（request_id / task_id，如有）。异常栈以 exc 字段携带。"""
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {
+            "time": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        for key in ("request_id", "task_id"):
+            val = getattr(record, key, None)
+            if val is not None:
+                payload[key] = val
+        if record.exc_info:
+            payload["exc"] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False)
 
 
 def configure_logging(level: int = logging.INFO) -> None:
@@ -35,9 +58,7 @@ def configure_logging(level: int = logging.INFO) -> None:
     )
     fh._mmh3_log = True  # type: ignore[attr-defined]  # 标记，便于幂等检测
     fh.setLevel(level)
-    fh.setFormatter(
-        logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
-    )
+    fh.setFormatter(JsonFormatter())  # 文件日志结构化 JSON（评估 P1-6）
     root.addHandler(fh)
 
     # 确保 INFO 能到达落盘 handler：root logger 默认级别常为 WARNING/NOTSET，

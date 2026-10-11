@@ -80,7 +80,7 @@ def _existing_kind_duration(shot_id: str, kind: str) -> float:
 
 
 @router.post("/upload")
-async def upload_ref(
+def upload_ref(
     file: UploadFile = File(...),
     shot_id: str = Form(default=""),
     paired_with: str = Form(default=""),
@@ -90,13 +90,7 @@ async def upload_ref(
     if not kind:
         raise HTTPException(422, f"不支持的文件格式: {file.filename}")
 
-    # 2. 大小校验
-    data = await file.read()
-    size = len(data)
-    if size > settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024:
-        raise HTTPException(413, f"文件过大，上限 {settings.MAX_UPLOAD_SIZE_MB}MB")
-
-    # 3. 如果绑定了 shot，做上限校验
+    # 2. 如果绑定了 shot，做上限校验（在写盘前校验，失败不产生残留文件）
     if shot_id:
         db = get_db()
         existing = db.execute(
@@ -125,14 +119,30 @@ async def upload_ref(
                 raise HTTPException(422, "音频须搭配图像或视频输入")
         db.close()
 
-    # 4. 落盘
+    # 3. 落盘（评估 P1-4）：同步路由（FastAPI 线程池执行，不阻塞事件循环）
+    #    + 流式分块写入（1MB 块），大小校验内联——超限即中断并清理，
+    #    消除「整文件读入内存 + 整文件写盘」的双份占用（上限 200MB 级）。
     aid = new_id("ast_")
     ext = Path(file.filename or "").suffix.lower() or ".bin"
     stored_name = f"{aid}{ext}"
     dest = settings.UPLOADS_DIR / stored_name
-    dest.write_bytes(data)
+    size = 0
+    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+    try:
+        with dest.open("wb") as out:
+            while True:
+                chunk = file.file.read(1024 * 1024)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > max_bytes:
+                    raise HTTPException(413, f"文件过大，上限 {settings.MAX_UPLOAD_SIZE_MB}MB")
+                out.write(chunk)
+    except HTTPException:
+        dest.unlink(missing_ok=True)
+        raise
 
-    # 4.5 时长校验（video/audio 探测 + 同类合计 ≤15s）
+    # 4. 时长校验（video/audio 探测 + 同类合计 ≤15s）
     meta_info = {"original_name": file.filename}
     if kind in ("video", "audio"):
         dur = _probe_duration(dest)

@@ -52,7 +52,9 @@ def comfy_url() -> str:
 
 
 # ── ComfyUI HTTP ──────────────────────────────────────────
-def _http(method: str, path: str, body=None, timeout: int = 30):
+def _http(method: str, path: str, body=None, timeout: int | None = None):
+    if timeout is None:
+        timeout = settings.COMFY_HTTP_TIMEOUT  # 评估 P2-7：默认超时经 Settings 外部化
     url = comfy_url() + path
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method,
@@ -68,6 +70,23 @@ def _http(method: str, path: str, body=None, timeout: int = 30):
 def _check_server() -> str:
     status, _ = _http("GET", "/system_stats")
     return f"ComfyUI 连接正常 (HTTP {status})"
+
+
+def check_health() -> dict:
+    """依赖存活探测（后端服务设计评估 P2-8）：供 /api/health 主动探测使用。
+
+    进程内 comfy_kernel 引擎自包含（无外部依赖）→ 恒可达；
+    HTTP 路径（显式设置 MMH3_COMFY_URL）→ 短超时探测 /system_stats。
+    探测失败不抛异常，如实返回可达性，避免健康检查自身成为新的故障点。
+    """
+    import os as _os
+    if not _os.environ.get("MMH3_COMFY_URL", "").strip():
+        return {"reachable": True, "detail": "进程内 comfy_kernel 引擎（无外部依赖）"}
+    try:
+        status, _ = _http("GET", "/system_stats", timeout=5)
+        return {"reachable": True, "detail": f"GET /system_stats -> HTTP {status}"}
+    except Exception as e:  # noqa: BLE001 - 探测失败仅记录
+        return {"reachable": False, "detail": f"{type(e).__name__}: {e}"}
 
 
 # ── 工作流装载 / 注入 ─────────────────────────────────────
@@ -302,10 +321,11 @@ def _input_image_name(path: str) -> str:
         return Path(path).name
     import shutil
     # 输入目录可移植化：默认项目内 data/comfy_input，可用 MMH3_COMFY_INPUT_DIR 覆盖
-    dest = Path(os.environ.get("MMH3_COMFY_INPUT_DIR", str(_BASE_DIR / "data" / "comfy_input")))
-    dest.mkdir(parents=True, exist_ok=True)
+    # （评估 P2-7：改经 Settings 读取，删除模块内 env 直读）
+    input_dir = Path(settings.COMFY_INPUT_DIR or _BASE_DIR / "data" / "comfy_input")
+    input_dir.mkdir(parents=True, exist_ok=True)
     name = f"mmh3_{uuid.uuid4().hex}" + Path(path).suffix
-    shutil.copy(path, dest / name)
+    shutil.copy(path, input_dir / name)
     return name
 
 
@@ -494,12 +514,14 @@ def _wait(prompt_id: str, timeout: int = 1800) -> dict:
 
 # 仅供 HTTP 旧路径：外部 ComfyUI 的输出目录（进程内路径不走这里）
 # 可移植化：默认项目内 data/comfy_output，可用 MMH3_COMFY_OUTPUT_DIR 覆盖
-_HTTP_OUT_DIR = Path(os.environ.get("MMH3_COMFY_OUTPUT_DIR", str(_BASE_DIR / "data" / "comfy_output")))
+# （评估 P2-7：改经 Settings 读取，删除模块内 env 直读）
+def _http_out_dir() -> Path:
+    return Path(settings.COMFY_OUTPUT_DIR or _BASE_DIR / "data" / "comfy_output")
 
 
 def _freshest_output(outputs: dict) -> Path:
     """从 /history 输出里找 mp4 路径（SaveVideo 产出，含音轨）。"""
-    out_dir = _HTTP_OUT_DIR
+    out_dir = _http_out_dir()
     best = None
     for node_out in outputs.values():
         imgs = node_out.get("images") or []

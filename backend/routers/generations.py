@@ -60,6 +60,27 @@ def submit_generation(body: GenRequest):
         db.close()
         raise HTTPException(422, "多模态参考模式需要提供参考素材")
 
+    # aspect / resolution 白名单校验（后端服务设计评估 P1-5）：替代静默回退——
+    # 原先非法比例经 h3.spec.RATIOS.get 兜底为 16:9、非法档位经 inference 静默归一，
+    # 现于 API 边界拒绝（422），杜绝「参数非法但成功返回错误画幅/档位」。
+    aspect = body.params.get("aspect")
+    if aspect is not None and aspect not in settings.SUPPORTED_RATIOS:
+        db.close()
+        raise HTTPException(
+            422,
+            f"不支持的画面比例: {aspect}（支持: {'/'.join(sorted(settings.SUPPORTED_RATIOS))}）",
+        )
+    resolution = body.params.get("resolution")
+    if resolution is not None and resolution not in settings.RESOLUTION_PRESETS:
+        # 兼容旧载荷别名：768P/2K 为历史前端遗留值，显式放行（inference 归一为 0.98/0.75）
+        if resolution not in ("768P", "2K"):
+            db.close()
+            raise HTTPException(
+                422,
+                f"不支持的清晰度档位: {resolution}"
+                f"（支持: {'/'.join(sorted(settings.RESOLUTION_PRESETS))} 及旧别名 768P/2K）",
+            )
+
     # seed 血缘（可复现性，MLOps 评估 P1）：提交时确定 seed 并写入 payload 落库。
     # 未指定 → 服务端生成随机 seed；显式指定 → 校验范围（uint32）后原样采用。
     # 重试 / 断点续跑 / 同参数重放均复用同一 seed，「同参数 + 同 seed」⇒ 结果可复现。
@@ -76,6 +97,19 @@ def submit_generation(body: GenRequest):
     else:
         seed = secrets.randbits(32)
     body.params["seed"] = seed
+
+    # 幂等去重（后端服务设计评估 P0-1）：同一镜头已存在活跃任务
+    # （pending/processing）时直接返回既有任务，不重复建任务——
+    # 重复点击提交 / 重放请求不会产生重复推理与重复资产。
+    active = db.execute(
+        "SELECT id FROM generation_tasks WHERE shot_id=? AND status IN ('pending','processing')"
+        " ORDER BY created_at LIMIT 1",
+        (body.shot_id,),
+    ).fetchone()
+    if active:
+        row = db.execute("SELECT * FROM generation_tasks WHERE id=?", (active["id"],)).fetchone()
+        db.close()
+        return row_to_dict(row)
 
     # 创建任务
     tid = new_id("task_")

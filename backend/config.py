@@ -43,8 +43,15 @@ class Settings:
     QUANTIZATION: str = "int8"                # bf16 | int8 | int4 | gguf-q4_k_m
     MAX_CONCURRENCY: int = 1                  # 单机默认串行
     INFERENCE_TIMEOUT: int = 600              # 单任务超时 (秒)
+    # ── vllm-omni 外部服务（ADR-0003，OpenAI 兼容 /v1/videos；评估 P0-2 容错参数化）──
+    VLLM_OMNI_ENDPOINT: str = "http://localhost:8000"  # 外部 vllm-omni 服务地址
+    VLLM_OMNI_TIMEOUT: int = 1800             # 单次 HTTP 请求超时 (秒)
+    VLLM_OMNI_RETRIES: int = 2                # 传输层失败重试次数（指数退避+抖动，0=不重试）
     COMFY_SOURCE_DIR: str = ""                # (保留) Comfy 内核源码目录
     COMFY_URL: str = "http://127.0.0.1:8188"  # ComfyUI HTTP 服务地址（B 方案经此提交官方工作流）
+    COMFY_HTTP_TIMEOUT: int = 30               # ComfyUI HTTP 单次请求默认超时 (秒；评估 P2-7 外部化)
+    COMFY_INPUT_DIR: str = ""                  # ComfyUI 输入目录（空则默认 BASE_DIR/data/comfy_input；评估 P2-7）
+    COMFY_OUTPUT_DIR: str = ""                 # ComfyUI HTTP 输出目录（空则默认 BASE_DIR/data/comfy_output；评估 P2-7）
     COMFY_ENABLE: bool = False                # 是否自动拉起本机 ComfyUI（脱离 ComfyUI 手动启动、无人值守使用）
     COMFY_PYTHON: str = ""                    # ComfyUI 进程用 Python（aki python / python.exe），空则自动探测
     COMFY_MAIN_PY: str = ""                   # ComfyUI 的 main.py 绝对路径，空则自动探测
@@ -142,6 +149,17 @@ class Settings:
             s.COMFY_SOURCE_DIR = env["MMH3_COMFY_SOURCE_DIR"]
         if env.get("MMH3_COMFY_URL"):
             s.COMFY_URL = env["MMH3_COMFY_URL"]
+        if env.get("MMH3_COMFY_HTTP_TIMEOUT"):
+            s.COMFY_HTTP_TIMEOUT = max(5, int(env["MMH3_COMFY_HTTP_TIMEOUT"]))
+        if env.get("MMH3_COMFY_INPUT_DIR"):
+            s.COMFY_INPUT_DIR = env["MMH3_COMFY_INPUT_DIR"].strip().rstrip("/")
+        if env.get("MMH3_COMFY_OUTPUT_DIR"):
+            s.COMFY_OUTPUT_DIR = env["MMH3_COMFY_OUTPUT_DIR"].strip().rstrip("/")
+        # 断点续跑参数外部化（评估 P2-7：原先仅 dataclass 默认值，不可 env 覆盖）
+        if env.get("MMH3_CHECKPOINT_DIR"):
+            s.CHECKPOINT_DIR = Path(env["MMH3_CHECKPOINT_DIR"].strip())
+        if env.get("MMH3_CHECKPOINT_EVERY"):
+            s.CHECKPOINT_EVERY = max(1, int(env["MMH3_CHECKPOINT_EVERY"]))
         if env.get("MMH3_INFERENCE_BACKEND"):
             s.INFERENCE_BACKEND = env["MMH3_INFERENCE_BACKEND"]
         if env.get("MMH3_QUANTIZATION"):
@@ -152,6 +170,12 @@ class Settings:
         # 常超默认 600s（2026-10-05 装后真实推理实测）；默认值不变，仅显式配置时覆盖。
         if env.get("MMH3_INFERENCE_TIMEOUT"):
             s.INFERENCE_TIMEOUT = max(60, int(env["MMH3_INFERENCE_TIMEOUT"]))
+        if env.get("MMH3_VLLM_OMNI_ENDPOINT"):
+            s.VLLM_OMNI_ENDPOINT = env["MMH3_VLLM_OMNI_ENDPOINT"].strip().rstrip("/")
+        if env.get("MMH3_VLLM_OMNI_TIMEOUT"):
+            s.VLLM_OMNI_TIMEOUT = max(10, int(env["MMH3_VLLM_OMNI_TIMEOUT"]))
+        if env.get("MMH3_VLLM_OMNI_RETRIES"):
+            s.VLLM_OMNI_RETRIES = max(0, min(5, int(env["MMH3_VLLM_OMNI_RETRIES"])))
         for env_key, attr in (
             ("MMH3_MODEL_FL2VA", "MODEL_FL2VA"),
             ("MMH3_MODEL_REF2VA", "MODEL_REF2VA"),

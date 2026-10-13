@@ -1,6 +1,6 @@
 **ADR-0003: H3 服务引擎切换评估（引入 vllm-omni 作为推荐默认引擎）**
 
-- **状态**: Accepted（registry 已注册 vllm-omni + 适配器脚手架落地 2026-09-03；runtime 切默认待 vllm-omni provisioning + RTX 5070 Ti recipe 验证）
+- **状态**: Implemented（脚手架部分）——comfy/vllm-omni 引擎注册已落地（`backend/engine_registry.py`）；`DEFAULT_BACKEND` 翻转 vllm-omni 待 RTX 5070 Ti recipe 实测与 H3 权重分发审批后执行（遗留项见 CHANGELOG）
 - **日期**: 2026-09-03
 - **决策者**: 项目维护者 + AI 指挥（家族规范审计 / §4.5 任务 #3）
 - **关联**: `docs/repo-analysis/MiniMax-H3_技术学习报告.md`、`docs/repo-analysis/vllm-omni_技术学习报告.md`、`docs/repo-analysis/Wan2.2_技术学习报告.md`、`docs/repo-analysis/LTX-Video_技术学习报告.md`
@@ -24,7 +24,7 @@
 
 - **采用方案 D**：将 **vllm-omni 设为 H3 推荐/默认服务引擎**（Apache-2.0），**comfy 降级为可选工作流后端**（opt-in、GPL-3.0 运行时隔离），**diffusers 保留为回退**。
 - `backend/h3/spec.py` 的框架无关任务层（T2VA/FL2VA/REF2VA、输出规格）**直接复用**，作为 vllm-omni 适配器的参数契约，无需重写。
-- 本 ADR 为**评估结论**，状态 `Proposed`；引擎适配器代码实现不在本任务范围，待 PoC 验证通过后另立实施 ADR（或本 ADR 转 Implemented）。
+- 本 ADR 脚手架部分（引擎注册与适配器）状态 `Implemented`；`DEFAULT_BACKEND` 翻转 vllm-omni 待 PoC 验证通过后执行（遗留项见 CHANGELOG）。
 
 # 实施影响（落地清单，待 PoC 后执行）
 

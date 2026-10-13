@@ -53,7 +53,7 @@ curl -s http://127.0.0.1:18080/api/health | python -m json.tool
 
 启动后访问 `http://127.0.0.1:18080`。
 
-> 镜像**不含** `comfy_kernel/`（ComfyUI 内核，GPL-3.0）。经 `docker compose up` 部署时会自动以只读方式挂载内核；若单独 `docker run`，native 引擎不可用，需手工挂载 `-v ./comfy_kernel:/app/comfy_kernel:ro` 提供内核。这是有意的许可边界取舍，详见 `docs/GPL_COMPLIANCE.md`。
+> 镜像**不含** `comfy_kernel/`（ComfyUI 内核，GPL-3.0）。经 `docker compose up` 部署时会自动以只读方式挂载内核；若单独 `docker run`，comfy 引擎（进程内）不可用，需手工挂载 `-v ./comfy_kernel:/app/comfy_kernel:ro` 提供内核。这是有意的许可边界取舍，详见 `docs/GPL_COMPLIANCE.md`。
 >
 > **暴露面告警**：compose 默认仅绑定本机 `127.0.0.1:18080`。切勿改为 `0.0.0.0` 后未加反向代理 + 鉴权即对外——本工作台 API 无内置认证。
 
@@ -84,7 +84,10 @@ npm run test:frontend               :: 前端测试（先渲染 Jinja2 模板，
 ## 模型与推理说明
 
 - 开源模型：**H3-Base-FL2VA**（t2v + 首/末帧）与 **H3-Base-Ref2VA**（多模态参考），768p 音画一体生成（24fps / 32kHz 立体声 / 4–15s）
-- 后端仅支持本地 diffusers（进程内 `ModularPipeline`），完全脱离 ComfyUI 运行；`workflows/` 三份官方模板仅作参数规格参考，不被执行
+- 推理引擎三选一，经 `MMH3_INFERENCE_BACKEND` 切换（取值 `comfy` | `vllm-omni` | `diffusers`，默认 `comfy`；环境变量设置后锁定页面切换，见 `backend/engine_registry.py`）：
+  - **comfy（默认）**：进程内 vendored ComfyUI 内核加载官方单文件权重（B 方案），即 Docker 段所述「native 引擎」；可选调优变量 `MMH3_COMFY_SOURCE_DIR` / `MMH3_COMFY_URL` / `MMH3_COMFY_HTTP_TIMEOUT` / `MMH3_COMFY_INPUT_DIR` / `MMH3_COMFY_OUTPUT_DIR`
+  - **vllm-omni（推荐目标）**：外部 vllm-omni 服务（Apache-2.0，OpenAI 兼容 `/v1/videos`），消费者级 GPU recipe（4090/5090 已验证），ADR-0003 推荐默认——待 RTX 5070 Ti recipe 实测与 H3 权重分发审批后翻转默认；启用时需配置 `MMH3_VLLM_OMNI_ENDPOINT` / `MMH3_VLLM_OMNI_TIMEOUT` / `MMH3_VLLM_OMNI_RETRIES`
+  - **diffusers（回退）**：进程内 `ModularPipeline`，需 diffusers 格式权重目录；ref_video_audios 降级、采样参数忽略等边界见「功能与限制」
 - 模型权重：本地路径经 `MMH3_MODEL_PATH` 指定，留空则从 HuggingFace `MiniMaxAI/MiniMax-H3` 拉取；国内下载优先魔搭 `MiniMax/MiniMax-H3`（[官方发布页](https://modelscope.cn/models/MiniMax/MiniMax-H3)）。显存有限时建议官方模板同款 int8 pruned 权重 + `MMH3_QUANTIZATION` 量化档位
 - 真实推理前请先完成：安装推理依赖（`requirements.txt` 中 diffusers/transformers 段）、准备权重，随后运行验证脚本 `scripts/smoke_real.py` 验证真实推理链路，再走一遍三模式页生成闭环
 - 许可证：MiniMax H3 Community License，商用 / 再分发 / 微调前请确认条款；代码许可 Apache-2.0
@@ -103,7 +106,7 @@ MiniMax-H3-lite/
 ├── scripts/            # 预检 / 部署校验 / 验证脚本
 ├── docs/               # 文档（含 GPL 合规说明 GPL_COMPLIANCE.md 等）
 ├── start.bat           # Windows 一键启动
-└── config.yaml         # 配置文件
+└── .env.example        # 环境变量模板（配置并入 Settings，见 backend/config.py）
 ```
 
 ## 贡献

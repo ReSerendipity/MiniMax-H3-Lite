@@ -14,6 +14,9 @@ import logging.handlers
 
 from config import settings
 
+# faulthandler 句柄（模块级引用，防止被 GC 关闭）
+_fault_log = None
+
 
 class JsonFormatter(logging.Formatter):
     """结构化 JSON 日志格式（文件专用）：一行一条 JSON，含时间/级别/logger/消息
@@ -67,3 +70,22 @@ def configure_logging(level: int = logging.INFO) -> None:
         root.setLevel(level)
 
     logging.getLogger(__name__).info("日志已落盘到 %s（滚动 5MB x 5，崩溃后可回放）", log_file)
+
+
+def enable_fault_handler() -> None:
+    """崩溃栈落盘（运维稳定性评估 P1-1 可落地部分）。
+
+    faulthandler 把进程级致命崩溃（含原生层 segfault / C 层 abort）的栈写入
+    logs/backend_faults.log（append），与 RotatingFileHandler 互补：
+    Python 层异常走 backend.log，进程级崩溃走 faulthandler 栈落盘。
+    幂等：重复调用无害；句柄保持模块级引用，防止被 GC 关闭。
+    """
+    global _fault_log
+    if _fault_log is not None:
+        return
+    import faulthandler
+
+    path = settings.BASE_DIR / "logs" / "backend_faults.log"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _fault_log = open(path, "a", encoding="utf-8")
+    faulthandler.enable(file=_fault_log)

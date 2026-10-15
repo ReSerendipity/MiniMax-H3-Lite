@@ -119,6 +119,9 @@ data/uploads/*
 outputs/*
 logs/*
 backup/
+
+# 诊断包输出（scripts/diag_bundle.py；含本地日志快照，不入库）
+diagnostics/
 *.log
 .env.*
 secrets/
@@ -198,6 +201,9 @@ FIX_LOG.md
 /docker-compose.pinned.yml
 
 .git.backup/
+
+# 诊断包输出（scripts/diag_bundle.py；含本地日志快照，不入库）
+diagnostics/
 
 # 自进化协议细化文档（仅本地保留，不并入仓库）
 docs/agents/

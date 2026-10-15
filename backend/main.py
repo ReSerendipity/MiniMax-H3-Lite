@@ -21,11 +21,12 @@ from config import settings
 from engine_registry import active_backend, list_engines
 from routers import projects, shots, generations, uploads, history, system
 from routers import comfy_engine, vllm_omni_engine
-from logging_config import configure_logging
+from logging_config import configure_logging, enable_fault_handler
 from runtime_state import is_model_loaded, orphan_inference_count
 from routers.queue_manager import queue_depth
 
 configure_logging()  # 日志落盘到 logs/backend.log（滚动），崩溃后可回放
+enable_fault_handler()  # 崩溃栈落盘 logs/backend_faults.log（运维评估 P1-1：进程级致命崩溃可回放）
 
 # 版本单一事实来源：仓库根 package.json（发版时人工随 tag 同步，见 docs/adr/0004 修订注记）
 try:  # 扁平导入（backend 目录已加入 sys.path）

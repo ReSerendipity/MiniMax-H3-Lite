@@ -69,15 +69,15 @@ ComfyUI-VideoHelperSuite, ComfyUI-WanVideoWrapper, rgthree-comfy
 
 | 严重度 | Triage 确认 | 修复时限 | 适用示例 |
 |---|---|---|---|
-| **Critical**（RCE、密钥泄露、鉴权绕过） | 24 小时内 | **7 天内**合入 main 并发版 | comfy_kernel 第三方节点 RCE、Ed25519 私钥泄露、CI 凭据泄露 |
-| **High**（路径遍历、任意文件读、CVE 有 fix） | 48 小时内 | **30 天内**合入 main | uploads 路径绕过、依赖 HIGH CVE（pip-audit/Trivy 阻断项） |
+| **Critical**（RCE、密钥泄露、鉴权绕过） | 24 小时内 | **3 天内**合入 main 并发版 | comfy_kernel 第三方节点 RCE、Ed25519 私钥泄露、CI 凭据泄露 |
+| **High**（路径遍历、任意文件读、CVE 有 fix） | 48 小时内 | **7 天内**合入 main | uploads 路径绕过、依赖 HIGH CVE（pip-audit/Trivy 阻断项） |
 | **Medium**（信息泄露、配置弱点） | 1 周内 | 随下个版本 | 日志泄露敏感路径、Banner 信息泄露 |
 | **Low**（最佳实践改进） | 不承诺时限 | 随版本捎带 | 缺少安全头、警告信息过详 |
 
 > 注：本项目为单人维护的本地单机工具，SLA 为维护者自约束，不构成对外承诺；依赖类漏洞以 Dependabot PR + CI Trivy/pip-audit 棘轮为准（见 `.ci/security_baseline.json`，只降不升）。
 
 > **计时台账落地（2026-10-15，软件供应链安全评估 P1-2）**：`scripts/security_gate.py` 按本表时限对
-> 依赖类债务自动计时——npm critical 168h / npm high 720h / pip-audit（无严重度字段）按 High 档 720h，
+> 依赖类债务自动计时——npm critical 72h / npm high 168h / pip-audit（无严重度字段）按 High 档 168h，
 > 状态存 `.ci/vuln_sla_state.json`（CI 经 actions/cache 跨 run 持续，cache miss 时钟重置为已记录的降级口径）；
 > 超时未修复即 CI 阻断（数量棘轮 + 时限台账双闸）。
 

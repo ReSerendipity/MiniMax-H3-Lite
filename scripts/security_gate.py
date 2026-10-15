@@ -24,8 +24,8 @@
     {"pip_audit_vulns": 0, "npm_critical": 0, "npm_high": 0}
 
 SLA 计时台账 (.ci/vuln_sla_state.json)：
-    任一门禁指标 >0 视为存在未修复债务，自首次观测起计时；npm critical 168h /
-    npm high 720h / pip-audit（无严重度字段）按 High 档 720h；归零自动清除；
+    任一门禁指标 >0 视为存在未修复债务，自首次观测起计时；npm critical 72h /
+    npm high 168h / pip-audit（无严重度字段）按 High 档 168h；归零自动清除；
     超时即 exit 1。CI 经 actions/cache 使状态跨 run 持续（cache miss 时钟重置，
     为已记录的降级口径，见 .github/SECURITY.md SLA 节）。
 """
@@ -46,11 +46,11 @@ NPM_REPORT = "npm-audit-report.json"
 # 避免被无法修复的传递依赖噪音长期锁定。
 GATED_METRICS = ("pip_audit_vulns", "npm_critical", "npm_high")
 # ── 漏洞修复 SLA 计时台账（软件供应链安全评估 P1-2）────────────────────
-# 与 .github/SECURITY.md「漏洞修复 SLA」同源：critical→168h、high→720h；
-# pip-audit 报告无严重度字段，按 High 档 720h。任一指标 >0 即从首次观测起算，
+# 与 .github/SECURITY.md「漏洞修复 SLA」同源：critical→72h、high→168h；
+# pip-audit 报告无严重度字段，按 High 档 168h。任一指标 >0 即从首次观测起算，
 # 归零自动清除；超时即门禁失败。状态文件 CI 经 actions/cache 跨 run 持续。
 SLA_STATE_PATH = os.path.join(".ci", "vuln_sla_state.json")
-SLA_HOURS = {"pip_audit_vulns": 720, "npm_critical": 168, "npm_high": 720}
+SLA_HOURS = {"pip_audit_vulns": 168, "npm_critical": 72, "npm_high": 168}
 
 
 def _load_json(path: str) -> Any | None:

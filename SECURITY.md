@@ -50,9 +50,9 @@
 
 ## 5. 漏洞修复 SLA 台账与强制门禁（2026-10-15）
 
-- 时限政策见 `.github/SECURITY.md`「漏洞修复 SLA」（Critical 7 天 / High 30 天，维护者自约束）。
+- 时限政策见 `.github/SECURITY.md`「漏洞修复 SLA」（Critical 3 天 / High 7 天，维护者自约束）。
 - 落地机制（软件供应链安全评估 P1-2）：`scripts/security_gate.py` 对依赖类债务自动计时——任一门禁
   指标 >0 即从首次观测起算，状态存 `.ci/vuln_sla_state.json`（CI 经 actions/cache 跨 run 持续；
-  cache miss 时钟重置为已记录的降级口径），超过对应时限即 CI 阻断：npm critical ≤ 168h、
-  npm high ≤ 720h、pip-audit（无严重度字段）按 High 档 ≤ 720h。
+  cache miss 时钟重置为已记录的降级口径），超过对应时限即 CI 阻断：npm critical ≤ 72h、
+  npm high ≤ 168h、pip-audit（无严重度字段）按 High 档 ≤ 168h。
 - 语义分工：`.ci/security_baseline.json` 管「数量只降不升」，本台账管「存量清偿时限」，双闸叠加。

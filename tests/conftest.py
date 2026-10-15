@@ -256,8 +256,8 @@ def mock_ffprobe(monkeypatch):
     桩化 ffprobe 调用，返回 None（表示无法探测时长）。
     用于避免测试依赖真实 ffmpeg。
     """
-    from routers import uploads
-    monkeypatch.setattr(uploads, "_probe_duration", lambda p: None)
+    from services import upload_service
+    monkeypatch.setattr(upload_service, "_probe_duration", lambda p: None)
     return
 
 
@@ -266,8 +266,8 @@ def mock_ffprobe_duration(monkeypatch):
     """
     桩化 ffprobe 调用，返回固定时长 5.0 秒。
     """
-    from routers import uploads
-    monkeypatch.setattr(uploads, "_probe_duration", lambda p: 5.0)
+    from services import upload_service
+    monkeypatch.setattr(upload_service, "_probe_duration", lambda p: 5.0)
     return
 
 

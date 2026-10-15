@@ -9,7 +9,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from routers import uploads  # 与应用同模块实例（main.py 以 routers.* 导入），保证 monkeypatch 生效
+from services import upload_service as uploads  # P1-1 收口后 patch 点迁移至服务层（与应用同模块实例，保证 monkeypatch 生效）
 from backend.config import settings
 
 

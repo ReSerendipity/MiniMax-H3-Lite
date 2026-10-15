@@ -227,6 +227,14 @@ def _run_task(task_id: str):
     if not row:
         db.close()
         return
+    # P1-2（后端服务设计评估）：从 payload 取回提交时的 request_id，
+    # 与本任务 task_id 组成日志双 ID（JsonFormatter 的 extra 白名单承接）。
+    try:
+        _payload = json.loads(row["payload"]) if isinstance(row["payload"], str) else (row["payload"] or {})
+    except (json.JSONDecodeError, TypeError):
+        _payload = {}
+    request_id = _payload.get("request_id") if isinstance(_payload, dict) else None
+    log_extra = {"task_id": task_id, "request_id": request_id}
 
     retry_count = 0
     while retry_count <= settings.TASK_RETRY_MAX:
@@ -240,7 +248,7 @@ def _run_task(task_id: str):
                 "请重启服务回收（启动时自动 resume 未完成任务）"
             )
             traceback.print_exc()  # 与既有失败路径一致：控制台留痕
-            logger.error("task_id=%s 槽位守卫拦截：%s", task_id, reason)
+            logger.error("task_id=%s 槽位守卫拦截：%s", task_id, reason, extra=log_extra)
             db.execute(
                 "UPDATE generation_tasks SET status=?, error=?, finished_at=? WHERE id=?",
                 (STATUS_FAILED, reason, now_iso(), task_id),
@@ -291,7 +299,7 @@ def _run_task(task_id: str):
             logger.error(
                 "task_id=%s 推理超时终态失败：%s（_INFERENCE_TIMEOUT 由 _run_with_timeout 抛出，"
                 "推理线程内原始 traceback 已随 print_exc 打到控制台）",
-                task_id, reason, exc_info=e,
+                task_id, reason, exc_info=e, extra=log_extra,
             )
             db.execute(
                 "UPDATE generation_tasks SET status=?, error=?, finished_at=? WHERE id=?",
@@ -311,7 +319,7 @@ def _run_task(task_id: str):
                 # 落盘本 Worker 线程的完整 traceback，携 task_id 前缀供 logs/backend.log 回放
                 logger.exception(
                     "task_id=%s 推理失败，重试 %s/%s：%s",
-                    task_id, retry_count, settings.TASK_RETRY_MAX, err_msg,
+                    task_id, retry_count, settings.TASK_RETRY_MAX, err_msg, extra=log_extra,
                 )
                 db.execute(
                     "UPDATE generation_tasks SET error=? WHERE id=?",
@@ -324,7 +332,7 @@ def _run_task(task_id: str):
                 # 最终失败：末次重试的完整 traceback 同样落盘，关联 task_id
                 logger.exception(
                     "task_id=%s 推理最终失败（已重试 %s 次）：%s",
-                    task_id, settings.TASK_RETRY_MAX, err_msg,
+                    task_id, settings.TASK_RETRY_MAX, err_msg, extra=log_extra,
                 )
                 db.execute(
                     "UPDATE generation_tasks SET status=?, error=?, finished_at=? WHERE id=?",

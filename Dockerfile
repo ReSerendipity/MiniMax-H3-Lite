@@ -73,8 +73,10 @@ RUN pip install --no-cache-dir --upgrade setuptools msgpack
 # 复制项目代码（model/ 等大权重经 .dockerignore 排除，运行时挂载）
 COPY . .
 
-# 编译检查（非致命，避免个别脚本语法问题阻断构建）
-RUN python -m compileall -q backend scripts 2>/dev/null || true
+# 编译检查（致命：backend/scripts 内任一 Python 语法错误都会阻断构建——不再用
+# `|| true` 吞掉退出码，也不再 `2>/dev/null` 隐藏报错；与 QUALITY_CONTRACT.md
+# 「已移除 continue-on-error / || true，发布门禁恢复阻断」一致，见 ADR-0004）。
+RUN python -m compileall -q backend scripts
 
 # 非 root 运行（安全基线；与家族 SeedVR2-lite 一致）
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

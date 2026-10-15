@@ -183,6 +183,21 @@ jobs:
           test "$z" -gt 0
           echo "[OK] 四件套齐、两份清单均校验通过、tar($n 条目) 与 zip($z 条目) 均可读"
 
+      - name: 生成 SBOM（CycloneDX：Python 锁 + npm 锁；软件供应链安全评估 P1-1）
+        run: |
+          set -euo pipefail
+          # Python 侧复用既有工具链 pip-audit（requirements.txt 已含，零新工具）：
+          # --no-deps 只审计锁内 pin（锁已是全量闭包），CycloneDX 产物即组件清单。
+          pip install pip-audit
+          pip-audit -r requirements-lock.txt --no-deps --format cyclonedx-json \
+            -o dist/sbom-python.cdx.json
+          # npm 侧用内置 npm sbom（npm>=9.6，runner Node22 自带）；先 npm ci 让依赖树
+          # 与 package-lock 一致（跳过脚本/审计加速），否则树校验口径不清。
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm sbom --sbom-format cyclonedx > dist/sbom-npm.cdx.json
+          # 产物可解析自证（防"生成了空/坏 SBOM 还归档"）
+          python3 -c "import json;d=json.load(open('dist/sbom-python.cdx.json',encoding='utf-8'));print('python SBOM components:',len(d.get('components',[])))"
+          python3 -c "import json;d=json.load(open('dist/sbom-npm.cdx.json',encoding='utf-8'));print('npm SBOM components:',len(d.get('components',[])))"
       - name: 上传到 staging（workflow artifact；dispatch 与 push 都留一份）
         uses: actions/upload-artifact@v4
         with:
@@ -202,7 +217,7 @@ jobs:
             echo
             echo "- 版本：\`$VER\`（tag \`$TAG\`）"
             echo "- 模式：**$([ "$DRY" = "true" ] && echo 'DRY-RUN（未建 Release、未推 tag）' || echo '真发版')**"
-            echo "- 产物：源码 tar.gz + zip + SHA256SUMS + SHA256SUMS.scripts"
+            echo "- 产物：源码 tar.gz + zip + SHA256SUMS + SHA256SUMS.scripts + SBOM（sbom-python.cdx.json / sbom-npm.cdx.json）"
             echo "- 不产 wheel/sdist：本仓无 pyproject.toml/setup.py（应用非库，见文件头说明）"
           } >> "$GITHUB_STEP_SUMMARY"
 

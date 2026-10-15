@@ -100,8 +100,8 @@ jobs:
       - name: Run tests with coverage
         env:
           MMH3_INFERENCE_BACKEND: diffusers
-        # 覆盖率门禁与 pytest.ini 保持一致（60%）；禁止 || true / continue-on-error 吞错
-        run: pytest tests/ --cov=backend --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=60 -v
+        # 覆盖率门禁与 pytest.ini 保持一致（70%，2026-10-15 实测整体 80.92% 后由 60 棘轮抬升）；禁止 || true / continue-on-error 吞错
+        run: pytest tests/ --cov=backend --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=70 -v
 
       - name: Upload coverage to Codecov
         if: always()

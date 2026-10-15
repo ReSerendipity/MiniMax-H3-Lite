@@ -76,6 +76,11 @@ ComfyUI-VideoHelperSuite, ComfyUI-WanVideoWrapper, rgthree-comfy
 
 > 注：本项目为单人维护的本地单机工具，SLA 为维护者自约束，不构成对外承诺；依赖类漏洞以 Dependabot PR + CI Trivy/pip-audit 棘轮为准（见 `.ci/security_baseline.json`，只降不升）。
 
+> **计时台账落地（2026-10-15，软件供应链安全评估 P1-2）**：`scripts/security_gate.py` 按本表时限对
+> 依赖类债务自动计时——npm critical 168h / npm high 720h / pip-audit（无严重度字段）按 High 档 720h，
+> 状态存 `.ci/vuln_sla_state.json`（CI 经 actions/cache 跨 run 持续，cache miss 时钟重置为已记录的降级口径）；
+> 超时未修复即 CI 阻断（数量棘轮 + 时限台账双闸）。
+
 ## 七、数据流与存储说明（本地自管）
 
 - 项目运行期间产生的数据全部为**本地文件**：`data/mmh3.db`（SQLite 任务库）、`uploads/`（上传素材）、`outputs/`（生成结果）、`data/checkpoints/`（断点续跑快照）。

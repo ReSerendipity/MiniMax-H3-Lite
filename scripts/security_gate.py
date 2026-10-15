@@ -22,6 +22,12 @@
 
 基线格式 (.ci/security_baseline.json)：
     {"pip_audit_vulns": 0, "npm_critical": 0, "npm_high": 0}
+
+SLA 计时台账 (.ci/vuln_sla_state.json)：
+    任一门禁指标 >0 视为存在未修复债务，自首次观测起计时；npm critical 168h /
+    npm high 720h / pip-audit（无严重度字段）按 High 档 720h；归零自动清除；
+    超时即 exit 1。CI 经 actions/cache 使状态跨 run 持续（cache miss 时钟重置，
+    为已记录的降级口径，见 .github/SECURITY.md SLA 节）。
 """
 
 from __future__ import annotations
@@ -39,6 +45,12 @@ NPM_REPORT = "npm-audit-report.json"
 # 只有这些指标参与门禁；npm 的 moderate/low 仅打印，不阻断，
 # 避免被无法修复的传递依赖噪音长期锁定。
 GATED_METRICS = ("pip_audit_vulns", "npm_critical", "npm_high")
+# ── 漏洞修复 SLA 计时台账（软件供应链安全评估 P1-2）────────────────────
+# 与 .github/SECURITY.md「漏洞修复 SLA」同源：critical→168h、high→720h；
+# pip-audit 报告无严重度字段，按 High 档 720h。任一指标 >0 即从首次观测起算，
+# 归零自动清除；超时即门禁失败。状态文件 CI 经 actions/cache 跨 run 持续。
+SLA_STATE_PATH = os.path.join(".ci", "vuln_sla_state.json")
+SLA_HOURS = {"pip_audit_vulns": 720, "npm_critical": 168, "npm_high": 720}
 
 
 def _load_json(path: str) -> Any | None:
@@ -116,6 +128,71 @@ def count_npm_audit(report: Any | None) -> dict[str, int]:
     sys.exit(1)
 
 
+def load_sla_state(path: str | None = None) -> dict:
+    """读取 SLA 状态文件；缺失返回 {}，损坏判失败（同基线口径：拒绝静默重置）。"""
+    p = path or SLA_STATE_PATH
+    data = _load_json(p)
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        print(f"[FAIL] SLA 状态文件 {p} 格式非法（应为 JSON 对象）。")
+        sys.exit(1)
+    return data
+
+
+def judge_sla(current: dict[str, int], state: dict, now: Any = None) -> tuple[bool, dict, list[str]]:
+    """SLA 判定：债务>0 从首次观测起算、归零清除；返回 (无超时, 新状态, 违规消息)。"""
+    from datetime import datetime, timezone
+
+    now = now or datetime.now(timezone.utc)
+    new_state = dict(state)
+    violations: list[str] = []
+    for metric in GATED_METRICS:
+        debt = current.get(metric, 0) > 0
+        if debt:
+            entry = new_state.get(metric)
+            since_str = entry.get("since") if isinstance(entry, dict) else None
+            if not since_str:
+                # 首次观测：开始计时，本次不判超时（否则每个新漏洞立刻红）
+                new_state[metric] = {
+                    "since": now.isoformat(timespec="seconds"),
+                    "last_seen": now.isoformat(timespec="seconds"),
+                    "count": current[metric],
+                }
+                continue
+            try:
+                since = datetime.fromisoformat(since_str)
+            except ValueError:
+                print(f"[WARN] {metric} 的 since 时间戳不可解析（{since_str!r}），时钟重置。")
+                new_state[metric] = {
+                    "since": now.isoformat(timespec="seconds"),
+                    "last_seen": now.isoformat(timespec="seconds"),
+                    "count": current[metric],
+                }
+                continue
+            if since.tzinfo is None:
+                since = since.replace(tzinfo=timezone.utc)
+            elapsed_h = (now - since).total_seconds() / 3600
+            sla = SLA_HOURS[metric]
+            new_state[metric]["last_seen"] = now.isoformat(timespec="seconds")
+            new_state[metric]["count"] = current[metric]
+            if elapsed_h > sla:
+                violations.append(
+                    f"{metric}: 首次观测 {since_str}，已持续 {elapsed_h:.1f}h > SLA {sla}h —— 高危漏洞超时限未修复"
+                )
+        else:
+            new_state.pop(metric, None)
+    return (not violations), new_state, violations
+
+
+def persist_sla_state(state: dict, path: str | None = None) -> None:
+    p = path or SLA_STATE_PATH
+    os.makedirs(os.path.dirname(p) or ".", exist_ok=True)
+    with open(p, "w", encoding="utf-8") as fh:
+        json.dump(state, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+
+
 def load_baseline() -> dict[str, int]:
     if not os.path.exists(BASELINE_PATH):
         print(f"[FAIL] 缺少基线文件 {BASELINE_PATH}。")
@@ -167,6 +244,16 @@ def main() -> int:
 
     baseline = load_baseline()
     print(f"=== 基线 {BASELINE_PATH}: {baseline} ===")
+    # ── SLA 计时台账（软件供应链安全评估 P1-2）：债务存量有时限，超时即阻断 ──
+    sla_ok, new_state, sla_violations = judge_sla(current, load_sla_state())
+    persist_sla_state(new_state)
+    for metric in GATED_METRICS:
+        entry = new_state.get(metric)
+        if entry:
+            print(
+                f"  SLA {metric}: 债务 {entry.get('count', 0)} 项，"
+                f"首次观测 {entry.get('since')}（SLA {SLA_HOURS[metric]}h）"
+            )
 
     regressions = []
     improvements = []
@@ -183,6 +270,13 @@ def main() -> int:
             print(f"      - {item}")
         print("      若确为可接受风险，请人工复核后回写基线：")
         print("          python scripts/security_gate.py --update-baseline")
+        return 1
+
+    if sla_violations:
+        print("[FAIL] 高危漏洞修复超时限（SLA 台账）：")
+        for item in sla_violations:
+            print(f"      - {item}")
+        print("      债务归零即自动清除计时；确需延期请人工评估并修订 .github/SECURITY.md 时限政策。")
         return 1
 
     if improvements:

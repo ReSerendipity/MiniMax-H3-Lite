@@ -235,6 +235,13 @@ jobs:
           pip install -r requirements-lock.txt
           npm ci
 
+      - name: 漏洞 SLA 状态缓存（security_gate 计时跨 run 持续；cache miss 时钟重置，降级口径见 .github/SECURITY.md）
+        uses: actions/cache@v6
+        with:
+          path: .ci/vuln_sla_state.json
+          key: vuln-sla-${{ github.run_id }}
+          restore-keys: |
+            vuln-sla-
       - name: Python security audit
         # 报告生成与门禁判定分离：pip-audit 自身非零退出不在此处阻断（报告损坏时
         # 由 security_gate.py 判失败），告警判定统一交给棘轮门禁。

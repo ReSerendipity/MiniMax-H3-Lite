@@ -3,10 +3,21 @@
 #   1) 先执行 gitleaks 待推送提交扫描（密钥防线，最高优先）
 #   2) 分支保护只读漂移检测（scripts/apply_branch_protection.py，仅提示不阻断）
 #   3) 仓库提供 precheck.ps1 -> 执行它（家族既有门禁口径）
+#      3b) 本次推送更新远端 main 时强制 -Full（含覆盖率门禁），把「接受时验证」
+#          绑回 owner 直推这条被服务端 enforce_admins=false 豁免的路径。
 #   4) 否则 -> 退回根目录守卫 structure-guard
 # gitleaks v8.30.1 无 `git pre-push` 子命令，改用 detect --log-opts 扫描 remote..local 范围。
 # 紧急绕过：git push --no-verify（仅限用户明确要求时）
 failed=0
+
+# stdin 只能读一次，而 gitleaks 循环与 main 判定都要用引用清单 -> 先整体缓存。
+PUSH_REFS="$(cat)"
+
+# bh-F1：本次推送是否更新远端 main（每行第 3 列 = remote ref）
+PUSHES_MAIN=0
+if [ -n "$PUSH_REFS" ] && printf '%s\n' "$PUSH_REFS" | awk '{print $3}' | grep -qx 'refs/heads/main'; then
+    PUSHES_MAIN=1
+fi
 
 # 1) gitleaks 扫描待推送提交（密钥防线）
 if command -v gitleaks >/dev/null 2>&1; then
@@ -27,7 +38,9 @@ if command -v gitleaks >/dev/null 2>&1; then
             echo "[pre-push] gitleaks 检测到泄露，推送已拒绝。绕过：git push --no-verify" >&2
             failed=1
         fi
-    done
+    done <<PUSH_REFS_EOF
+$PUSH_REFS
+PUSH_REFS_EOF
 else
     echo "[pre-push] gitleaks 未安装，跳过推送前密钥扫描" >&2
 fi
@@ -66,9 +79,18 @@ fi
 
 # 3) precheck.ps1（家族既有门禁）
 if [ -f ./precheck.ps1 ]; then
-    echo "[pre-push] 运行本地预检 precheck.ps1 ..."
+    if [ "$PUSHES_MAIN" -eq 1 ]; then
+        # bh-F1：main 是默认分支，且服务端 enforce_admins=false 使 8 项必需状态检查
+        # 对 owner 直推不生效（见 docs/ci/branch-protection.json 的 bypass_note）。
+        # 这条路径上唯一真正会挡的是本钩子，故把完整检查（含 70% 覆盖率门禁）绑在这里。
+        echo "[pre-push] 目标含 main -> 按直推授权要求执行完整本地预检（precheck.ps1 -Full，含覆盖率门禁）"
+        PRECHECK_ARGS="-Full"
+    else
+        echo "[pre-push] 运行本地预检 precheck.ps1 ..."
+        PRECHECK_ARGS=""
+    fi
     if command -v powershell.exe >/dev/null 2>&1; then
-        if ! powershell.exe -NoProfile -ExecutionPolicy Bypass -File "./precheck.ps1"; then
+        if ! powershell.exe -NoProfile -ExecutionPolicy Bypass -File "./precheck.ps1" $PRECHECK_ARGS; then
             echo "[pre-push] 预检未通过。绕过：git push --no-verify" >&2
             exit 1
         fi

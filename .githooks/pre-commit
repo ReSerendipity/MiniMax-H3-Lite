@@ -21,6 +21,22 @@ if [ -f scripts/check_no_hardcoded_paths.py ]; then
         fi
     fi
 fi
+# 1.5) docs/ 忽略面提示（只报告，不阻断）：
+#      .gitignore 整目录忽略 docs/，新建文档对 git 不可见、git status 不报、
+#      git add 被拒——漏掉 -f 的后果是「本地写了文档，仓库和干净检出里没有」。
+#      本提示只在本次提交确实触及 docs/ 时触发，避免对纯代码提交产生噪声。
+if git diff --cached --name-only --diff-filter=ACMRD | grep -q '^docs/'; then
+    IGNORED_DOCS="$(git ls-files --others --ignored --exclude-standard -- docs/ 2>/dev/null)"
+    if [ -n "$IGNORED_DOCS" ]; then
+        IGNORED_DOCS_COUNT="$(printf '%s\n' "$IGNORED_DOCS" | grep -c .)"
+        echo "[pre-commit] 提示（不阻断）：本次提交触及 docs/，但 docs/ 下另有 $IGNORED_DOCS_COUNT 个文件被 .gitignore 忽略、不会进入本仓库："
+        printf '%s\n' "$IGNORED_DOCS" | head -5 | sed 's/^/               - /'
+        if [ "$IGNORED_DOCS_COUNT" -gt 5 ]; then
+            echo "               - …（其余 $((IGNORED_DOCS_COUNT - 5)) 个，完整清单：git ls-files -o -i --exclude-standard -- docs/）"
+        fi
+        echo "[pre-commit]          若其中有应随仓库分发的文档，须显式 git add -f docs/<文件>；入库/留本机的判据见 .gitignore 的 docs/ 说明段。"
+    fi
+fi
 # 完整性清单新鲜度：动了 backend/*.py 却没重算重签清单 -> 拒提交。
 # 漂移不只是 CI 红线：INTEGRITY_ENFORCE 默认 True 且 fail-closed，
 # 这种代码全新装出去会在启动自检处直接拒启。修复命令由 --check 打印。

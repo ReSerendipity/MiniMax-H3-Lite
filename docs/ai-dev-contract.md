@@ -28,6 +28,15 @@
   冲突时按 `AGENTS.md` §0「文档优先级」处理（代码与配置 > official spec > `AGENTS.md` > README/docs > CHANGELOG）。
 - **对 CI 的影响**：本 stub 对上述本机路径一律使用行内代码而非 Markdown 链接，
   故干净检出下 `scripts/check_spec_refs.py --minimal`（死链审计，扫跟踪 `*.md` 的相对链接）不会误报。
+- **`scripts/check_spec_refs.py` 的两种模式（2026-10-16 实测口径，勿凭文字臆测）**：
+  脚本只在 `<仓库根>/.spec_audit/audit_spec_refs.py` 与 `<仓库根上一级>/.spec_audit/audit_spec_refs.py`
+  两处寻找仓外家族审计器。
+  - 传 `--minimal`：始终执行自包含死链审计（扫跟踪 `*.md` + 磁盘上的 `AGENTS.md` / `docs/agents/*.md`），
+    开发机与 CI 输出一致；`structure-guard.yml` 与 `docs-consistency.yml` 用的就是这个模式。
+  - 不传 `--minimal` 且审计器不存在：**退出码 2 并打印错误**（"gate could not run"），不是绿灯也不是零结果。
+  因此「跑一次 `python scripts/check_spec_refs.py` 就拿到 `phantom=…/dead_links=…` 判定行」
+  只在家族审计器就位的机器上成立；本仓当前检出与本机都没有该目录时，可执行的核对模式是 `--minimal`。
+  引用仓外审计器时一律按其真实存在性描述，禁止写成已生效的门禁（`AGENTS.md` 铁律 #6）。
 
 ## 3. 不同角色的下一步
 

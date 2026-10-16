@@ -20,6 +20,15 @@
 
 ## 快速开始
 
+### 克隆后必做（本地门禁）
+
+```bash
+sh .githooks/install.sh        # 启用本仓库钩子（一次性）
+sh .githooks/install.sh --check  # 只读自检：未启用则退出码 1 并说明失效了哪些防线
+```
+
+`core.hooksPath` 是**本地** git 配置，不随克隆传播（详见 `.githooks/README.md`）。未启用时，密钥扫描（gitleaks）、完整性清单新鲜度核对、DCO 自动签名与推送前预检都不会执行——`--check` 把这种"静默缺失"变成可判定状态。受支持运行时：Python 3.12 与 Node 22（与 CI 同版本）；`start.bat` 为 Windows 专用探测脚本，非 Windows 环境请用下方手动启动或 Docker 路径。
+
 ### 一键启动
 
 ```bat

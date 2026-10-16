@@ -371,7 +371,9 @@ jobs:
   # 推理路径在 CI 零覆盖。ADR-0005 取舍结论 = 条件式守卫（方案 C）：
   #   * 内核随 checkout 在场（自托管 runner / 本地）→ 跑内核漂移基线校验 + 棘轮复检 + 适配器测试
   #   * GitHub 托管 runner（无内核）→ 步骤级 SKIP，日志可见，不算通过也不算失败
-  #   * 真机 GPU 全链路仍归 gpu-smoke.yml（复用 scripts/smoke_comfy.py）
+  #   * 真机 GPU 全链路归 gpu-smoke.yml，但它复用 scripts/smoke_real.py（diffusers 路径，
+  #     workflow_dispatch + 每周一 03:00 UTC 定时）；comfy 进程内内核的真机链路**尚无 CI 调用点**
+  #     （scripts/smoke_comfy.py 存在但未被任何 workflow 引用）。证据等级见 docs/adr/0005 §证据申报。
   comfy-kernel-guard:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -468,7 +470,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
-          # --no-cov 必需：pytest.ini 的 addopts 带 --cov-fail-under=60，本步只跑 2 个
+          # --no-cov 必需：pytest.ini 的 addopts 带 --cov-fail-under=70，本步只跑 2 个
           # 文件的子集，覆盖率必然不达标 → 内核在场时（自托管/本地带 vendored 内核）
           # 这一步会以与被测代码无关的理由失败。同 #62 对 benchmark 的处理。
           pytest tests/test_comfy_engine.py tests/test_comfy_engine_integration.py --no-cov -q

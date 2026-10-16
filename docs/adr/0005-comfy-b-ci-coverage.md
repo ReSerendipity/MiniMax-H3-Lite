@@ -50,3 +50,24 @@
   真机（gpu-smoke 扩展点）；托管 runner 零成本不飘红。
 - 代价：托管 runner 上"内核集成面"永远是 SKIP——这是 vendored 不入库的固有代价，
   由本机 push 前钩子补偿；若未来该缺口不可接受， revisit 方案 A/B。
+
+## 证据等级申报（2026-10-16 harness 修复新增）
+
+> 解决的问题：本 ADR 记录了"哪一层没被覆盖"，但没有规定"改动 comfy 引擎时怎样才算拿到过证据"。
+> 结果是改 `backend/routers/comfy_engine.py` / `backend/routers/queue_manager.py` 的人（含 agent）
+> 可以把"CI 全绿"误读成"引擎行为已验证"。本节把申报动作本身变成交付要求。
+
+三层证据与各自的**实际**执行入口（引用路径均已核对存在）：
+
+| 层 | 覆盖对象 | 执行入口 | 可移植环境（托管 CI / 干净检出）能否拿到 |
+|---|---|---|---|
+| L1 适配器 | `comfy_engine.py` 的工作流映射 / 参数注入 / 假节点剔除 | `python -m pytest tests/test_comfy_engine.py tests/test_comfy_engine_integration.py --no-cov -q` | 能（纯标准库、不依赖内核；`test.yml` 的 comfy-kernel-guard 在内核在场分支执行） |
+| L2 内核集成面 | `import comfy` 可行性 / 内核版本 / vendor 漂移 | `python scripts/comfy_kernel_baseline.py --check` | 不能。内核不入库 → `present=false` → 步骤级 SKIP，由 `kernel-guard-status` 的 job 名显式申报"未执行" |
+| L3 真机 comfy 推理 | 真实权重 + GPU 进程内 comfy 出片 | `python scripts/smoke_comfy.py`（本机手动，需内核与权重就位） | 不能。`gpu-smoke.yml` 复用 `scripts/smoke_real.py`（diffusers 路径），**不含 comfy 链路**；其 `schedule`（每周一 03:00 UTC）与 `workflow_dispatch` 都跑在 self-hosted `gpu` runner 上 |
+
+申报规则：
+
+1. 改动 comfy 引擎相关代码后，交付说明必须写明取得的是哪一层证据（L1 / L1+L2 / L1+L2+L3）。
+2. 只有 L1 时，必须显式写「内核集成面与真机 comfy 链路证据等级 = 无」，不得以 CI 绿色代替。
+3. 不得把 L3 写成 CI 已覆盖：本仓不存在任何自动执行 `scripts/smoke_comfy.py` 的作业（2026-10-16 实测：`grep -rn smoke_comfy .github/workflows/` 仅命中 `test.yml` 的注释，无调用点）。
+4. L2/L3 的缺失是 vendored + GPL 许可边界的固有代价，不是待补的缺陷；本规则只约束**表述**。

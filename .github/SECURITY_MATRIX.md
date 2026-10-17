@@ -48,9 +48,18 @@
   `RESOLUTION_PRESETS`/`SUPPORTED_RATIOS`/`OUTPUT_BIT_DEPTH`/`OUTPUT_FORMAT`）：
   消费点直读 `h3.spec`，settings 副本暂为死镜像（漂移风险已在门禁注释标注），
   清理方向二选一：删副本或改消费点。
+- Dependabot 告警 #8（medium，`glib`，2026-10-17 只读取证后**知情保留**）：
+  `desktop/src-tauri/Cargo.lock` 锁 `glib 0.18.5`，官方修复版 `0.20.0`，
+  漏洞范围 `>= 0.15.0, < 0.20.0`（`glib::VariantStrIter` 的 Iterator 实现不健全）。
+  **属范围受限而非解析陈旧**——`cargo update -p glib --precise 0.20.0 --dry-run` 退出码 101，
+  报 `failed to select a version for the requirement glib = "^0.18"`，约束来自
+  `gtk v0.18.2`，而 gtk 由 `tauri v2.12.1` 要求；`cargo update -p tauri --dry-run` 在 `^2`
+  内只能到 2.12.2，**不更换 gtk** ⇒ 取到修复版需迁移 tauri/gtk 主版本栈（tauri 3 仅 alpha），
+  会推翻既有桌面壳打包链与已发布 v2.6.0 资产。实际暴露面：被报 API 在 `desktop/` 下
+  `VariantStrIter`/`str_iter()` 命中 **0**、desktop Rust 源 `glib::` 引用 **0** ⇒ 第一方代码不可达。
+  复审触发条件：tauri 发布依赖 gtk ≥0.20 的稳定版，或 desktop 侧代码开始消费 glib variant 迭代。
 
 ## 5. 代码完整性防线（R10，2026-09-10 落地）
-
 **防线构成**：`backend/` 核心模块 + `comfy_kernel/` 关键入口的 SHA256 清单
 （`backend/security/integrity_manifest.json`）→ Ed25519 签名（签发机私钥，发布链）
 /HMAC-SHA256 回退（开发机自验）→ 后端启动事件自检，`INTEGRITY_ENFORCE=true`

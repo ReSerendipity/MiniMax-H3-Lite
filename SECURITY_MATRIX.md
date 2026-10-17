@@ -6,7 +6,7 @@
 
 | 控制项 | 实现方式 | 状态 |
 |---|---|---|
-| 分支保护 | GitHub Branch Protection（main 受保护，需 PR + required checks） | ✅ |
+| 分支保护 | GitHub Branch Protection：要求 PR + 1 审批 + **8 项必需状态检查**（`strict=false`），但 **`enforce_admins=false`** ⇒ 对 owner/admin 直推 main 不生效（2026-10-17 只读实测）。admin 路径的补偿是 `.githooks/pre-push` 对 `refs/heads/main` 强制 `precheck.ps1 -Full` | ⚠️ 部分生效（admin 豁免，属 2026-09-28 已定治理决定） |
 | DCO 签名 | .githooks/commit-msg 强制 Signed-off-by | ✅ |
 | 代码审查 | PR 需 review | ⚠️ 待配置 CODEOWNERS |
 
@@ -36,4 +36,4 @@
 | 制品不可变 | Immutable Release Artifacts | ✅ |
 
 ---
-*最后更新：2026-09-20*
+*最后更新：2026-10-17（分支保护一行按服务端只读实测改为「部分生效」并写明 admin 豁免与本地补偿；依赖漏洞评估见 `.github/SECURITY_MATRIX.md` §4）*

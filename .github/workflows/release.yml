@@ -8,7 +8,7 @@
 #   · 六个历史 Release（v0.1.0…v2.5.0）**全部零资产**。
 # 曾考虑恢复 release-please（姊妹仓 TTS 已实证可用，v2.3.0 于 2026-09-25 真发布），
 # 但它开的 release PR 拿不到任何 CI（GITHUB_TOKEN 提交不级联触发 workflow），
-# 而本仓分支保护登记了 9 条必需 context ⇒ release PR 会因必需 context 永不回报而不可合并，
+# 而本仓分支保护登记了 8 条必需 context（2026-10-17 只读实测校正，原写 9 条）⇒ release PR 会因必需 context 永不回报而不可合并，
 # 除非改分支保护。故走本方案：入口是人推 tag，不推就零执行，v2.5.1 挂起由结构保证。
 #
 # 【安全边界】workflow_dispatch **永远是 dry-run**：只构建产物并上传为 workflow artifact

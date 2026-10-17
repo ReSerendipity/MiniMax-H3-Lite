@@ -17,6 +17,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CFG_PATH = PROJECT_ROOT / "docs" / "ci" / "branch-protection.json"
 
 
+def _protection_path(cfg):
+    """按 cfg 组装打桩 fake gh 要匹配的 API 路径。
+
+    与生产代码 protection_paths() 同形（repos/{owner}/{repo}/branches/{branch}/protection），
+    所以 fake 仍然逐字比对整条路径——路径组成写错照样不匹配。
+    不在夹具里钉死仓名字面量：仓名以 docs/ci/branch-protection.json 与服务端现名为准，
+    钉字面量会让"校正旧名"这类正确改动反而打红本测试（2026-10-17 实测踩过）。
+    """
+    return "repos/%s/%s/branches/%s/protection" % (
+        cfg["owner"], cfg["repo"], cfg.get("branch", "main"))
+
+
 @pytest.fixture(scope="module")
 def mod():
     path = PROJECT_ROOT / "scripts" / "apply_branch_protection.py"
@@ -204,7 +216,7 @@ def test_apply_sequence_disabled_signatures(monkeypatch, cfg, mod):
     methods = [(a[1], a[2].split("/")[-1]) for a in calls if a and a[0] == "-X"]
     assert ("PUT", "protection") in methods
     assert ("DELETE", "required_signatures") in methods
-    assert ("PATCH", "MiniMax-H3-lite") in methods
+    assert ("PATCH", cfg["repo"]) in methods
     # 不能把签名要求塞进 PUT 主体之外的误调用
     assert all("required_signatures" not in a[2] or a[1] == "DELETE" for a in calls)
     # 临时 body 文件必须清掉
@@ -222,7 +234,7 @@ def test_apply_sequence_enabled_signatures(monkeypatch, cfg, mod):
     monkeypatch.setattr(mod, "gh", fake_gh)
     ok, _ = mod.apply_protection(cfg, mod.desired_put_body(cfg))
     assert ok
-    assert ["-X", "POST", "repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection/required_signatures"] in calls
+    assert ["-X", "POST", _protection_path(cfg) + "/required_signatures"] in calls
 
 
 # ---------- main 端到端（打桩） ----------
@@ -234,7 +246,7 @@ def _install_fake(monkeypatch, mod, cfg, cur=None, auto_merge="true",
     def fake_gh(args):
         if record is not None:
             record.append(args)
-        if args == ["repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection"]:
+        if args == [_protection_path(cfg)]:
             if protection_read_fail:
                 return 1, "", "404 no protection"
             return 0, json.dumps(cur), ""
@@ -277,7 +289,7 @@ def _install_drift_then_converge(monkeypatch, mod, cfg, record):
     def fake_gh(args):
         if record is not None:
             record.append(args)
-        if args == ["repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection"]:
+        if args == [_protection_path(cfg)]:
             state["protection_gets"] += 1
             cur = drifted if state["protection_gets"] == 1 else aligned
             return 0, json.dumps(cur), ""

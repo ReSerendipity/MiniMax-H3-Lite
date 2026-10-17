@@ -1,7 +1,7 @@
 {
   "_comment": "分支保护单一来源（字段口径对齐 GitHub REST API）。改这里 -> 先跑 python scripts/apply_branch_protection.py 看漂移，确认后再跑 --apply --yes 写入。required_signatures 是独立子资源，由脚本自动走 /required_signatures 端点；allow_auto_merge 是仓库级设置，走 PATCH /repos。",
   "owner": "ReSerendipity",
-  "repo": "MiniMax-H3-lite",
+  "repo": "MiniMax-H3-Lite",
   "branch": "main",
   "required_status_checks": {
     "strict": false,
@@ -37,6 +37,6 @@
     "enforce_admins": false,
     "bypass_note": "admin（ReSerendipity，仓库 owner）可绕过 PR 要求直推 main；其他协作者必须走 PR + 1 审批。个人账号仓库不支持用户级 bypass，以 enforce_admins=false 实现。"
   },
-  "_measured_at": "2026-09-28T10:25Z 首测；2026-10-07 按 live 复核校正顶层字段（gh api repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection：require PR(1 approval)、require_code_owner_reviews=false、enforce_admins=false）。顶层字段是 apply 脚本实际写入的依据，必须与 policy/bypass_note/_meets_reality 保持同一口径，否则每次 push 都会被 .githooks/pre-push 判成漂移。",
+  "_measured_at": "2026-09-28T10:25Z 首测；2026-10-07 按 live 复核校正顶层字段（gh api repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection：require PR(1 approval)、require_code_owner_reviews=false、enforce_admins=false）。顶层字段是 apply 脚本实际写入的依据，必须与 policy/bypass_note/_meets_reality 保持同一口径，否则每次 push 都会被 .githooks/pre-push 判成漂移。2026-10-17 第三次只读实测（gh api repos/ReSerendipity/MiniMax-H3-Lite/branches/main/protection 及 required_status_checks/enforce_admins 子资源）：strict=false、必需 context 8 条、required_approving_review_count=1、require_code_owner_reviews=false、enforce_admins=false、required_signatures.enabled=false。同轮把 repo 字段由改名前的 MiniMax-H3-lite 校正为服务端现名 MiniMax-H3-Lite（旧值仅因 GitHub 改名重定向才使只读 GET 继续成立；--apply 的 PUT 路径本轮未测也未执行，属远端写待批）。",
   "_meets_reality": "live 已改为：require PR(1 approval) + enforce_admins=false；owner/admin 直推 main 免 PR，其余账号强制 PR。"
 }

@@ -35,8 +35,9 @@
   "allow_auto_merge": true,
   "policy": {
     "enforce_admins": false,
-    "bypass_note": "admin（ReSerendipity，仓库 owner）可绕过 PR 要求直推 main；其他协作者必须走 PR + 1 审批。个人账号仓库不支持用户级 bypass，以 enforce_admins=false 实现。"
+    "status": "accepted-and-recorded",
+    "bypass_note": "admin（ReSerendipity，仓库 owner）可绕过 PR 要求直推 main；其他协作者必须走 PR + 1 审批。个人账号仓库不支持用户级 bypass，以 enforce_admins=false 实现。该豁免是 2026-09-28 设立的正式治理决定，2026-10-17 按 owner 明确指示（本设备可直推）复核确认保留；补偿控制为 .githooks/pre-push 对 refs/heads/main 强制 precheck.ps1 -Full，并比对 live 与本文件判漂移。"
   },
-  "_measured_at": "2026-09-28T10:25Z 首测；2026-10-07 按 live 复核校正顶层字段（gh api repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection：require PR(1 approval)、require_code_owner_reviews=false、enforce_admins=false）。顶层字段是 apply 脚本实际写入的依据，必须与 policy/bypass_note/_meets_reality 保持同一口径，否则每次 push 都会被 .githooks/pre-push 判成漂移。2026-10-17 第三次只读实测（gh api repos/ReSerendipity/MiniMax-H3-Lite/branches/main/protection 及 required_status_checks/enforce_admins 子资源）：strict=false、必需 context 8 条、required_approving_review_count=1、require_code_owner_reviews=false、enforce_admins=false、required_signatures.enabled=false。同轮把 repo 字段由改名前的 MiniMax-H3-lite 校正为服务端现名 MiniMax-H3-Lite（旧值仅因 GitHub 改名重定向才使只读 GET 继续成立；--apply 的 PUT 路径本轮未测也未执行，属远端写待批）。",
-  "_meets_reality": "live 已改为：require PR(1 approval) + enforce_admins=false；owner/admin 直推 main 免 PR，其余账号强制 PR。"
+  "_measured_at": "2026-09-28T10:25Z 首测；2026-10-07 按 live 复核校正顶层字段（gh api repos/ReSerendipity/MiniMax-H3-lite/branches/main/protection：require PR(1 approval)、require_code_owner_reviews=false、enforce_admins=false）。顶层字段是 apply 脚本实际写入的依据，必须与 policy/bypass_note/_meets_reality 保持同一口径，否则每次 push 都会被 .githooks/pre-push 判成漂移。2026-10-17 第三次只读实测（gh api repos/ReSerendipity/MiniMax-H3-Lite/branches/main/protection 及 required_status_checks/enforce_admins 子资源）：strict=false、必需 context 8 条、required_approving_review_count=1、require_code_owner_reviews=false、enforce_admins=false、required_signatures.enabled=false。同轮把 repo 字段由改名前的 MiniMax-H3-lite 校正为服务端现名 MiniMax-H3-Lite（旧值仅因 GitHub 改名重定向才使只读 GET 继续成立；--apply 的 PUT 路径本轮未测也未执行，属远端写待批）。2026-10-17 后续决策：**不改远端开关**（保留 enforce_admins=false，按 owner 明确指示「本设备可直推」），仅把 AGENTS.md / SECURITY_MATRIX.md / 本文件三处口径统一改写为「已接受并记录的例外」；本轮未执行任何远端写。",
+  "_meets_reality": "live 为：require PR(1 approval) + enforce_admins=false；owner/admin 直推 main 免 PR（2026-10-17 复核确认保留，属「已接受并记录」的例外，见 policy.status），其余账号强制 PR。本文件的顶层 enforce_admins 保持 false 以与 live 一致，避免 .githooks/pre-push 漂移误判；同口径文件：AGENTS.md §main 直推授权、SECURITY_MATRIX.md 分支保护行。"
 }

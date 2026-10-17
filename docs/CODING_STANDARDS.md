@@ -56,7 +56,7 @@ python scripts/check_no_hardcoded_paths.py --all    # 全库
 
 ## 2. Git 工作流（强制）
 
-- main 受保护：禁止直推。流程：`git fetch` → 从 `origin/main` 建分支 → 修改 → `git commit -s`（DCO）→ push（过 pre-push 门禁）→ GitHub PR。
+- main 受保护：**对协作者禁止直推**（owner 本机凭据为唯一豁免，见 `AGENTS.md` §main 直推授权）。协作者流程：`git fetch` → 从 `origin/main` 建分支 → 修改 → `git commit -s`（DCO）→ push（过 pre-push 门禁）→ GitHub PR。
 - 提交信息使用 Conventional Commits 风格：`feat: / fix: / chore: / docs: / refactor: / test:`；同一仓库内语言保持一致。
 - 钩子存放在 `.githooks/` 并随仓库分发（仓库自包含），克隆后启用：
 

@@ -1,4 +1,4 @@
-﻿# MiniMax-H3-lite 安全矩阵
+# MiniMax-H3-lite 安全矩阵
 
 > 本文档列出项目的安全控制措施，供安全审计和合规检查参考。
 
@@ -6,7 +6,7 @@
 
 | 控制项 | 实现方式 | 状态 |
 |---|---|---|
-| 分支保护 | GitHub Branch Protection：要求 PR + 1 审批 + **8 项必需状态检查**（`strict=false`），但 **`enforce_admins=false`** ⇒ 对 owner/admin 直推 main 不生效（2026-10-17 只读实测）。admin 路径的补偿是 `.githooks/pre-push` 对 `refs/heads/main` 强制 `precheck.ps1 -Full` | ⚠️ 部分生效（admin 豁免，属 2026-09-28 已定治理决定） |
+| 分支保护 | GitHub Branch Protection：要求 PR + 1 审批 + **8 项必需状态检查**（`strict=false`）＋ **`enforce_admins=false`** ⇒ 本机 owner/admin 凭据可直推 main（2026-10-17 只读实测）。该豁免的**补偿控制**是 `.githooks/pre-push` 对 `refs/heads/main` 强制 `precheck.ps1 -Full`，并比对 live 与 `docs/ci/branch-protection.json` 判漂移 | ✅ 已接受并记录（2026-09-28 设立·2026-10-17 复核确认保留；见 `AGENTS.md` §main 直推授权） |
 | DCO 签名 | .githooks/commit-msg 强制 Signed-off-by | ✅ |
 | 代码审查 | PR 需 review | ⚠️ 待配置 CODEOWNERS |
 

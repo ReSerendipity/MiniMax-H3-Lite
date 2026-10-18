@@ -1,10 +1,7 @@
-# 历史身份归并：所有别名统一到主身份 ReSerendipity <259081123+ReSerendipity@users.noreply.github.com>
-# 见 https://git-scm.com/docs/gitmailmap
-
-# —— 个人别名（同一邮箱，不同 git config user.name）——
-
-# —— 本地/其他邮箱变体 ——
-
-# —— GitHub bot（不代表真人，归并到主身份以保持 shortlog 干净）——
+# 提交身份归一（红线 #4：身份固定为 noreply，禁止个人邮箱身份）
+# 历史提交中的账号公开邮箱/本地占位邮箱统一显示为 noreply 身份；不改写历史。
+# 覆盖：GitHub squash/rebase/update-branch 服务端生成的提交 + 早期本地开发占位身份 + bot 服务端提交。
+# 只归一仓库所有者自己的邮箱变体；第三方贡献者（如 GalgameShell 上游作者）不动。
+ReSerendipity <259081123+ReSerendipity@users.noreply.github.com> <zengyangc@outlook.com>
 ReSerendipity <259081123+ReSerendipity@users.noreply.github.com> <41898282+github-actions[bot]@users.noreply.github.com>
 ReSerendipity <259081123+ReSerendipity@users.noreply.github.com> <49699333+dependabot[bot]@users.noreply.github.com>

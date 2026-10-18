@@ -6,7 +6,7 @@
 # 本 workflow 构建镜像后用 Trivy 扫描：
 #   - `trivy image`：基础镜像 + torch cu130 轮子 + Python 依赖的 CVE 面（HIGH/CRITICAL）
 #   - `trivy fs`   ：仓库内依赖清单（requirements.txt）的已知漏洞
-# 采用「观察模式」(exit-code 0)：首次运行只出报告不阻断 CI，待人工 triage 后再收紧为门禁。
+# 采用**阻断模式**（exit-code 1）：2026-10-18 依治理规范 §10.4 收紧（扫描不得停在报告模式）。
 #
 # 设计对齐家族约定（与 gpu-smoke.yml 一致）：
 #   - permissions: contents: read（最小权限，不上传 SARIF 故无需 security-events: write）
@@ -64,20 +64,20 @@ jobs:
         # v0.3.1 = 81e514348e19b6112ce2a7e3ecbafe19c1e1f567
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
 
-      - name: Trivy image scan (observe mode)
+      - name: Trivy image scan (gate: HIGH/CRITICAL)
         run: |
           trivy image \
             --severity HIGH,CRITICAL \
-            --exit-code 0 \
+            --exit-code 1 \
             --format table \
             minimax-h3-lite:ci | tee trivy-image.txt
-          echo "::notice::image scan in OBSERVE mode (exit-code 0). After triage, set --exit-code 1 to gate CI on HIGH/CRITICAL."
+          echo "::notice::image scan is a GATE (exit-code 1); findings fail the job. Accepted risks (if any) must be registered in .trivyignore.yaml with reason + expiration."
 
-      - name: Trivy filesystem scan (observe mode)
+      - name: Trivy filesystem scan (gate: CRITICAL)
         run: |
           trivy fs \
             --severity CRITICAL \
-            --exit-code 0 \
+            --exit-code 1 \
             --format table \
             . | tee trivy-fs.txt
 

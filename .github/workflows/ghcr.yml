@@ -92,5 +92,8 @@ jobs:
             VCS_REF=${{ github.sha }}
             BUILD_DATE=${{ steps.version.outputs.build_date }}
             VERSION=${{ steps.version.outputs.version }}
+          # 治理规范 §10.4（2026-10-18 收敛）：镜像链开 provenance + sbom
+          provenance: true
+          sbom: true
           cache-from: type=gha,scope=ghcr-publish
           cache-to: type=gha,mode=max,scope=ghcr-publish

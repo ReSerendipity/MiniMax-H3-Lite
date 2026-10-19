@@ -32,7 +32,7 @@ def test_notice_declares_aimdo_gpl():
 
 
 def test_third_party_notices_no_unverified_license():
-    text = _read("THIRD_PARTY_NOTICES.md")
+    text = _read("docs/THIRD_PARTY_NOTICES.md")
     for line in text.splitlines():
         if "comfy" in line.lower() and "未核验" in line:
             raise AssertionError(f"许可证不得停留在未核验状态: {line.strip()}")

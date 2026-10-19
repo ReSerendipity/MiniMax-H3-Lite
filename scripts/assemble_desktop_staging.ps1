@@ -8,7 +8,8 @@
 #   ├─ backend\ workflows\ assets\ scripts\   git archive HEAD 装跟踪路径
 #   ├─ comfy_kernel\            属 .gitignore 的 vendored 目录，从磁盘 robocopy
 #   ├─ requirements*.txt package.json start.bat LICENSE NOTICE THIRD_PARTY_NOTICES.md README.md
-#   │                         （package.json=版本单一事实源，backend/version.py 随包读取，缺它回退 0.0.0-dev）
+#   │                         （package.json=版本单一事实源，backend/version.py 随包读取，缺它回退 0.0.0-dev；
+#   │                           THIRD_PARTY_NOTICES.md 源路径 §12.2 起在 docs/，组装时展平回 staging 根）
 #   ├─ runtime\                 便携 Python 运行时（-RuntimeDir 指定；无则必须 -SkipRuntime）
 #   ├─ model\                   四类别的真实空目录（权重不打包，用户按指引自行下载）
 #   └─ data\ logs\ uploads\     空占位目录（运行期生成物落这里）
@@ -86,7 +87,7 @@ $archivePaths = @(
     "backend", "workflows", "assets", "scripts",
     "package.json",
     "requirements.txt", "requirements-lock.txt",
-    "start.bat", "LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "README.md"
+    "start.bat", "LICENSE", "NOTICE", "docs/THIRD_PARTY_NOTICES.md", "README.md"
 )
 $tmpTar = Join-Path $env:TEMP "mmh3-app-$Version.tar"
 git -C $RepoRoot archive --format=tar --output="$tmpTar" HEAD -- @archivePaths
@@ -96,6 +97,10 @@ $Tar = Join-Path $env:SystemRoot "System32\tar.exe"
 & $Tar -xf "$tmpTar" -C "$OutputDir"
 if ($LASTEXITCODE -ne 0) { throw "tar 解包失败" }
 Remove-Item $tmpTar -Force
+# §12.2 后 THIRD_PARTY_NOTICES.md 自 docs/ 解出，展平回 staging 根以维持扁平布局契约
+# （与 setup.nsi 的 Delete "$INSTDIR\THIRD_PARTY_NOTICES.md" 双向约定不变）
+Move-Item (Join-Path $OutputDir "docs\THIRD_PARTY_NOTICES.md") (Join-Path $OutputDir "THIRD_PARTY_NOTICES.md") -Force
+Remove-Item (Join-Path $OutputDir "docs") -Force -ErrorAction SilentlyContinue
 Write-Host "[OK] 跟踪代码（git archive：backend/workflows/assets/scripts + 根文件）"
 
 # ── 3. comfy_kernel：vendored 于 .gitignore，必须从磁盘复制 ────

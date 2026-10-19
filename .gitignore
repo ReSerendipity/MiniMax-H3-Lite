@@ -184,6 +184,9 @@ coverage.xml
 .coverage
 htmlcov/
 
+# ── §13.1 local/ 容器：仅本地内容的唯一 ignore 容器（内部说明/agent 上下文/纯历史，2026-10-19 结构收敛）──
+/local/
+
 # AI 规范（仅本地保留，不上传远程，2026-08-27）
 AGENTS.md
 

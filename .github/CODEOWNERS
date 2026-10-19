@@ -60,8 +60,8 @@ docker-compose.yml @ReSerendipity
 # 防线矩阵与告警 triage 结论
 .github/SECURITY_MATRIX.md @ReSerendipity
 
-# 根级安全入口指针
-SECURITY.md @ReSerendipity
+# 安全入口指针（§12.2 结构收敛后位于 docs/）
+docs/SECURITY.md @ReSerendipity
 
 # vendored 内核许可边界
 docs/GPL_COMPLIANCE.md @ReSerendipity

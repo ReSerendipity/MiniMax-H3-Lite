@@ -188,7 +188,8 @@ jobs:
 
       - name: Lint JavaScript
         # 业务前端脚本（assets/**/*.js）与测试脚本一并纳入静态检查。
-        run: npx eslint tests/frontend/*.js tests/*.js assets/**/*.js --no-error-on-unmatched-pattern
+        # §12.2：eslint flat 配置自根迁入 scripts/，以 --config 显式指定路径。
+        run: npx eslint --config scripts/eslint.config.mjs tests/frontend/*.js tests/*.js assets/**/*.js --no-error-on-unmatched-pattern
 
   # ── 类型门禁（mypy ratchet，家族底线；2026-09-03 试点接入组织模板）──
   # 门禁逻辑统一维护在 ReSerendipity/.github 的 python-quality-baseline.yml，

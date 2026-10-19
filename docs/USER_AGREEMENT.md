@@ -5,9 +5,9 @@
 
 ## 1. 许可与发布形态
 
-1.1 项目代码适用 [Apache License 2.0](LICENSE)，可自由使用、修改、再分发（保留版权声明与 LICENSE 副本）。
+1.1 项目代码适用 [Apache License 2.0](../LICENSE)，可自由使用、修改、再分发（保留版权声明与 LICENSE 副本）。
 
-1.2 **模型权重许可独立于代码**：MiniMax H3 模型受《MiniMax H3 Community License Agreement》约束（排除欧盟/英国/韩国/美国部署、商用超 2000 万美元需书面授权等，详见 [NOTICE](NOTICE)）——使用前务必阅读并遵守，商用场景按许可要求取得授权。
+1.2 **模型权重许可独立于代码**：MiniMax H3 模型受《MiniMax H3 Community License Agreement》约束（排除欧盟/英国/韩国/美国部署、商用超 2000 万美元需书面授权等，详见 [NOTICE](../NOTICE)）——使用前务必阅读并遵守，商用场景按许可要求取得授权。
 
 ## 2. 合法使用承诺
 
@@ -27,7 +27,7 @@
 
 ## 4. 第三方明示
 
-模型权重许可见 [NOTICE](NOTICE)；第三方代码依赖许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+模型权重许可见 [NOTICE](../NOTICE)；第三方代码依赖许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 5. 免责与责任限制
 

@@ -275,6 +275,3 @@ service-account.json
 
 # ZCode 会话配置（合规建议：本地工具配置不入库）
 .zcodeignore
-
-# 对内项目说明（docs/README.internal.md）：仅本地维护者，不入库（2026-10-13 README 双版本制度）
-docs/README.internal.md

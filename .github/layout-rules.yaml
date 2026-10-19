@@ -71,7 +71,6 @@ root_allowlist:
   - docker-compose.pinned.yml.example
   - docker-compose.yml
   - docs
-  - eslint.config.mjs
   - gitleaks.toml
   - logs
   - package-lock.json

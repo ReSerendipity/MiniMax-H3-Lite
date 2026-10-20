@@ -1,13 +1,13 @@
 # .github/workflows/gpu-smoke.yml
 # Weekly + manual REAL-INFERENCE smoke on a self-hosted GPU runner (label: gpu).
 #
-# 补齐 MiniMax-H3-lite 在「GPU 真机推理 CI」维度的历史缺口：
+# 补齐 MiniMax-H3-Lite 在「GPU 真机推理 CI」维度的历史缺口：
 # 此前 .github/workflows/ 仅有 docs-consistency / release-please / sast / stale / test，
 # runs-on 全为 GitHub 托管 runner（ubuntu / windows），无任何 GPU 真机推理验证——
 # diffusers 升级、torch/CUDA 变体变更、权重加载路径改动后没有任何防线。
 #
-# 设计借鉴 SeedVR2-lite 的 gpu-smoke.yml（runner-precheck + gpu-smoke 双 job），
-# 与 Image_MultiModel / TTS_MultiModel 家族一致。与三者不同：本项目已自带
+# 设计借鉴 SeedVR2-Lite 的 gpu-smoke.yml（runner-precheck + gpu-smoke 双 job），
+# 与 Image-DuoModel / TTS-MultiModel 家族一致。与三者不同：本项目已自带
 # 真实权重推理冒烟脚本 scripts/smoke_real.py（校验 torch/diffusers → CUDA → 权重
 # 路径 → 跑 diffusers ModularPipeline → 落盘非空 mp4），故本 workflow 直接复用它，
 # 无需另造冒烟脚本。

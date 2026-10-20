@@ -70,7 +70,7 @@ _archive/
 #   漏掉 -f 的结果是"本地写了文档、仓库和干净检出里没有"，且不会有任何报错。
 #
 # 刻意保持本机-only、不要 -f 入库的文档（含内部主机名/运维细节/未公开审计结论）：
-#   docs/SECURITY_AUDIT_MiniMax-H3-lite.md   安全审计报告全文
+#   docs/SECURITY_AUDIT_MiniMax-H3-Lite.md   安全审计报告全文
 #   docs/SECURITY_REMEDIATION_TRACKER.md     整改进度台账
 #   docs/SRE_RUNBOOK.md                      运维手册
 #   docs/agents/                             AI 开发契约细化子文档（另有条目排除）

@@ -1,4 +1,4 @@
-# MiniMax-H3-lite 发版工作流（人工 tag 驱动，兑现 bbe6996 的承诺）
+# MiniMax-H3-Lite 发版工作流（人工 tag 驱动，兑现 bbe6996 的承诺）
 #
 # 【为什么是这个形状】第 3 阶段审计实测：本仓发版链在 09-16 被拆掉后一直没接上——
 #   · bbe6996 删除 release-please.yml（−24 行），提交信息写"改人工 tag 驱动 release.yml"，
@@ -281,9 +281,9 @@ jobs:
             fi
             if [ -n "$notes" ]; then
               printf '%s\n' "$notes" > /tmp/notes.md
-              gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md --verify-tag dist/*
+              gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md --draft --verify-tag dist/*
             else
-              gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag dist/*
+              gh release create "$TAG" --title "$TAG" --generate-notes --draft --verify-tag dist/*
             fi
           fi
           echo "=== 该 Release 的资产 ==="

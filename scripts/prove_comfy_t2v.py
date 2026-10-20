@@ -4,7 +4,7 @@
 DEV-ONLY：依赖外部 ComfyUI 安装目录（batch_workflow_generator 工具与官方工作流）。
 默认读取本机 aki-v3 安装；其他机器请用环境变量 COMFYUI_ROOT 指向你的 ComfyUI 根目录。
 
-用途：证明「MiniMax-H3-lite 用 comfy 后端 + ComfyUI」这条路能真正生成视频。
+用途：证明「MiniMax-H3-Lite 用 comfy 后端 + ComfyUI」这条路能真正生成视频。
 """
 import json
 import os

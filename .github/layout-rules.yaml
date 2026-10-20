@@ -1,4 +1,4 @@
-# structure-guard baseline (MiniMax-H3-lite)。root_allowlist 冻结已批准的根级布局。
+# structure-guard baseline (MiniMax-H3-Lite)。root_allowlist 冻结已批准的根级布局。
 version: 1
 require_dirs:
   - docs

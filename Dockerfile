@@ -1,7 +1,7 @@
-# MiniMax-H3-lite — 容器化（GPU 单机工作台）
+# MiniMax-H3-Lite — 容器化（GPU 单机工作台）
 #
 # 形态：FastAPI 单端口工作台（Jinja2 页面 + /api + /assets 静态资源），进程内 Comfy 内核推理。
-# 基础镜像：python:3.12-slim-bookworm —— 与家族 SeedVR2-lite / Image_MultiModel 一致。
+# 基础镜像：python:3.12-slim-bookworm —— 与家族 SeedVR2-Lite / Image-DuoModel 一致。
 # torch 走 cu130 轮子（本机已验证 torch 2.9.1+cu130，见 scripts/clean_launch.py 注释），
 # 由宿主机 nvidia-container-toolkit 提供 GPU 访问，无需在镜像里装 CUDA toolkit。
 #
@@ -14,15 +14,15 @@
 #     否则 classic/buildx 解析报 "no build stage in current context"）===
 ARG VCS_REF=unknown
 ARG BUILD_DATE=unknown
-ARG VERSION=0.1.0
+ARG VERSION=2.6.0
 
 FROM python:3.12-slim-bookworm
 
 # === OCI 镜像元数据（Trivy/GHCR 可读；引用上方全局 ARG）===
 LABEL org.opencontainers.image.title="minimax-h3-lite" \
       org.opencontainers.image.description="MiniMax H3 video generation timeline workbench" \
-      org.opencontainers.image.source="https://github.com/ReSerendipity/MiniMax-H3-lite" \
-      org.opencontainers.image.url="https://github.com/ReSerendipity/MiniMax-H3-lite" \
+      org.opencontainers.image.source="https://github.com/ReSerendipity/MiniMax-H3-Lite" \
+      org.opencontainers.image.url="https://github.com/ReSerendipity/MiniMax-H3-Lite" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${VCS_REF}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
@@ -78,7 +78,7 @@ COPY . .
 # 「已移除 continue-on-error / || true，发布门禁恢复阻断」一致，见 ADR-0004）。
 RUN python -m compileall -q backend scripts
 
-# 非 root 运行（安全基线；与家族 SeedVR2-lite 一致）
+# 非 root 运行（安全基线；与家族 SeedVR2-Lite 一致）
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 

@@ -56,6 +56,7 @@ capture-screenshots.bat
 skills-learning/
 # 归档旧原型
 _archive/
+# docs/ 为纯入库目录（§12.1/§13.1）：docs/ 下文档随仓库分发；仅本地内容一律归 local/ 容器，不再整目录忽略。
 
 # 内容来源标识签名密钥（仅本机，严禁入库）
 .watermark_key

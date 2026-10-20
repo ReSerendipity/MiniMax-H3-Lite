@@ -1,4 +1,4 @@
-# MiniMax-H3-lite — 单机 GPU 工作台编排
+# MiniMax-H3-Lite — 单机 GPU 工作台编排
 #
 # 用法：
 #   docker compose up -d --build

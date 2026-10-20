@@ -1,4 +1,4 @@
-"""运维稳定性评估落地回归测试（对应 MiniMax-H3-lite_运维稳定性评估提示词 v1.0.0）。
+"""运维稳定性评估落地回归测试（对应 MiniMax-H3-Lite_运维稳定性评估提示词 v1.0.0）。
 
 覆盖：日志落盘 / 健康探针就绪信号 / 队列深度 / 默认推理路径超时强制（TASK_TIMEOUT 死配置清除）。
 依赖 conftest 的 fastapi 环境与临时 DB；在本机/CI 需 fastapi + torch 可用。

@@ -1,6 +1,6 @@
 # MM·H3 工作台 · MiniMax H3 视频生成时间线工作台
 
-[![CI](https://github.com/ReSerendipity/MiniMax-H3-lite/actions/workflows/test.yml/badge.svg)](https://github.com/ReSerendipity/MiniMax-H3-lite/actions) [![gitleaks](https://img.shields.io/badge/secret%20scan-gitleaks%20passing-0080FF?style=for-the-badge)](https://github.com/ReSerendipity/MiniMax-H3-lite/actions/workflows/gitleaks.yml)
+[![CI](https://github.com/ReSerendipity/MiniMax-H3-Lite/actions/workflows/test.yml/badge.svg)](https://github.com/ReSerendipity/MiniMax-H3-Lite/actions) [![gitleaks](https://img.shields.io/badge/secret%20scan-gitleaks%20passing-0080FF?style=for-the-badge)](https://github.com/ReSerendipity/MiniMax-H3-Lite/actions/workflows/gitleaks.yml)
 
 一个面向开发者的本地视频生成工作台：以**多镜头时间线**编排视频项目，输入提示词 / 参数 / 参考素材，调用本地 **MiniMax H3**（H3-Base）推理服务逐镜头生成视频并预览成片。
 
@@ -104,7 +104,7 @@ npm run test:frontend               :: 前端测试（先渲染 Jinja2 模板，
 ## 目录结构（概览）
 
 ```
-MiniMax-H3-lite/
+MiniMax-H3-Lite/
 ├── backend/            # FastAPI 单端口服务（页面 + API + 静态资源）
 │   └── templates/      # Jinja2 页面模板（base.html + partials/ + t2v / i2v / r2v）
 ├── assets/             # 共享 CSS/JS + favicon 三件套

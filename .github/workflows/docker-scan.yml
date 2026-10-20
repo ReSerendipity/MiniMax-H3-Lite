@@ -1,5 +1,5 @@
 # .github/workflows/docker-scan.yml
-# Trivy 镜像 / 依赖漏洞扫描（补齐 MiniMax-H3-lite 在「镜像供应链安全」维度的历史缺口）。
+# Trivy 镜像 / 依赖漏洞扫描（补齐 MiniMax-H3-Lite 在「镜像供应链安全」维度的历史缺口）。
 #
 # 背景：此前本仓库仅有 docs-consistency / release-please / sast / stale / test / gpu-smoke，
 # 没有任何容器镜像扫描步骤（评估提示词 §2.7 / 反模式 #4 P1 已标注「缺镜像扫描」）。
@@ -64,7 +64,7 @@ jobs:
         # v0.3.1 = 81e514348e19b6112ce2a7e3ecbafe19c1e1f567
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
 
-      - name: Trivy image scan (gate: HIGH/CRITICAL)
+      - name: "Trivy image scan (gate: HIGH/CRITICAL)"
         run: |
           trivy image \
             --severity HIGH,CRITICAL \
@@ -73,7 +73,7 @@ jobs:
             minimax-h3-lite:ci | tee trivy-image.txt
           echo "::notice::image scan is a GATE (exit-code 1); findings fail the job. Accepted risks (if any) must be registered in .trivyignore.yaml with reason + expiration."
 
-      - name: Trivy filesystem scan (gate: CRITICAL)
+      - name: "Trivy filesystem scan (gate: CRITICAL)"
         run: |
           trivy fs \
             --severity CRITICAL \

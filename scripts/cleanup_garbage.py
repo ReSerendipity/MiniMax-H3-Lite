@@ -15,8 +15,8 @@ import subprocess  # nosec B404
 import sys
 from pathlib import Path
 
-# DEV-ONLY 运维工具：默认指向本机仓库根；克隆到其他机器请用 MMH3_REPO_ROOT 覆盖
-BASE = Path(os.environ.get("MMH3_REPO_ROOT", r"C:\Users\Doro\MiniMax-H3-lite"))
+# 运维工具：默认以脚本所在目录推导仓库根（可移植）；可用 MMH3_REPO_ROOT 覆盖
+BASE = Path(os.environ.get("MMH3_REPO_ROOT") or Path(__file__).resolve().parent.parent)
 DB = BASE / "data" / "mmh3.db"
 UPLOADS = BASE / "uploads"
 ASSETS = BASE / "assets"

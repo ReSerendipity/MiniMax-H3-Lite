@@ -1,10 +1,10 @@
 # Security Policy
 
-> MiniMax-H3-lite 安全策略。最后更新：2026-08-27（与代码实测逐项对齐）
+> MiniMax-H3-Lite 安全策略。最后更新：2026-08-27（与代码实测逐项对齐）
 
 ## 一、项目形态与默认安全姿态
 
-MiniMax-H3-lite 是**本地单机运行**的 MiniMax H3 视频生成时间线工作台：
+MiniMax-H3-Lite 是**本地单机运行**的 MiniMax H3 视频生成时间线工作台：
 
 - 后端为 **FastAPI**（`backend/main.py`），**单端口**统一提供 Jinja2 页面 + `/api/*` 接口 + 静态资源（`/assets`、`/uploads`）。
 - 服务默认仅绑定 **`127.0.0.1`**，不对外网开放（见 `backend/config.py` 的 `HOST="127.0.0.1"` 默认值与 `from_env()` 的 `MMH3_HOST`/`MMH3_PORT` 覆盖）。

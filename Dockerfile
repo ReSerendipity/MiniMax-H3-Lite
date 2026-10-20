@@ -14,7 +14,7 @@
 #     否则 classic/buildx 解析报 "no build stage in current context"）===
 ARG VCS_REF=unknown
 ARG BUILD_DATE=unknown
-ARG VERSION=0.1.0
+ARG VERSION=2.6.0
 
 FROM python:3.12-slim-bookworm
 

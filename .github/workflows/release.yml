@@ -281,9 +281,9 @@ jobs:
             fi
             if [ -n "$notes" ]; then
               printf '%s\n' "$notes" > /tmp/notes.md
-              gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md --verify-tag dist/*
+              gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md --draft --verify-tag dist/*
             else
-              gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag dist/*
+              gh release create "$TAG" --title "$TAG" --generate-notes --draft --verify-tag dist/*
             fi
           fi
           echo "=== 该 Release 的资产 ==="

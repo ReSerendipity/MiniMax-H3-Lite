@@ -1,4 +1,4 @@
-# 安全需求矩阵 — MiniMax-H3-lite
+# 安全需求矩阵 — MiniMax-H3-Lite
 
 > 定位：本文件是安全需求追踪矩阵（原根目录 `SECURITY.md`，2026-09-11 自净化整改移入 `.github/SECURITY_MATRIX.md`，消除与 GitHub 健康文件 `SECURITY.md` 的命名冲突）。**漏洞报告政策、支持版本、报告渠道见 [.github/SECURITY.md](SECURITY.md)**。
 >

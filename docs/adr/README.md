@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR)
 
-> 本目录是 MiniMax-H3-lite 项目的架构决策记录库。
+> 本目录是 MiniMax-H3-Lite 项目的架构决策记录库。
 > 每个 ADR 编号唯一、只追加不删除（被推翻的标记为 Superseded）。
 >
 > ⚠️ 本目录为**本地文档，未随仓库发布**（`.gitignore:59` 屏蔽 `docs/` 整目录，仅作本机决策记录）。

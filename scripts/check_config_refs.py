@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scripts/check_config_refs.py — 配置-实现一致性门禁（MiniMax-H3-lite 适配版）
+scripts/check_config_refs.py — 配置-实现一致性门禁（MiniMax-H3-Lite 适配版）
 
 根因：安全评估 M1 指出「配置幻觉（Phantom Control）」——``config.py`` 的
 ``@dataclass Settings`` 字段若由环境变量（``MMH3_*``）覆盖却从未被代码真实应用，

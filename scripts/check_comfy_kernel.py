@@ -9,15 +9,15 @@ test.yml 的 comfy-kernel-guard job）与 `scripts/check_compose_mounts.py`（bi
 做 import 探测；这是 `scripts/` 下唯一的**不依赖 GPU/权重**的内核可 import 性探测
 （`smoke_comfy.py` 虽也触达 comfy，但走的是真机全链路）。
 
-适用形态：下文检查项通篇描述的是 **Image_MultiModel 仓**的形态（`UPGRADE_STRATEGY.md`、
+适用形态：下文检查项通篇描述的是 **Image-DuoModel 仓**的形态（`UPGRADE_STRATEGY.md`、
 `COMFYUI_VERSION_PIN` 标记等约定本仓并不存在），拿它扫本仓得到的"缺失"不代表本仓有问题。
 性能地雷：`_search_pin()` 对传入的仓库根做**无排除白名单的 `rglob` 全文读取**，只跳过
 `__pycache__` 与 `node_modules`；本仓工作树的 `.venv/` 有 17364 个命中扩展名的文件会被逐个
 read_text（2026-09-10 实测），`model/` 的 4 个子项是 junction（实测指向
 `APP/ComfyUI-aki-v3/ComfyUI/models/*`）同样会被递归穿透，整仓跑一次是分钟级开销。
 
-只读检查 Image_MultiModel 仓的 comfy_kernel 目录，输出评估报告文本，用于
-MiniMax-H3-lite 移植 ComfyUI 内核进程内复用的可行性判断。
+只读检查 Image-DuoModel 仓的 comfy_kernel 目录，输出评估报告文本，用于
+MiniMax-H3-Lite 移植 ComfyUI 内核进程内复用的可行性判断。
 
 检查项：
   1. comfy_kernel 目录结构与 `import comfy` 可行性（comfy/ 包 + __init__.py，

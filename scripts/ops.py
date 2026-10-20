@@ -119,7 +119,7 @@ def cmd_status(_args: argparse.Namespace) -> int:
     base = f"http://127.0.0.1:{port}"
     online, raw = _probe(base)
 
-    print("MiniMax-H3-lite 运维巡检（只读）")
+    print("MiniMax-H3-Lite 运维巡检（只读）")
     print(f"  仓库根   : {ROOT}")
     print(f"  服务端口 : {port}（来源 MMH3_PORT env 或 backend/config.py）")
     if online:
@@ -194,7 +194,7 @@ def cmd_backup(args: argparse.Namespace) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(
         prog="ops",
-        description="MiniMax-H3-lite 薄管理 CLI（status/health/backup，只读优先）",
+        description="MiniMax-H3-Lite 薄管理 CLI（status/health/backup，只读优先）",
     )
     sub = ap.add_subparsers(dest="command", required=True)
 

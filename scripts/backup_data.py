@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""备份 MiniMax-H3-lite 运行时数据（SQLite + settings + checkpoints）。
+"""备份 MiniMax-H3-Lite 运行时数据（SQLite + settings + checkpoints）。
 
 运维稳定性评估发现：SRE_RUNBOOK §3 声明了 SQLite 定期备份，但 ``scripts/`` 零备份脚本
 （连「只备不练」都谈不上）。本脚本把 SLO/DR 表中的备份预案落地为可重复、可审计的命令。
@@ -51,7 +51,7 @@ def prune_old(dest: Path, keep: int) -> list[Path]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="备份 MiniMax-H3-lite 运行时数据")
+    ap = argparse.ArgumentParser(description="备份 MiniMax-H3-Lite 运行时数据")
     ap.add_argument("--dest", type=Path, default=DEFAULT_DEST, help="备份根目录（默认 ./backup）")
     ap.add_argument("--keep", type=int, default=5, help="保留最近 N 份（默认 5）")
     ap.add_argument("--dry-run", action="store_true", help="仅列出待备份项，不写盘")

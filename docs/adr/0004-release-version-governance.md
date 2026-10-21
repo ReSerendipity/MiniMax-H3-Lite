@@ -37,7 +37,7 @@
 - 移除 `release-please.yml` 的 `continue-on-error: true` → 发布失败即红叉，不再静默。
 - `skip-github-pull-request: false` → 版本晋升经 release PR 人工审查（版本号、CHANGELOG 分区、package.json 同步）。
 - `test.yml`：覆盖率门槛 40 → 60（与 `pytest.ini` 一致，实测 69.25%）；前端 smoke 移除 `continue-on-error` 与 `|| true`（实测 57/57 通过）。
-- 依据：`docs/agents/QUALITY_CONTRACT.md` §10.2/§10.4 明确禁止以 `continue-on-error` / `|| true` 掩盖失败。
+- 依据：`local/agents/QUALITY_CONTRACT.md` §10.2/§10.4 明确禁止以 `continue-on-error` / `|| true` 掩盖失败。
 
 ### D3 保留 2.3.1 基线，断层以文档显式记录
 

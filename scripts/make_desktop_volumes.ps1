@@ -79,4 +79,4 @@ $uploadNames | Set-Content (Join-Path $OutputDir "upload-list.txt") -Encoding AS
 $totalGB = [math]::Round((($hashTargets | Measure-Object Length -Sum).Sum) / 1GB, 2)
 Write-Host ""
 Write-Host "=== 分卷完成: $OutputDir（$($volumes.Count) 卷 + 校验和，共 $totalGB GB） ==="
-Write-Host "上传纪律见 docs/agents/RELEASE_PROFILE.md 阶段4（gh release upload 必须带 -R；逐文件+重试）"
+Write-Host "上传纪律见 local/agents/RELEASE_PROFILE.md 阶段4（gh release upload 必须带 -R；逐文件+重试）"

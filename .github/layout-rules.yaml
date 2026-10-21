@@ -6,7 +6,7 @@ require_dirs:
   - .github
 forbid_root_patterns:
   # 注：暂缓 '*_AUDIT_*.md$' —— MiniMax 根目录现存 SECURITY_AUDIT_*.md，
-  #     待其迁入 docs/ 后再恢复该模式（见 docs/agents 治理说明）。
+  #     待其迁入 docs/ 后再恢复该模式（见 local/agents 治理说明）。
   - '.*_ASSESSMENT_.*\\.md$'
   - '.*_REVIEW_.*\\.md$'
   - 'REMEDIATION_EXECUTION_LOG.*\\.md$'

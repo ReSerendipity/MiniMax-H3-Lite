@@ -48,5 +48,5 @@
 
 ## 5. 回滚/恢复演练留痕要求
 
-- 每次发版（docs/agents/RELEASE_PROFILE.md 阶段 4）收尾时，在既有「恢复备份并验证 git status 干净」之外，留一条**恢复验证记录**：时间戳、备份源路径、恢复目标、SHA256 对比结果、`/api/health` 结论、执行人。
+- 每次发版（local/agents/RELEASE_PROFILE.md 阶段 4）收尾时，在既有「恢复备份并验证 git status 干净」之外，留一条**恢复验证记录**：时间戳、备份源路径、恢复目标、SHA256 对比结果、`/api/health` 结论、执行人。
 - 记录位置：仓外发版证据目录（`<仓外>\_mmh3_release_evidence_<版本>\`）；模板示例见 v2.9 修复批次的《恢复演练记录》。

@@ -12,7 +12,7 @@ crashes the run before a verdict is printed (2026-09-18 harness re-check).
 when present the self-contained dead-link audit ALWAYS runs, regardless of
 whether the family auditor exists on disk.  This guarantees identical output
 on dev machines and CI — the core predictability requirement.  The audit
-scans tracked Markdown plus ``AGENTS.md`` / ``docs/agents/*.md`` from disk
+scans tracked Markdown plus ``AGENTS.md`` / ``local/agents/*.md`` from disk
 (any relative Markdown link whose target is missing on disk AND not
 gitignored fails the build; gitignored targets are allowed by family
 convention).  On a clean CI checkout those governance paths simply do not
@@ -62,7 +62,7 @@ def _audit_one(rel: str, findings: list[str]) -> int:
     """Audit relative Markdown links in one file; return number of links checked.
 
     ``rel`` is a repo-root-relative POSIX path.  Same rules apply to tracked
-    Markdown and to the on-disk-only governance docs (AGENTS.md / docs/agents/):
+    Markdown and to the on-disk-only governance docs (AGENTS.md / local/agents/):
     a missing target that is gitignored is treated as an allowed local-only
     reference, not a dead link (family convention).
     """
@@ -94,7 +94,7 @@ def _audit_one(rel: str, findings: list[str]) -> int:
 
 
 def _local_governance_md(tracked: set[str]) -> list[str]:
-    """Return repo-relative paths of AGENTS.md and docs/agents/*.md present on
+    """Return repo-relative paths of AGENTS.md and local/agents/*.md present on
     disk but not already in the tracked set.  On a clean CI checkout these
     paths are gitignored and do not exist, so the list is empty there — the
     audit degrades gracefully rather than failing on missing files.
@@ -103,7 +103,7 @@ def _local_governance_md(tracked: set[str]) -> list[str]:
     root_agents = HERE / "AGENTS.md"
     if root_agents.is_file():
         candidates.append(root_agents)
-    agents_dir = HERE / "docs" / "agents"
+    agents_dir = HERE / "local" / "agents"
     if agents_dir.is_dir():
         candidates.extend(sorted(agents_dir.glob("*.md")))
     extras: list[str] = []
@@ -122,7 +122,7 @@ def _local_governance_md(tracked: set[str]) -> list[str]:
 
 def minimal_audit() -> int:
     """Self-contained dead-link audit over tracked Markdown plus the on-disk
-    AI-development contract (AGENTS.md / docs/agents/) so 铁律#6 证据绑定 复核
+    AI-development contract (AGENTS.md / local/agents/) so 铁律#6 证据绑定 复核
     在干净检出/无外部审计器环境下仍对契约本身可复现；gitignored 目标不计为死链。
     """
     try:
@@ -141,7 +141,7 @@ def minimal_audit() -> int:
     print(
         f"minimal dead-link audit: {len(md_files)} tracked md"
         f" + {len(extra_files)} local-only governance md"
-        f" (AGENTS.md / docs/agents/*)"
+        f" (AGENTS.md / local/agents/*)"
         f" / {checked} relative links / {len(findings)} findings"
     )
     if extra_files:

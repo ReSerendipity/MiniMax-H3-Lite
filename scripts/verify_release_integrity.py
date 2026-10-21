@@ -90,7 +90,7 @@ def _release_context_files() -> list[Path]:
         if not p.is_file():
             continue
         rel = p.relative_to(ROOT).as_posix()
-        if rel.startswith(".git/") or rel.startswith(".venv/") or rel.startswith("docs/agents/"):
+        if rel.startswith(".git/") or rel.startswith(".venv/") or rel.startswith("local/agents/"):
             continue
         if not _dockerignore_match(patterns, rel):
             out.append(p)

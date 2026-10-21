@@ -141,4 +141,4 @@ Write-Host "[OK] version.json"
 $sizeGB = [math]::Round(((Get-ChildItem $OutputDir -Recurse -File | Measure-Object Length -Sum).Sum) / 1GB, 2)
 Write-Host ""
 Write-Host "=== staging 组装完成: $OutputDir（$sizeGB GB，版本 $Version） ==="
-Write-Host "下一步: makensis 打 Setup → scripts\make_desktop_volumes.ps1 打数据分卷（详见 docs/agents/RELEASE_PROFILE.md 阶段2）"
+Write-Host "下一步: makensis 打 Setup → scripts\make_desktop_volumes.ps1 打数据分卷（详见 local/agents/RELEASE_PROFILE.md 阶段2）"

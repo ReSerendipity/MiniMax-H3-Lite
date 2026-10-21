@@ -11,17 +11,17 @@
 | 本机路径 | 角色 | 跟踪状态 |
 |---|---|---|
 | `AGENTS.md` | AI 辅助开发指南 · 自进化协议主文档（6 条铁律、自检清单入口、文档优先级） | ❌ 本地（`.gitignore` §「AI 规范」） |
-| `docs/agents/` | 契约细化子文档 9 件：`ARCH_MAP.md`（模块地图）、`CODE_STYLE.md`（代码风格）、`CONFIG.md`（启动命令与环境变量）、`TEST_COMMANDS.md`（测试约定）、`GOTCHAS.md`（坑点台账）、`SOPS.md`（典型开发 SOP + 自进化自检清单）、`QUALITY_CONTRACT.md`（质量执行契约）、`REVISION_LOG.md`（修订记录表）、`RELEASE_PROFILE.md`（发版周期项目档案） | ❌ 本地（`.gitignore` §「自进化协议细化文档」） |
+| `local/agents/` | 契约细化子文档 9 件：`ARCH_MAP.md`（模块地图）、`CODE_STYLE.md`（代码风格）、`CONFIG.md`（启动命令与环境变量）、`TEST_COMMANDS.md`（测试约定）、`GOTCHAS.md`（坑点台账）、`SOPS.md`（典型开发 SOP + 自进化自检清单）、`QUALITY_CONTRACT.md`（质量执行契约）、`REVISION_LOG.md`（修订记录表）、`RELEASE_PROFILE.md`（发版周期项目档案） | ❌ 本地（`.gitignore` §「自进化协议细化文档」） |
 | `LOCAL_RULES.md` | 所有者本地管理规则 | ❌ 本地（`.gitignore` §「本地管理规则」） |
 
-路由约定（以本机 `AGENTS.md` 为唯一入口）：项目概览/技术栈 → `docs/agents/ARCH_MAP.md`、`CONFIG.md`；
+路由约定（以本机 `AGENTS.md` 为唯一入口）：项目概览/技术栈 → `local/agents/ARCH_MAP.md`、`CONFIG.md`；
 写码前 → `CODE_STYLE.md`；跑测试 → `TEST_COMMANDS.md`；修 bug 后 → 追加 `GOTCHAS.md`；
 完成任务后 → 追加 `SOPS.md`；每次启动 → 执行 `SOPS.md` 尾部「自进化自检清单」。
 
 ## 2. 本地属性声明（为什么只有一个 stub）
 
 - **有意决定，非遗漏**：上述治理文档含本机路径、本地环境与家族仓库引用等私人/易变信息，
-  所有者选择不上远程（`AGENTS.md` 铁律 #6 亦登记了 `docs/agents/`「运行时产物（非问题）」的口径）。
+  所有者选择不上远程（`AGENTS.md` 铁律 #6 亦登记了 `local/agents/`「运行时产物（非问题）」的口径）。
   因此它们**不参与 CI、对新克隆不可见**——这是本 stub 存在的原因。
 - **权威关系**：仓库跟踪文件（代码、`package.json`、`.pre-commit-config.yaml`、本 README、`docs/**`）
   对任何人都是事实源；`AGENTS.md` 系仅对本机 agent 生效的**补充**工作契约。
@@ -31,7 +31,7 @@
 - **`scripts/check_spec_refs.py` 的两种模式（2026-10-16 实测口径，勿凭文字臆测）**：
   脚本只在 `<仓库根>/.spec_audit/audit_spec_refs.py` 与 `<仓库根上一级>/.spec_audit/audit_spec_refs.py`
   两处寻找仓外家族审计器。
-  - 传 `--minimal`：始终执行自包含死链审计（扫跟踪 `*.md` + 磁盘上的 `AGENTS.md` / `docs/agents/*.md`），
+  - 传 `--minimal`：始终执行自包含死链审计（扫跟踪 `*.md` + 磁盘上的 `AGENTS.md` / `local/agents/*.md`），
     开发机与 CI 输出一致；`structure-guard.yml` 与 `docs-consistency.yml` 用的就是这个模式。
   - 不传 `--minimal` 且审计器不存在：**退出码 2 并打印错误**（"gate could not run"），不是绿灯也不是零结果。
   因此「跑一次 `python scripts/check_spec_refs.py` 就拿到 `phantom=…/dead_links=…` 判定行」
@@ -41,14 +41,14 @@
 ## 3. 不同角色的下一步
 
 - **在所有者本机打开 agent（当前环境）**：直接读仓库根 `AGENTS.md`，按其 §0 与索引进入
-  `docs/agents/*` 执行；本 stub 只是它的仓库可见门面，不复述规则正文，避免双份漂移。
-- **在新克隆 / CI 干净检出上工作**：`AGENTS.md` 与 `docs/agents/` 不存在，属预期状态。
+  `local/agents/*` 执行；本 stub 只是它的仓库可见门面，不复述规则正文，避免双份漂移。
+- **在新克隆 / CI 干净检出上工作**：`AGENTS.md` 与 `local/agents/` 不存在，属预期状态。
   以 `README.md`（快速开始/测试）、`docs/CODING_STANDARDS.md` §2（本地验证循环、提交规范、
   红线）、`docs/adr/*`（架构决策）为行为依据；贡献流程与 DCO 以组织级贡献指南为准
   （本仓不放根级 `CONTRIBUTING.md`，社区健康文件由 org 默认仓提供）；
   如需自进化契约，须先由所有者把本机治理文档随附，或显式引入公开版本——**agent 不得虚构其内容**。
-- **要修改契约本身**：改本机 `AGENTS.md` / `docs/agents/*` 并按其铁律 #5 递增自进化协议版本号、
-  在 `docs/agents/REVISION_LOG.md` 追加记录；仅当本 stub 的路径表或本地属性口径变化时才改本文件。
+- **要修改契约本身**：改本机 `AGENTS.md` / `local/agents/*` 并按其铁律 #5 递增自进化协议版本号、
+  在 `local/agents/REVISION_LOG.md` 追加记录；仅当本 stub 的路径表或本地属性口径变化时才改本文件。
 
 ---
 

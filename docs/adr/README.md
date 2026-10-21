@@ -3,7 +3,8 @@
 > 本目录是 MiniMax-H3-Lite 项目的架构决策记录库。
 > 每个 ADR 编号唯一、只追加不删除（被推翻的标记为 Superseded）。
 >
-> ⚠️ 本目录为**本地文档，未随仓库发布**（`.gitignore:59` 屏蔽 `docs/` 整目录，仅作本机决策记录）。
+> ✅ 本目录**随仓库分发并入库**：`docs/` 自 `d89ca4a`（2026-10-20，§12.1 结构收敛）起为纯入库目录，
+> `.gitignore:59` 的注释已改为「docs/ 为纯入库目录」，不再整目录忽略（原文「本地文档，未随仓库发布」已过时）。
 
 ## 索引
 
@@ -11,7 +12,7 @@
 |------|------|------|------|
 | [0001](0001-single-port-fastapi.md) | 单端口 FastAPI（Jinja2 + API + 静态统一提供） | Implemented | 2026-08-27 |
 | [0002](0002-embedded-comfy-kernel.md) | 内嵌 comfy_kernel 进程内复用（B 方案） | Implemented | 2026-08-27 |
-| [0003](0003-h3-engine-vllm-omni.md) | H3 服务引擎切换评估（引入 vllm-omni 作为推荐默认） | Proposed | 2026-09-03 |
+| [0003](0003-h3-engine-vllm-omni.md) | H3 服务引擎切换评估（引入 vllm-omni 作为推荐默认） | Implemented（脚手架部分） | 2026-09-03 |
 | [0004](0004-release-version-governance.md) | 发布版本治理（manifest 单一版本源 + 门禁恢复阻断 + 保留 2.3.1 基线） | Implemented | 2026-09-05 |
 | [0005](0005-comfy-b-ci-coverage.md) | comfy B 方案 CI 覆盖（条件式内核守卫，否决子模块化 / slim 拉取） | Implemented | 2026-09-06 |
 

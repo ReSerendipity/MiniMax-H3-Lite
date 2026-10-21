@@ -1,10 +1,12 @@
 # GPL-3.0 合规说明（vendored `comfy_kernel/` 与相关 pip 组件）
 
-> 本文档是**分发物**，不是内部笔记：§2 方式 A 要求它随包出仓，因此它虽位于
-> gitignored 的 `docs/` 下，仍以 `git add -f` 显式入库（`.gitignore:59` 的 `docs/`
-> 模式不适用于本文件）。文中每个数字都由 §4 的命令当场可复现，改动内核或基线后须同步。
+> 本文档是**分发物**，不是内部笔记：§2 方式 A 要求它随包出仓。`docs/` 自
+> `d89ca4a`（2026-10-20，§12.1 结构收敛）起为**纯入库目录**，本文件正常跟踪入库，
+> 不再需要 `git add -f`（`.gitignore` 中已无 `docs/` 整目录忽略规则）。文中每个数字
+> 都由 §4 的命令当场可复现，改动内核或基线后须同步。
 >
-> 最后核验：2026-09-10（`comfy_kernel` 0.33.0 / 基线 `ae711691b124`）。
+> 最后核验：2026-10-21（`comfy_kernel` 0.33.0 / 基线 `ae711691b124`；本轮复核了 §1
+> 文件数口径、一级目录数口径、§1b 的 pip 钉版与 §1 取证块的本机路径）。
 
 ## 1. 组件事实
 
@@ -14,18 +16,19 @@
 | 上游 | <https://github.com/Comfy-Org/ComfyUI> |
 | 版本 | ComfyUI **0.33.0**（实测 `comfy_kernel/pyproject.toml` L2-3：`name = "ComfyUI"` / `version = "0.33.0"`） |
 | 源码对应提交 | **不可得** —— 见下方「取证」块。本仓无法声明上游提交号 |
-| 磁盘文件数（口径 A） | **4136** —— `comfy_kernel/` 下**所有**文件，含编译缓存与版本控制痕迹 |
-| 纳入基线哈希（口径 B） | **2582** —— `.ci/comfy_kernel_baseline.json` 的 `file_count` |
-| 被排除数 | **1554** = 1553 个 `__pycache__` 文件 + 1 个悬空 gitlink（`4136 − 1554 = 2582`） |
-| 一级目录数 | **20** |
+| 磁盘文件数（口径 A） | **4133** —— `comfy_kernel/` 下**所有**文件（实测 `find comfy_kernel -type f \| wc -l`，含编译缓存与版本控制痕迹；随本地运行会增删 `__pycache__`，故该数逐机浮动） |
+| 纳入基线哈希（口径 B） | **2582** —— `.ci/comfy_kernel_baseline.json` 的 `file_count`（生成机口径，不受本地缓存增减影响） |
+| 被排除数 | 排除规则由 `scripts/comfy_kernel_baseline.py:43` 的 `SKIP_DIRS`（`__pycache__` / `.git` / `.mypy_cache` / `.pytest_cache` / `node_modules`）决定。基线生成时为 **1554** = 1553 个 `__pycache__` 文件 + 1 个悬空 gitlink（`4136 − 1554 = 2582`）；本机 2026-10-21 实测为 **1560** = 1559 个 `__pycache__` 文件 + 1 个 gitlink（`4133 − 1560 = 2573`；gitlink 位置见 §1c）。⚠️ **本机 2573 与基线 2582 相差的 9 个文件不是缓存浮动**：`python scripts/comfy_kernel_baseline.py --check` 实测（2026-10-21）rc=1，报 `removed _removed_nodes` / `modified app` / `file_count 2582 → 2573`（`_removed_nodes/` 现已 0 文件；`input/` 为 0 文件新目录，不进摘要故未列报）——内核相对基线存在实质改动，须按 §5 处置。2582 与根摘要 `ae711691b124` 以基线工件为准，不受本机缓存增减影响；凡 `--check` 报出**非缓存类**差异，一律按 §5 处置，不是口径错误 |
+| 一级目录数 | **20**（`comfy_kernel/` 下顶层目录，**不含** `__pycache__`；含隐藏目录 `.ci` / `.github` / `.vscode`。含 `__pycache__` 时为 21） |
 | 根摘要（前 12 位） | `ae711691b124` |
 | 本地改动检测 | `scripts/comfy_kernel_baseline.py` + 入库工件 `.ci/comfy_kernel_baseline.json`；CI 在 `comfy-kernel-guard` job 内跑 `--check` |
 | 许可 | GNU GPL-3.0（`comfy_kernel/LICENSE` 首行：`GNU GENERAL PUBLIC LICENSE`） |
 | 主项目许可 | Apache-2.0（`LICENSE` 首行：`Apache License`） |
-| 引用方式 | **进程内复用**：`sys.path.insert(0, _KERNEL_DIR)`（`backend/routers/comfy_engine.py:341`）→ `nodes.init_extra_nodes(...)`（同文件 L405）→ `execution.PromptExecutor(...)`（同文件 L410），非独立进程、非网络调用 |
+| 引用方式 | **进程内复用**：`sys.path.insert(0, _KERNEL_DIR)`（`backend/routers/comfy_engine.py:362`）→ `nodes.init_extra_nodes(...)`（同文件 L426）→ `execution.PromptExecutor(...)`（同文件 L431），非独立进程、非网络调用 |
 
-⚠️ **口径 A 与口径 B 不得混写**：4136 是"内核目录里有多少文件"，2582 是"基线对多少文件做了哈希"。
-把 4136 写进"基线覆盖范围"、或把 2582 当作内核规模，都会与入库工件自相矛盾。
+⚠️ **口径 A 与口径 B 不得混写**：口径 A（基线生成机 4136；本机 2026-10-21 实测 4133）是"内核目录里有多少文件"，口径 B（2582）是"基线对多少文件做了哈希"。
+把口径 A 写进"基线覆盖范围"、或把 2582 当作内核规模，都会与入库工件自相矛盾。
+口径 A 随本地 `__pycache__` 增减而浮动，引用时须注明测量时点；本机与基线的非缓存差异以 `--check` 实测为准（见「被排除数」行与 §5）。
 
 ### 取证：为什么"源码对应提交"不可得
 
@@ -41,10 +44,11 @@
    ```
 
 3. ⚠️ **陷阱**：计划原先给的 `git -C comfy_kernel rev-parse HEAD` **不会失败**，实测 rc=0，
-   并打印 `ba2e47ca7fe7efff3c32a1b22e85cd27c3324617`。那**不是**上游 ComfyUI 的提交，
+   并打印**主仓当前 HEAD**（2026-10-21 复核为 `098f6efe…`；该值随主仓提交推进而变化，
+   引用时须注明测量时点）。那**不是**上游 ComfyUI 的提交，
    而是**本主仓自己的 HEAD** —— `git -C` 进入 `comfy_kernel/` 后向上穿透，发现了
-   `MiniMax-H3-lite/.git`（`git -C comfy_kernel rev-parse --show-toplevel` 实测打印
-   `C:/Users/Doro/MiniMax-H3-lite` 即为佐证）。
+   主仓根的 `.git`（`git -C comfy_kernel rev-parse --show-toplevel` 实测打印
+   `C:/Users/Doro/APP/repository/MiniMax-H3-Lite`，随本机克隆位置而变，2026-10-21 复核）。
    **任何人不得把该 SHA 写成内核的上游对应提交**；要判定"内核不是仓库"，必须用上面第 2 条
    这种无法向上穿透的形式。
 
@@ -55,11 +59,14 @@
 
 | 包 | 钉版 | 许可 | 依据（均为本仓当场实测） |
 |---|---|---|---|
-| `comfy-aimdo` | `==0.5.3`（`requirements.txt:32`，2026-09-15 与 requirements 同步） | **GPL-3.0** | 安装副本 `.venv/Lib/site-packages/comfy_aimdo-0.4.13.dist-info/licenses/LICENSE` 前二行：`This project is licensed under the GNU General Public License v3.0.` / `The original author/copyright holder reserves the right to offer the`。上游 GitHub 标 `NOASSERTION` 仅因许可正文前置了那段非标准声明，不改变"按 GPL-3.0 授权"的判定 |
-| `comfy-kitchen` | `==0.2.33`（`requirements.txt:31`，2026-09-15 与 requirements 同步） | Apache-2.0 | 安装副本 `comfy_kitchen-0.2.31.dist-info/METADATA` 含 `License: Apache-2.0`；上游 `Comfy-Org/comfy-kitchen` LICENSE 一致；0.2.33 另经 PyPI 元数据核实 License: Apache-2.0（2026-09-15） |
+| `comfy-aimdo` | `==0.5.5`（`requirements.txt:32`，2026-10-20 复核同步） | **GPL-3.0** | 安装副本 `comfy_aimdo-<ver>.dist-info/licenses/LICENSE` 前二行：`This project is licensed under the GNU General Public License v3.0.` / `The original author/copyright holder reserves the right to offer the`。上游 GitHub 标 `NOASSERTION` 仅因许可正文前置了那段非标准声明，不改变"按 GPL-3.0 授权"的判定 |
+| `comfy-kitchen` | `==0.2.37`（`requirements.txt:31`，2026-10-20 复核同步） | Apache-2.0 | 安装副本 `comfy_kitchen-<ver>.dist-info/METADATA` 含 `License: Apache-2.0`；上游 `Comfy-Org/comfy-kitchen` LICENSE 一致（0.2.33 曾于 2026-09-15 经 PyPI 元数据核实 License: Apache-2.0，0.2.37 同一许可未变更） |
+
+> ⚠️ 上表"安装副本"路径中的版本号随实际安装而变，故写作 `<ver>` 占位；核对时以
+> `requirements.txt` 的钉版为准，勿以旧 `dist-info` 目录名反推钉版。
 
 `comfy-aimdo` 与内核同为**进程内**依赖：它在运行时被直接 import 进本项目的推理路径
-（`backend/routers/comfy_engine.py:374` `import comfy_aimdo.control as _ctl`，并在 L391-392
+（`backend/routers/comfy_engine.py:395` `import comfy_aimdo.control as _ctl`，并在 L412-413
 预载 `comfy_aimdo.model_vbar` / `host_buffer` / `vram_buffer` / `torch` 子模块），
 承担 DynamicVRAM 分层落盘。**它的 GPL-3.0 义务范围与内核一致，不得按"普通第三方 pip 包"降级处理。**
 
@@ -109,7 +116,7 @@
 - **代价（有意取舍，不是缺陷）**：单独 `docker run minimax-h3-lite` 时 native 引擎不可用，
   必须经 `docker compose up` 或显式 `-v ./comfy_kernel:/app/comfy_kernel:ro` 提供内核；
   README「🐳 Docker 部署」段已对此明示。运行时若缺内核，
-  `backend/routers/comfy_engine.py:339` 抛 `内置 Comfy 引擎缺失…（comfy_kernel 未随项目分发）`。
+  `backend/routers/comfy_engine.py:360` 抛 `内置 Comfy 引擎缺失…（comfy_kernel 未随项目分发）`。
 - **未实测项（诚实标注）**：排除内核带来的**镜像/构建上下文体积差未实测** —— 本机无 docker，
   无法执行计划 Task 3 Step 1 的 `docker build --progress=plain` 上下文传输量对比。
   本节结论仅基于 `.dockerignore` 语义与 `COPY . .` 的行为推断，**不得**在任何地方引用一个
@@ -131,16 +138,15 @@
       `check_compose_mounts.py` 一项兜底）
 - [ ] 基线工件本身在库（它入库，缺失等于门禁被拆掉）：
       `git ls-files --error-unmatch .ci/comfy_kernel_baseline.json` → rc=0
-- [ ] 本文件确已随分发物出仓（`docs/` 被 `.gitignore:59` 排除，靠 force-add 才入库）：
+- [ ] 本文件确已随分发物出仓（`docs/` 为纯入库目录，无需 force-add）：
       `git ls-files --error-unmatch docs/GPL_COMPLIANCE.md` → rc=0
 - [ ] 镜像不含内核、compose 挂载未动：
       `Select-String -Path .dockerignore -Pattern '^comfy_kernel$'` 命中，且
       `Select-String -Path docker-compose.yml -Pattern '\./comfy_kernel:/app/comfy_kernel:ro'` 命中
 - [ ] bind-mount 门禁在部署机给出绿信号：`python scripts\check_compose_mounts.py` → 退出 0
 - [ ] `NOTICE` 与 `THIRD_PARTY_NOTICES.md` 的 `comfy_kernel` / `comfy-aimdo` 条目未被删改。
-      **注意两点**：(a) 这类 `git grep` 断言**只覆盖入库文件**，本文件位于 `docs/` 下，
-      只有经 `git add -f` 才会随分发物出仓 —— 换言之 CI 的绿**不能**证明本文件在产物里，
-      必须用上面第 4 条单独断言；(b) 这一项**自 `0e8dd58` 起不再"只能人工核"**：断言落在
+      **注意两点**：(a) 这类 `git grep` 断言**只覆盖入库文件**，用上面第 4 条单独断言
+      本文件在库且随分发物出仓；(b) 这一项**自 `0e8dd58` 起不再"只能人工核"**：断言落在
       `.github/workflows/docs-consistency.yml` → job `spec-refs` → 步骤名
       **`license-notice-check`**，它逐条 grep 五项 —— ① `NOTICE` 提及 `comfy_kernel`、
       ② `NOTICE` 声明 `GPL-3.0`、③ `NOTICE` 声明 `comfy-aimdo`、

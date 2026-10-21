@@ -53,7 +53,7 @@
   - **差异（记录）**：镜像 tag **仅有 semver、未附 `sha` 后缀**（§10.3 建议 semver + `sha`）；且 `ghcr.yml` 未显式设置 `provenance:` / `sbom:` —— 即**镜像链未开 provenance / sbom**。SBOM 只在 `release.yml` 的 Release 资产层产出，不随镜像推送。
 - **Trivy 扫描口径（如实记录，含两条链，取值不同）**：
   - `trivy.yml`（Trivy Container Scan）：**阻断**，`exit-code: '1'`，`severity: HIGH,CRITICAL`，`ignore-unfixed: true`；扫 `rootfs`（`docker export` 合并视图）并上传 SARIF；触发 `push main` / `pull_request` / `workflow_dispatch`。
-  - `docker-scan.yml`（Container Image Scan (Trivy)）：**报告（observe）**，`exit-code 0`（image 步与 fs 步皆为 `0`），仅 `schedule`（周一 03:00 UTC）与 `workflow_dispatch` 触发，只出报告不阻断。
+  - `docker-scan.yml`（Container Image Scan (Trivy)）：**阻断（gate）**，`--exit-code 1`（2026-10-21 复核：该 workflow 已于 2026-10-18 依治理规范 §10.4 由报告模式收紧为阻断，见其头注与 L71 实参；本文 2026-10-18 建立时所记「`exit-code 0` 观察模式」已过时）；触发为 `workflow_dispatch` + `schedule`（周一 03:00 UTC）。
   - **差异（记录）**：**镜像发布链 `ghcr.yml` 自身不跑 Trivy**，即「发布前扫描」未串在推镜像之前（`docker-gate.yml` 是发布**完整性**五步门禁，属另一类，非漏洞扫描）。
 - **不使用 GPG 分离签名**：本仓 `gpg-signed-release.yml` 已于 PR #95（commit `f9c7174`「删除已裁决撤掉的 GPG 签名 workflow」）删除；经 API 核对，`main` 上该文件已 404 不存在。完整性由 `SHA256SUMS` 承担。
 - 桌面壳完整性补充（记录现状）：`desktop/src-tauri/tauri.conf.json` 当前**未配置 updater 插件**，故桌面安装包**暂无 Tauri ed25519 更新器签名**，以 `SHA256SUMS.desktop` 哈希为主。另有仓内**代码**完整性防线（`release-signing-public-key.asc` 为公钥，私钥在本机 `data/.manifest_signing_key`、不入库；`scripts/verify_release_integrity.py` 走五步门禁），属启动自检范畴，非 Release 资产分发手段。
@@ -75,7 +75,7 @@
 - [ ] 版本位全部同步（见 §1 清单；根 `package.json` 与桌面三件套一致）
 - [ ] `tests/test_version_consistency.py` 通过（漂一处即判红）
 - [ ] `CHANGELOG.md` 已有本版二级标题 + 日期（否则发版说明退化为自动生成）
-- [ ] 分支保护登记的必需检查全绿：`lock-consistency`、`integrity-freshness`、`python-test (ubuntu-latest)`、`python-test (windows-latest)`、`Typecheck (mypy ratchet)`、`frontend-smoke`、`security-scan`、`lint`（来源：`docs/ci/branch-protection.json`）
+- [ ] 分支保护登记的必需检查全绿：`lock-consistency`、`integrity-freshness`、`python-test (ubuntu-latest)`、`python-test (windows-latest)`、`Typecheck (mypy ratchet) / Typecheck (mypy ratchet)`、`frontend-smoke`、`security-scan`、`lint`（来源：`docs/ci/branch-protection.json`，共 8 条 context，取值逐字对齐）
 - [ ] 镜像类：`trivy.yml` 阻断已过（HIGH/CRITICAL）
 - [ ] **本地未产出任何发布交付物**（源码包 / 镜像 / SBOM 全部远端构建）；**桌面安装包属已知本地例外，见 §4 差异**
 - [ ] 冒烟 / 测试与 lint 门禁按各 workflow 实际命令通过（`test.yml`、`lint` 等）

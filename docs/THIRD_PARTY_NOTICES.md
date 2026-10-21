@@ -5,8 +5,8 @@
 
 ## 项目主许可
 
-MiniMax-H3-lite 项目代码采用 [Apache License 2.0](LICENSE)。
-模型权重（MiniMax H3）受其 Community License Agreement 约束，见 [NOTICE](NOTICE)，不由本文件管理。
+MiniMax-H3-lite 项目代码采用 [Apache License 2.0](../LICENSE)。
+模型权重（MiniMax H3）受其 Community License Agreement 约束，见 [NOTICE](../NOTICE)，不由本文件管理。
 
 ## 主要 Python 依赖（许可类型为常见归类，以各包 LICENSE 为准）
 
@@ -17,7 +17,7 @@ MiniMax-H3-lite 项目代码采用 [Apache License 2.0](LICENSE)。
 | uvicorn | BSD-3-Clause | ASGI 服务器 |
 | pydantic / pydantic-core | MIT | 数据校验 |
 | aiohttp | Apache-2.0 | 异步 HTTP 客户端 |
-| aiosqlite / sqlite | Apache-2.0 / 公有领域 | 本地数据库 |
+| sqlite | 公有领域 | 本地数据库（Python 标准库 `sqlite3`；无 aiosqlite 依赖，2026-10-21 复核 requirements） |
 | jinja2 | BSD-3-Clause | 模板渲染 |
 | pillow | HPND（PIL Software License） | 图像处理 |
 | numpy | BSD-3-Clause | 数值计算 |
@@ -26,20 +26,20 @@ MiniMax-H3-lite 项目代码采用 [Apache License 2.0](LICENSE)。
 | httpx | BSD-3-Clause | HTTP 客户端 |
 | python-multipart | Apache-2.0 | 上传解析 |
 | comfy-aimdo | GPL-3.0 | 进程内依赖；`LICENSE` 首行明示。**义务范围同内核**，见 `docs/GPL_COMPLIANCE.md` §1b |
-| comfy-kitchen | Apache-2.0 | 与 GPL 无冲突；钉版 `==0.2.31` |
+| comfy-kitchen | Apache-2.0 | 与 GPL 无冲突；钉版 `==0.2.37`（`requirements.txt:31`，2026-10-21 复核同步） |
 
 ## vendored 组件
 
 ### ComfyUI 内核（`comfy_kernel/`，进程内复用）
 
-- **组件**: ComfyUI 推理内核源码（vendored，供旧版引擎执行 ComfyUI 工作流）
+- **组件**: ComfyUI 推理内核源码（vendored，进程内复用执行 ComfyUI 工作流；`comfy` 为当前默认引擎，见 `backend/engine_registry.py`）
 - **上游**: <https://github.com/Comfy-Org/ComfyUI>（Comfy-Org）
 - **许可**: [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html)
 - **分发义务**: 需遵守 GPL-3.0（随附许可文本、提供源码获取方式、保留版权声明）；本地默认仅 loopback 使用
 
 ### 官方工作流模板（`workflows/`）
 
-- MiniMax 官方 ComfyUI 模板，受 MiniMax H3 Community License 约束（见 [NOTICE](NOTICE)）
+- MiniMax 官方 ComfyUI 模板，受 MiniMax H3 Community License 约束（见 [NOTICE](../NOTICE)）
 
 ---
 

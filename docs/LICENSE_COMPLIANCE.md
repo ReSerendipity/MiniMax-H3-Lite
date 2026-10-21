@@ -1,8 +1,9 @@
 # MiniMax-H3-lite 许可证合规台账（License Compliance）
 
-> 最后更新：2026-09-15（P0-2：ComfyUI-EsesImageCompare 已整体移出 comfy_kernel 工作区，激活节点包 17 个；§1b 依赖钉版与 requirements.txt 同步）。
+> 最后更新：2026-09-15（P0-2：ComfyUI-EsesImageCompare 已整体移出 comfy_kernel 工作区；§1b 依赖钉版与 requirements.txt 同步）。
+> 2026-10-21 复核：激活节点包数由 17 更正为 **16 个**（`Get-ChildItem comfy_kernel/custom_nodes -Directory | Where-Object Name -ne '__pycache__'` 实测 16；17 系把 `__pycache__` 计入）。
 > 历史记录：2026-09-03（§3.4 四项未决收口：节点包 LICENSE 实测复核 + Image/MiniMax 不对称说明；节点包实测 19 个）。
-> 本台账覆盖**随仓内嵌/随包分发**的组件；Python 依赖以 `pyproject.toml` 为准，另行核查。
+> 本台账覆盖**随仓内嵌/随包分发**的组件；Python 依赖以 `requirements.txt` / `requirements-lock.txt` 为准，另行核查（本仓无 `pyproject.toml`，见 `docs/adr/0004-release-version-governance.md` 与 `docs/release-governance.md` §1）。
 > ⚠️「商用合规 / 合规要求」两列仅记录**事实与风险提示**，不构成法律意见；标「需人工确认」者必须逐项人工补查后再分发。
 
 ## 1. 主程序许可
@@ -17,7 +18,7 @@
 |---|---|---|---|
 | `comfy_kernel/`（上游 ComfyUI 内核） | GPL-3.0 | ⚠️ 传染风险（进程内复用）；具体分发形态需人工评估 | 隔离进程边界，或改用 Apache-2.0 等价实现；保留上游版权与许可文本 |
 
-## 3. `comfy_kernel/custom_nodes/` 第三方节点包（17 个激活节点包，除 `__pycache__` 外；EsesImageCompare 已于 2026-09-15 移出）
+## 3. `comfy_kernel/custom_nodes/` 第三方节点包（16 个激活节点包，除 `__pycache__` 外，2026-10-21 实测；EsesImageCompare 已于 2026-09-15 移出）
 
 > §3.4 四项未决收口记录（2026-09-03，LICENSE 文件实测复核）：
 > ① `ComfyUI_Dynamic-RAMCache` 原记 **NOT FOUND** 实为「**目录存在但无 LICENSE 文件**」→ **已核实上游 `Windecay/ComfyUI_Dynamic-RAMCache` 为 MIT（README 声明，82★，pushed 2026-06-13）**，vendor 副本缺失的 LICENSE 已补回 `comfy_kernel/custom_nodes/ComfyUI_Dynamic-RAMCache/LICENSE`（2026-09-03 收口，见下表该行）；

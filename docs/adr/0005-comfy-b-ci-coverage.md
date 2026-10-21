@@ -9,9 +9,12 @@
 
 ## 背景
 
-`comfy_kernel/` 为 vendored 上游 ComfyUI 内核（1724 个 .py / ~50 万行），被 `.gitignore:128`
+`comfy_kernel/` 为 vendored 上游 ComfyUI 内核（1722 个 .py / 498,312 行，2026-10-21 本机实测；决策时 2026-09-06 记为 1724 / ~50 万行），被 `.gitignore:143`
 排除、不入库。GitHub 托管 runner 的 checkout 天然没有该目录 → **B 方案（`COMFY_ENABLE=true`
 进程内复用内核）在 CI 中零覆盖**。但需澄清覆盖的三层：
+> **2026-10-21 复核**：引擎激活方式现为 `MMH3_INFERENCE_BACKEND=comfy`（`backend/engine_registry.py`）；
+> `COMFY_ENABLE` 是未实现规划字段（零消费点，登记于 `scripts/check_config_refs.py` 的
+> `_RESERVED_NON_ENV`）——上文括注为决策时（2026-09-06）的机制表述，非现行激活方式。
 
 1. **适配器代码**（`backend/routers/comfy_engine.py` 的工作流映射 / 参数注入 / 假节点剔除）：
    **已有单测覆盖**（`tests/test_comfy_engine.py` + `test_comfy_engine_integration.py`，

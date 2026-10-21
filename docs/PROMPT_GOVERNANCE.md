@@ -8,10 +8,10 @@
 
 | 事实 | 位置 |
 | --- | --- |
-| 官方标签语法（`<Picture N>` / `<Video N>` / `<Audio N>`、`<d>[语言]`） | `backend/templates/r2v.html` 提示词坞内联引导 + `h3/spec.py`（REF2VA 参考素材上限 9/3/3/12） |
+| 官方标签语法（`<Picture N>` / `<Video N>` / `<Audio N>`、`<d>[语言]`） | `backend/templates/r2v.html` 提示词坞内联引导 + `backend/h3/spec.py`（REF2VA 参考素材上限 9/3/3/12） |
 | 保留程度词（`fully_preserved` / `partially_copy` / `reference`） | `backend/templates/r2v.html`（REF2VA 标签引用引导段） |
 | Context-IR 组织结构（subject_definitions → summary → retention_analysis → detailed_description → overall_soundscape → non_diegetic_music） | `backend/templates/r2v.html`（注明 H3-Context-IR 未开源，供手写对齐） |
-| 提示词长度上限（7000 字符前后端一致） | `backend/config.py`（MAX_PROMPT_CHARS）+ `r2v.html` textarea maxlength + `generations.py` 422 校验 |
+| 提示词长度上限（7000 字符前后端一致） | `backend/config.py`（MAX_PROMPT_CHARS）+ `r2v.html` textarea maxlength + `backend/services/generation_service.py` 422 校验（`generations.py` 为薄路由，校验在 service 层） |
 | 轻量指令优化（非 H3-Context-IR 官方等价物） | `backend/templates/r2v.html`（按钮 title 已声明边界） |
 
 **规则**：以上事实若变更，必须同步修改事实源并在本文件登记（见第三节），不得在
@@ -32,7 +32,7 @@
 1. 每次提示词引导变更（新增标签语法、改保留程度词、改 Context-IR 结构说明）：
    - 在提交信息注明 `prompt-governance` 前缀；
    - 更新本文档对应"单一事实源"行的位置/说明；
-   - 若影响参数契约（如新增参考素材上限），同步 `h3/spec.py` 修订记录（SPEC_VERSION +1）。
+   - 若影响参数契约（如新增参考素材上限），同步 `backend/h3/spec.py` 修订记录（SPEC_VERSION +1）。
 2. 后端校验与前端引导不一致视为缺陷（例：前端允许但 API 422，或反之），须同批修复。
 
 ## 四、审计

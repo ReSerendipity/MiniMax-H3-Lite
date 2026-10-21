@@ -23,7 +23,7 @@
 ## 2. CHANGELOG 管理
 
 - `CHANGELOG.md` **已存在**（仓库根）。
-- 现行形态：顶部 `## [Unreleased]`，其下按 conventional 分区（`### Features` / `### Bug Fixes` / `### CI/CD` / `### AI/ML 工程` 等）；发版小节为 GitHub 释放式标题 `## [X.Y.Z](…/compare/vX.Y.Z...vA.B.C) (YYYY-MM-DD)`。`release.yml` 的 `publish-release` 会从对应二级标题节抽取发版说明（抽不到则回退 `--generate-notes`）。
+- 现行形态：顶部 `## [Unreleased]`，其下按 conventional 分区（`### Features` / `### Bug Fixes` / `### CI/CD` / `### AI/ML 工程` 等）；发版小节为 GitHub 释放式标题 `## [X.Y.Z](https://github.com/ReSerendipity/MiniMax-H3-Lite/compare/vX.Y.Z...vA.B.C) (YYYY-MM-DD)`。`release.yml` 的 `publish-release` 会从对应二级标题节抽取发版说明（抽不到则回退 `--generate-notes`）。
 - 每次合并 `main` 在 `[Unreleased]` 追加条目；发版时把 `[Unreleased]` 内容归入新的 `[VERSION] - YYYY-MM-DD` 小节。
 - **命名差异（记录，待收敛）**：本仓分区名为 conventional 语义（`Features` / `Bug Fixes`），与 §10.2 的 Keep a Changelog 类别名（Added / Changed / Fixed）**命名不一致**，语义可一一对应（feat→Features/Added、fix→Bug Fixes/Fixed、refactor→Changed）。本仓尚未按 Keep a Changelog 类别名收敛。
 

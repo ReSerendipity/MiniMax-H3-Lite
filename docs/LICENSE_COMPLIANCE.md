@@ -1,4 +1,4 @@
-# MiniMax-H3-lite 许可证合规台账（License Compliance）
+# MiniMax-H3-Lite 许可证合规台账（License Compliance）
 
 > 最后更新：2026-09-15（P0-2：ComfyUI-EsesImageCompare 已整体移出 comfy_kernel 工作区；§1b 依赖钉版与 requirements.txt 同步）。
 > 2026-10-21 复核：激活节点包数由 17 更正为 **16 个**（`Get-ChildItem comfy_kernel/custom_nodes -Directory | Where-Object Name -ne '__pycache__'` 实测 16；17 系把 `__pycache__` 计入）。
@@ -10,7 +10,7 @@
 
 | 组件 | 许可证 | 商用合规 | 合规要求 |
 |---|---|---|---|
-| MiniMax-H3-lite 项目代码 | Apache-2.0（以根级 LICENSE 为准） | 宽松许可 | 保留版权声明与 NOTICE |
+| MiniMax-H3-Lite 项目代码 | Apache-2.0（以根级 LICENSE 为准） | 宽松许可 | 保留版权声明与 NOTICE |
 
 ## 2. 内嵌 ComfyUI 内核（B 方案进程内复用）
 

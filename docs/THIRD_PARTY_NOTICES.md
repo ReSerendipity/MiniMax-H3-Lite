@@ -5,7 +5,7 @@
 
 ## 项目主许可
 
-MiniMax-H3-lite 项目代码采用 [Apache License 2.0](../LICENSE)。
+MiniMax-H3-Lite 项目代码采用 [Apache License 2.0](../LICENSE)。
 模型权重（MiniMax H3）受其 Community License Agreement 约束，见 [NOTICE](../NOTICE)，不由本文件管理。
 
 ## 主要 Python 依赖（许可类型为常见归类，以各包 LICENSE 为准）
@@ -26,7 +26,7 @@ MiniMax-H3-lite 项目代码采用 [Apache License 2.0](../LICENSE)。
 | httpx | BSD-3-Clause | HTTP 客户端 |
 | python-multipart | Apache-2.0 | 上传解析 |
 | comfy-aimdo | GPL-3.0 | 进程内依赖；`LICENSE` 首行明示。**义务范围同内核**，见 `docs/GPL_COMPLIANCE.md` §1b |
-| comfy-kitchen | Apache-2.0 | 与 GPL 无冲突；钉版 `==0.2.37`（`requirements.txt:31`，2026-10-21 复核同步） |
+| comfy-kitchen | Apache-2.0 | 与 GPL 无冲突；钉版 `==0.2.37`（`requirements.txt:27`，2026-10-21 复核同步） |
 
 ## vendored 组件
 

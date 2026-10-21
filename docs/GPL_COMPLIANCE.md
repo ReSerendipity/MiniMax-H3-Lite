@@ -59,8 +59,8 @@
 
 | 包 | 钉版 | 许可 | 依据（均为本仓当场实测） |
 |---|---|---|---|
-| `comfy-aimdo` | `==0.5.5`（`requirements.txt:32`，2026-10-20 复核同步） | **GPL-3.0** | 安装副本 `comfy_aimdo-<ver>.dist-info/licenses/LICENSE` 前二行：`This project is licensed under the GNU General Public License v3.0.` / `The original author/copyright holder reserves the right to offer the`。上游 GitHub 标 `NOASSERTION` 仅因许可正文前置了那段非标准声明，不改变"按 GPL-3.0 授权"的判定 |
-| `comfy-kitchen` | `==0.2.37`（`requirements.txt:31`，2026-10-20 复核同步） | Apache-2.0 | 安装副本 `comfy_kitchen-<ver>.dist-info/METADATA` 含 `License: Apache-2.0`；上游 `Comfy-Org/comfy-kitchen` LICENSE 一致（0.2.33 曾于 2026-09-15 经 PyPI 元数据核实 License: Apache-2.0，0.2.37 同一许可未变更） |
+| `comfy-aimdo` | `==0.5.5`（`requirements.txt:28`，2026-10-20 复核同步） | **GPL-3.0** | 安装副本 `comfy_aimdo-<ver>.dist-info/licenses/LICENSE` 前二行：`This project is licensed under the GNU General Public License v3.0.` / `The original author/copyright holder reserves the right to offer the`。上游 GitHub 标 `NOASSERTION` 仅因许可正文前置了那段非标准声明，不改变"按 GPL-3.0 授权"的判定 |
+| `comfy-kitchen` | `==0.2.37`（`requirements.txt:27`，2026-10-20 复核同步） | Apache-2.0 | 安装副本 `comfy_kitchen-<ver>.dist-info/METADATA` 含 `License: Apache-2.0`；上游 `Comfy-Org/comfy-kitchen` LICENSE 一致（0.2.33 曾于 2026-09-15 经 PyPI 元数据核实 License: Apache-2.0，0.2.37 同一许可未变更） |
 
 > ⚠️ 上表"安装副本"路径中的版本号随实际安装而变，故写作 `<ver>` 占位；核对时以
 > `requirements.txt` 的钉版为准，勿以旧 `dist-info` 目录名反推钉版。

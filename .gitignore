@@ -254,3 +254,4 @@ service-account.json
 
 # ZCode 会话配置（合规建议：本地工具配置不入库）
 .zcodeignore
+!/AGENTS.md

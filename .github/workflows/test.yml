@@ -200,7 +200,7 @@ jobs:
   # （原内联实现见 git 历史 f13e1fc；mypy ratchet 门禁 2026-09-03 迁移自组织级 reusable workflow（原迁移报告未随本仓留存））
   typecheck:
     name: Typecheck (mypy ratchet)
-    uses: ReSerendipity/.github/.github/workflows/python-quality-baseline.yml@main
+    uses: ReSerendipity/.github/.github/workflows/python-quality-baseline.yml@7c03273a862ffc8136ec886914c6105d77dce32d # pinned 2026-10-22
     with:
       package: backend
       include_tests: false

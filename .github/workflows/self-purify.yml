@@ -25,4 +25,4 @@ concurrency:
 jobs:
   self-purify:
     name: 自净化检查（非阻塞）
-    uses: ReSerendipity/.github/.github/workflows/self-purify.yml@7c03273a862ffc8136ec886914c6105d77dce32d # pinned 2026-10-22
+    uses: ReSerendipity/.github/.github/workflows/self-purify.yml@051227229483b9efe65f57a6a81ddcd10cf950fc # pinned 2026-10-22

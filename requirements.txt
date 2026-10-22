@@ -4,7 +4,7 @@ uvicorn[standard]>=0.54.0
 pydantic>=2.13.5
 python-multipart>=0.0.6
 jinja2>=3.1.0
-pillow>=9.0.0
+pillow>=13.0.0
 cryptography>=50.0.2  # 代码完整性自检（R10，Ed25519 验签/签名）
 cryptography>=50.0.2  # 代码完整性自检（R10，Ed25519 验签/签名）
 # ── 推理依赖（真实推理需要；已验证组合：diffusers 0.39.0 + transformers 5.x）──

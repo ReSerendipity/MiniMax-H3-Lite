@@ -10,6 +10,16 @@
 
 > 三模式（文生 / 图生 / 多模态参考）生成闭环已可用：从提示词、参数与参考素材出发，经多镜头时间线逐镜头生成并预览成片。2K（H3-Regenerate-2K）等能力待官方开源后跟进，详见下文「功能与限制」。
 
+## English
+
+MM·H3 Workbench is a **local video-generation timeline studio** for developers: arrange shots on a multi-shot timeline, feed prompts / parameters / reference media, and call a local **MiniMax H3** (H3-Base) inference service to render each shot with inline preview.
+
+The frontend splits the three official ComfyUI workflows into mode pages — **T2V** (`/`), **I2V** (`/i2v`, first/last/both frames) and **R2V** (`/r2v`, multimodal reference manager) — served by a **FastAPI + Jinja2 single-port** backend (`backend/templates/`), with light/dark themes and a responsive layout.
+
+It is a UI/queue client only: it depends on a locally reachable MiniMax H3 inference backend (`comfy` in-process kernel, external `vllm-omni` OpenAI-compatible endpoint, or `diffusers` in-process pipeline). 2K (H3-Regenerate-2K) is **not yet open-sourced by MiniMax** and remains disabled in the UI; it will be wired up once official weights are released.
+
+![T2V workbench UI — 1440px viewport, three-mode top bar, shot timeline, parameter panel](docs/assets/t2v-workbench.png)
+
 ## 功能特性
 
 - **三模式页**：文生视频（`/`，T2V）/ 图生视频（`/i2v`，首帧/末帧/首尾帧 + 图像槽位）/ 多模态参考（`/r2v`，参考素材管理器 + 标签速查），顶栏切换互跳、当前页高亮；时间线镜头按模式自动跳转到对应页面

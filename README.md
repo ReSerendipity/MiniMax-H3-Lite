@@ -37,23 +37,23 @@ MM·H3 工作台是一个面向开发者的**本地视频生成时间线工作�
 
 **主界面（文生 T2V 工作台）**——顶栏三模式切换、左侧提示词坞、中央放映机预览、右侧镜头参数、底部多镜头时间线：
 
-![MM·H3 工作台主界面：三模式顶栏、提示词坞、放映机预览与镜头时间线](docs/assets/readme-minimax-h3-lite-1-main.png)
+![MM·H3 工作台主界面：三模式顶栏、提示词坞、放映机预览与镜头时间线](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-1-main.png)
 
 **结果回投区（等待生成）**——生成完成后视频会在此即时回放；当前为空态，可见 REC / 时间码 / 24FPS·768P 角标与播放控制条：
 
-![结果回投：放映机预览区与镜头播放控制条](docs/assets/readme-minimax-h3-lite-2-results.png)
+![结果回投：放映机预览区与镜头播放控制条](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-2-results.png)
 
 **镜头参数面板**——画面比例、实时分辨率换算、时长 / 帧数、种子、Steps，以及官方模板规格（Sampler / Scheduler / 输出规格）：
 
-![镜头参数面板：比例、分辨率、时长、种子与采样规格](docs/assets/readme-minimax-h3-lite-3-params.png)
+![镜头参数面板：比例、分辨率、时长、种子与采样规格](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-3-params.png)
 
 **时间线与队列状态栏**——多镜头缩略条、总时长统计，状态栏实时显示连接状态、`QUEUE 待处理·进行中`计数、应用版本与当前推理引擎：
 
-![时间线镜头条与底部状态栏：CONN、QUEUE 计数、引擎指示](docs/assets/readme-minimax-h3-lite-4-queue.png)
+![时间线镜头条与底部状态栏：CONN、QUEUE 计数、引擎指示](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-4-queue.png)
 
 **组件架构**——浏览器（Jinja2 SSR）→ FastAPI 单端口（页面 + API + SQLite + 队列）→ 三选一推理后端 → 本地权重：
 
-![MM·H3 工作台组件架构图](docs/assets/readme-minimax-h3-lite-5-architecture.svg)
+![MM·H3 工作台组件架构图](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-5-architecture.svg)
 
 ### 快速开始
 
@@ -183,23 +183,23 @@ It is a UI/queue client only: it depends on a locally reachable MiniMax H3 infer
 
 **Main workbench (T2V)** — top mode tabs, left prompt dock, center projector preview, right shot parameters, bottom multi-shot timeline:
 
-![MM·H3 workbench main UI: mode tabs, prompt dock, projector preview and shot timeline](docs/assets/readme-minimax-h3-lite-1-main.png)
+![MM·H3 workbench main UI: mode tabs, prompt dock, projector preview and shot timeline](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-1-main.png)
 
 **Result playback area (waiting for generation)** — finished video plays back inline here once rendering completes; shown in its empty state, with REC / timecode / 24FPS·768P badges and a transport bar:
 
-![Result playback: projector preview and shot transport controls](docs/assets/readme-minimax-h3-lite-2-results.png)
+![Result playback: projector preview and shot transport controls](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-2-results.png)
 
 **Shot parameter panel** — aspect ratio, live resolution conversion, duration / frame count, seed, steps, and official-template spec (Sampler / Scheduler / output format):
 
-![Shot parameter panel: aspect, resolution, duration, seed and sampling spec](docs/assets/readme-minimax-h3-lite-3-params.png)
+![Shot parameter panel: aspect, resolution, duration, seed and sampling spec](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-3-params.png)
 
 **Timeline & queue status bar** — shot thumbnails, total duration, and a status bar showing connection, `QUEUE pending·running` count, app version and active inference engine:
 
-![Shot timeline and bottom status bar: CONN, QUEUE count, engine indicator](docs/assets/readme-minimax-h3-lite-4-queue.png)
+![Shot timeline and bottom status bar: CONN, QUEUE count, engine indicator](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-4-queue.png)
 
 **Component architecture** — browser (Jinja2 SSR) → FastAPI single port (pages + API + SQLite + queue) → one of three inference backends → local weights:
 
-![MM·H3 workbench component architecture](docs/assets/readme-minimax-h3-lite-5-architecture.svg)
+![MM·H3 workbench component architecture](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-5-architecture.svg)
 
 ### Quick Start
 

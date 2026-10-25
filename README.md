@@ -39,7 +39,7 @@ MM·H3 工作台是一个面向开发者的**本地视频生成时间线工作�
 
 ![MM·H3 工作台主界面：三模式顶栏、提示词坞、放映机预览与镜头时间线](docs/assets/readme-minimax-h3-lite-1-main.png)
 
-**结果回投区**——生成完成后视频在此即时回放，带 REC / 时间码 / 24FPS·768P 角标与播放控制条：
+**结果回投区（等待生成）**——生成完成后视频会在此即时回放；当前为空态，可见 REC / 时间码 / 24FPS·768P 角标与播放控制条：
 
 ![结果回投：放映机预览区与镜头播放控制条](docs/assets/readme-minimax-h3-lite-2-results.png)
 
@@ -185,7 +185,7 @@ It is a UI/queue client only: it depends on a locally reachable MiniMax H3 infer
 
 ![MM·H3 workbench main UI: mode tabs, prompt dock, projector preview and shot timeline](docs/assets/readme-minimax-h3-lite-1-main.png)
 
-**Result playback area** — finished video plays back inline with REC / timecode / 24FPS·768P badges and a transport bar:
+**Result playback area (waiting for generation)** — finished video plays back inline here once rendering completes; shown in its empty state, with REC / timecode / 24FPS·768P badges and a transport bar:
 
 ![Result playback: projector preview and shot transport controls](docs/assets/readme-minimax-h3-lite-2-results.png)
 

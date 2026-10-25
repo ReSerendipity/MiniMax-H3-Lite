@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" font-family="-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" font-size="13">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6b7b"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#2f6f5e;stroke-width:1.4;rx:10}
+      .box2{fill:#eef4f2;stroke:#2f6f5e;stroke-width:1.4}
+      .grp{fill:#f6f8f9;stroke:#9fb3b8;stroke-width:1.2;stroke-dasharray:5 4}
+      .lbl{fill:#1d2b33;font-weight:600}
+      .sub{fill:#5b6b7b;font-size:11}
+      .arr{stroke:#5b6b7b;stroke-width:1.6;fill:none;marker-end:url(#arr)}
+      .title{fill:#1d2b33;font-size:16px;font-weight:700}
+    </style>
+  </defs>
+
+  <text x="20" y="28" class="title">MM·H3 Workbench — Component Architecture</text>
+
+  <!-- Browser -->
+  <rect x="20" y="60" width="200" height="180" rx="10" class="grp"/>
+  <text x="30" y="80" class="lbl">Browser (Jinja2 SSR)</text>
+  <rect x="35" y="92" width="170" height="34" rx="6" class="box2"/>
+  <text x="45" y="113" class="lbl">T2V  /</text>
+  <rect x="35" y="134" width="170" height="34" rx="6" class="box2"/>
+  <text x="45" y="155" class="lbl">I2V  /i2v</text>
+  <rect x="35" y="176" width="170" height="34" rx="6" class="box2"/>
+  <text x="45" y="197" class="lbl">R2V  /r2v</text>
+  <text x="35" y="228" class="sub">timeline · prompt · params · history</text>
+
+  <!-- FastAPI core -->
+  <rect x="300" y="60" width="300" height="300" rx="10" class="grp"/>
+  <text x="312" y="82" class="lbl">FastAPI single-port  (127.0.0.1:18080)</text>
+
+  <rect x="320" y="96" width="260" height="40" rx="8" class="box"/>
+  <text x="332" y="120" class="lbl">Pages + REST API + static assets</text>
+
+  <rect x="320" y="150" width="125" height="44" rx="8" class="box2"/>
+  <text x="332" y="170" class="lbl">Project / Shot</text>
+  <text x="332" y="186" class="sub">projects · shots</text>
+
+  <rect x="455" y="150" width="125" height="44" rx="8" class="box2"/>
+  <text x="467" y="170" class="lbl">Uploads / History</text>
+  <text x="467" y="186" class="sub">uploads · history</text>
+
+  <rect x="320" y="206" width="260" height="44" rx="8" class="box"/>
+  <text x="332" y="226" class="lbl">Queue Manager</text>
+  <text x="332" y="242" class="sub">state machine · resume · orphan watch</text>
+
+  <rect x="320" y="266" width="125" height="44" rx="8" class="box2"/>
+  <text x="332" y="286" class="lbl">SQLite</text>
+  <text x="332" y="302" class="sub">mmh3.db</text>
+
+  <rect x="455" y="266" width="125" height="44" rx="8" class="box2"/>
+  <text x="467" y="286" class="lbl">Engine Registry</text>
+  <text x="467" y="302" class="sub">MMH3_INFERENCE_BACKEND</text>
+
+  <text x="320" y="338" class="sub">no model loaded at startup; UI boots without weights</text>
+
+  <!-- Arrows browser<->api -->
+  <path d="M220 150 L318 150" class="arr"/>
+  <path d="M318 130 L220 130" class="arr"/>
+
+  <!-- Engines -->
+  <rect x="660" y="60" width="280" height="300" rx="10" class="grp"/>
+  <text x="672" y="82" class="lbl">Inference backend (one of three)</text>
+
+  <rect x="680" y="96" width="240" height="66" rx="8" class="box"/>
+  <text x="692" y="118" class="lbl">comfy (default)</text>
+  <text x="692" y="134" class="sub">in-process vendored ComfyUI kernel</text>
+  <text x="692" y="150" class="sub">loads local single-file weights</text>
+
+  <rect x="680" y="174" width="240" height="66" rx="8" class="box2"/>
+  <text x="692" y="196" class="lbl">vllm-omni (target)</text>
+  <text x="692" y="212" class="sub">external OpenAI-compatible /v1/videos</text>
+  <text x="692" y="228" class="sub">consumer-GPU recipe (4090/5090)</text>
+
+  <rect x="680" y="252" width="240" height="66" rx="8" class="box2"/>
+  <text x="692" y="274" class="lbl">diffusers (fallback)</text>
+  <text x="692" y="290" class="sub">in-process ModularPipeline</text>
+  <text x="692" y="306" class="sub">needs diffusers-format weights dir</text>
+
+  <!-- Arrow engine -> engines -->
+  <path d="M620 228 L678 228" class="arr"/>
+
+  <!-- Weights -->
+  <rect x="300" y="400" width="680" height="70" rx="10" class="grp"/>
+  <text x="312" y="422" class="lbl">Model weights (not bundled, never downloaded by UI boot)</text>
+  <text x="312" y="442" class="sub">H3-Base-FL2VA (t2v / first·last frame) · H3-Base-Ref2VA (multimodal reference)</text>
+  <text x="312" y="459" class="sub">local path via MMH3_MODEL_PATH, else HuggingFace MiniMaxAI/MiniMax-H3 · ModelScope mirror · int8 pruned</text>
+
+  <path d="M800 360 L800 398" class="arr"/>
+  <path d="M450 360 L450 398" class="arr"/>
+
+  <text x="20" y="510" class="sub">UI/queue client only — inference runs in the chosen backend; this repo ships no weights and does not call a cloud API.</text>
+</svg>

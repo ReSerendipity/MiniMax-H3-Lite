@@ -39,9 +39,9 @@ MM·H3 工作台是一个面向开发者的**本地视频生成时间线工作�
 
 ![MM·H3 工作台主界面：三模式顶栏、提示词坞、放映机预览与镜头时间线](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-1-main.png)
 
-**结果回投区（等待生成）**——生成完成后视频会在此即时回放；当前为空态，可见 REC / 时间码 / 24FPS·768P 角标与播放控制条：
+**结果回投区（等待生成）**——完整工作台视图：左侧提示词坞、中央放映机结果区（当前为空态，显示「等待生成·结果帧回投」，带 REC / 时间码 / 24FPS·768P 角标与播放控制条）、右侧镜头参数与底部多镜头时间线：
 
-![结果回投：放映机预览区与镜头播放控制条](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-2-results.png)
+![完整工作台：提示词坞、中央放映机结果区（空态）、镜头参数面板与底部时间线](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-2-results-20261026.png)
 
 **镜头参数面板**——画面比例、实时分辨率换算、时长 / 帧数、种子、Steps，以及官方模板规格（Sampler / Scheduler / 输出规格）：
 
@@ -185,9 +185,9 @@ It is a UI/queue client only: it depends on a locally reachable MiniMax H3 infer
 
 ![MM·H3 workbench main UI: mode tabs, prompt dock, projector preview and shot timeline](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-1-main.png)
 
-**Result playback area (waiting for generation)** — finished video plays back inline here once rendering completes; shown in its empty state, with REC / timecode / 24FPS·768P badges and a transport bar:
+**Result playback area (waiting for generation)** — full workbench view: left prompt dock, center projector result area (currently empty, showing "waiting for generation"; with REC / timecode / 24FPS·768P badges and a transport bar), right shot-parameter panel and bottom multi-shot timeline:
 
-![Result playback: projector preview and shot transport controls](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-2-results.png)
+![Full workbench: prompt dock, center projector result area (empty), shot-parameter panel and bottom timeline](https://gcore.jsdelivr.net/gh/ReSerendipity/MiniMax-H3-Lite@main/docs/assets/readme-minimax-h3-lite-2-results-20261026.png)
 
 **Shot parameter panel** — aspect ratio, live resolution conversion, duration / frame count, seed, steps, and official-template spec (Sampler / Scheduler / output format):
 

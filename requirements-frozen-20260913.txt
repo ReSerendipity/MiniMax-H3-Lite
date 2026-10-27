@@ -100,7 +100,7 @@ rich==15.0.0
 safetensors==0.8.0
 scipy==1.18.1
 sentencepiece==0.2.2
-setuptools==84.0.0
+setuptools==84.1.0
 shellingham==1.5.4
 simpleeval==1.0.8
 sortedcontainers==2.4.0

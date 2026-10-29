@@ -67,8 +67,8 @@
 
 **密钥分发（任务书 §4 避坑 #1，先定分发再开 enforce）**：
 - 私钥：签发机 `data/.manifest_signing_key`（gitignore）+ GitHub Secret
-  `MMH3_MANIFEST_SIGNING_KEY_B64`（**待人工设置**：`gh secret set ...`，见
-  `scripts/generate_manifest_signing_key.py` 头注释）+ 离线备份（SOP-17）；
+  `MMH3_MANIFEST_SIGNING_KEY_B64`（2026-10-29 已按轮换后的新私钥设置）+ 离线备份
+  `MiniMax-H3-Lite-KeyBackup`（7z AES-256，SOP-17）；旧私钥已停用。
 - 公钥：`backend/security/manifest_signing_public_key.pem` 随代码入库（公开无害，
   仅可验签）；签名脚本内置「公钥一致性闸门」——清单声明公钥 SHA256 与仓库公钥
   不一致即 fail（GOTCHAS #97）。

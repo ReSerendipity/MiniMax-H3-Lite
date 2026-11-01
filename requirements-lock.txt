@@ -11,7 +11,7 @@ cryptography==50.0.2
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
-av==18.1.0
+av==19.0.2
 boolean-py==5.0
 cachecontrol[filecache]==0.14.4
 certifi==2026.10.19
